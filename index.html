@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>iPAS AI 應用規劃師刷題工具｜初級＋中級</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#172033;--muted:#687386;--line:#e4e7ec;--brand:#4f46e5;--brand2:#7c3aed;--ok:#087443;--bad:#b42318;--warn:#b54708;--soft:#eef2ff}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC",sans-serif;background:var(--bg);color:var(--ink)}
+button,select,input{font:inherit}.app{max-width:1050px;margin:auto;padding:18px 16px 90px}.top{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center;color:white;font-weight:800}
+h1{font-size:20px;margin:0}.sub{font-size:13px;color:var(--muted);margin-top:3px}.tabs{display:flex;gap:7px;overflow:auto;padding:3px 0 12px;position:sticky;top:0;background:rgba(246,247,251,.94);backdrop-filter:blur(8px);z-index:5}
+.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:999px;cursor:pointer}.tab.active{background:#111827;color:white;border-color:#111827}
+.panel{display:none}.panel.active{display:block}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+.c6{grid-column:span 6}.c4{grid-column:span 4}.c8{grid-column:span 8}.c12{grid-column:span 12}
+.kpi{font-size:28px;font-weight:800}.label{font-size:12px;color:var(--muted)}.pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:var(--soft);color:#3730a3;font-size:12px;margin:2px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.controls select,.controls input{border:1px solid var(--line);background:white;border-radius:10px;padding:9px}
+.btn{border:0;border-radius:11px;padding:10px 14px;cursor:pointer;font-weight:650}.primary{background:var(--brand);color:white}.secondary{background:#fff;border:1px solid var(--line)}.danger{background:#fff1f0;color:var(--bad);border:1px solid #fecdca}
+.qmeta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.qtext{font-size:19px;font-weight:700;line-height:1.55;margin:8px 0 14px}
+.option{display:block;width:100%;text-align:left;padding:13px 14px;margin:8px 0;border:1px solid var(--line);background:white;border-radius:12px;cursor:pointer;line-height:1.45}
+.option:hover{border-color:#a5b4fc}.option.selected{border-color:var(--brand);background:#eef2ff}.option.correct{border-color:#6ce9a6;background:#ecfdf3}.option.wrong{border-color:#fda29b;background:#fef3f2}
+.explain{margin-top:14px;padding:13px 14px;border-radius:12px;background:#f8fafc;border:1px solid var(--line);line-height:1.6}.hidden{display:none!important}
+.navrow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px}.progress{height:8px;background:#eaecf0;border-radius:999px;overflow:hidden;margin:10px 0}.progress>div{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+.examtop{display:flex;justify-content:space-between;gap:12px;align-items:center}.timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:20px}.timer.low{color:var(--bad)}
+.palette{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:12px}.pnum{border:1px solid var(--line);background:white;border-radius:7px;padding:6px 0;font-size:11px;cursor:pointer}.pnum.done{background:#e0e7ff;border-color:#a5b4fc}.pnum.current{outline:2px solid #111827}
+.topicbar{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:9px 0}.bar{height:7px;background:#eaecf0;border-radius:999px;overflow:hidden;flex:1;max-width:240px}.bar i{display:block;height:100%;background:var(--brand)}
+.small{font-size:12px;color:var(--muted)}.notice{background:#fffaeb;border:1px solid #fedf89;border-radius:13px;padding:12px;line-height:1.55}.good{color:var(--ok)}.bad{color:var(--bad)}
+a{color:var(--brand)}.footer{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.6}
+@media(max-width:720px){.c6,.c4,.c8{grid-column:span 12}.app{padding:12px 10px 80px}.qtext{font-size:17px}.palette{grid-template-columns:repeat(8,1fr)}.top{align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="logo">AI</div><div><h1>iPAS AI 應用規劃師刷題工具</h1><div class="sub">初級 Lv1 ＋ 中級 Lv2｜115 年（2026）官方評鑑範圍版</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-panel="home">總覽</button>
+    <button class="tab" data-panel="practice">刷題練習</button>
+    <button class="tab" data-panel="exam">正式模擬</button>
+    <button class="tab" data-panel="past">考古題</button>
+    <button class="tab" data-panel="wrong">錯題本</button>
+    <button class="tab" data-panel="stats">弱點分析</button>
+    <button class="tab" data-panel="scope">官方範圍</button>
+  </div>
+
+  <section id="home" class="panel active"></section>
+  <section id="practice" class="panel"></section>
+  <section id="exam" class="panel"></section>
+  <section id="past" class="panel"></section>
+  <section id="wrong" class="panel"></section>
+  <section id="stats" class="panel"></section>
+  <section id="scope" class="panel"></section>
+
+  <div class="footer">
+    「刷題練習／正式模擬」為依 iPAS 官方評鑑範圍自編的練習題；「考古題」分頁則使用 iPAS 官方公告試題來源。進度與考古題快取儲存在你的瀏覽器 localStorage。
+  </div>
+</div>
+
+<script>
+const DB = {"subjects": {"L11": {"level": "初級", "name": "人工智慧基礎概論", "minutes": 75}, "L12": {"level": "初級", "name": "生成式 AI 應用與規劃", "minutes": 75}, "L21": {"level": "中級", "name": "人工智慧技術應用與規劃", "minutes": 90}, "L22": {"level": "中級", "name": "大數據處理分析與應用", "minutes": 90}, "L23": {"level": "中級", "name": "機器學習技術與應用", "minutes": 90}}, "topics": {"L11101": "AI 的定義與分類", "L11102": "AI 治理概念", "L11201": "資料基本概念與來源", "L11202": "資料整理與分析流程", "L11203": "資料隱私與安全", "L11301": "機器學習基本原理", "L11302": "常見的機器學習模型", "L11401": "鑑別式 AI 與生成式 AI 的基本原理", "L11402": "鑑別式 AI 與生成式 AI 的整合應用", "L12101": "No Code / Low Code 的基本概念", "L12102": "No Code / Low Code 的優勢與限制", "L12201": "生成式 AI 應用領域與常見工具", "L12202": "如何善用生成式 AI 工具", "L12301": "生成式 AI 導入評估", "L12302": "生成式 AI 導入規劃", "L12303": "生成式 AI 風險管理", "L21101": "自然語言處理技術與應用", "L21102": "電腦視覺技術與應用", "L21103": "生成式 AI 技術與應用", "L21104": "多模態人工智慧應用", "L21201": "AI 導入評估", "L21202": "AI 導入規劃", "L21203": "AI 風險管理", "L21301": "數據準備與模型選擇", "L21302": "AI 技術系統集成與部署", "L22101": "敘述性統計與資料摘要技術", "L22102": "機率分佈與資料分佈模型", "L22103": "假設檢定與統計推論", "L22201": "數據收集與清理", "L22202": "數據儲存與管理", "L22203": "數據處理技術與工具", "L22301": "統計學在大數據中的應用", "L22302": "常見的大數據分析方法", "L22303": "數據可視化工具", "L22401": "大數據與機器學習", "L22402": "大數據在鑑別式 AI 中的應用", "L22403": "大數據在生成式 AI 中的應用", "L22404": "大數據隱私保護、安全與合規", "L23101": "機率／統計之機器學習基礎應用", "L23102": "線性代數之機器學習基礎應用", "L23103": "數值優化技術與方法", "L23201": "機器學習原理與技術", "L23202": "常見機器學習演算法", "L23203": "深度學習原理與框架", "L23301": "數據準備與特徵工程", "L23302": "模型選擇與架構設計", "L23303": "模型訓練、評估與驗證", "L23304": "模型調整與優化", "L23401": "數據隱私、安全與合規", "L23402": "演算法偏見與公平性"}, "questions": [{"id": "Q001", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11101", "topicName": "AI 的定義與分類", "concept": "AI、ML、DL 關係", "difficulty": "easy", "question": "下列哪一項對 AI、機器學習（ML）與深度學習（DL）的關係描述最適當？", "options": ["ML 包含所有 AI，而 AI 只是一種 ML", "AI 是較廣泛範疇，ML 是其中一類方法，DL 又是 ML 的一類方法", "所有 AI 系統都一定使用深度神經網路", "DL 與 ML 完全無關"], "answer": 1, "explanation": "AI 是廣義領域；機器學習是讓系統從資料學習的一類 AI 方法，而深度學習通常視為機器學習的一個子領域。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q002", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11101", "topicName": "AI 的定義與分類", "concept": "AI、ML、DL 關係", "difficulty": "easy", "question": "若把 AI 視為較大的技術範疇，ML 與 DL 的層級關係通常如何理解？", "options": ["ML 包含所有 AI，而 AI 只是一種 ML", "所有 AI 系統都一定使用深度神經網路", "AI 是較廣泛範疇，ML 是其中一類方法，DL 又是 ML 的一類方法", "DL 與 ML 完全無關"], "answer": 2, "explanation": "AI 是廣義領域；機器學習是讓系統從資料學習的一類 AI 方法，而深度學習通常視為機器學習的一個子領域。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q003", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11101", "topicName": "AI 的定義與分類", "concept": "AI、ML、DL 關係", "difficulty": "easy", "question": "在一般概念分類下，哪一個敘述最合理？", "options": ["ML 包含所有 AI，而 AI 只是一種 ML", "DL 與 ML 完全無關", "所有 AI 系統都一定使用深度神經網路", "AI 是較廣泛範疇，ML 是其中一類方法，DL 又是 ML 的一類方法"], "answer": 3, "explanation": "AI 是廣義領域；機器學習是讓系統從資料學習的一類 AI 方法，而深度學習通常視為機器學習的一個子領域。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q004", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11102", "topicName": "AI 治理概念", "concept": "負責任 AI 治理", "difficulty": "medium", "question": "企業將 AI 用於影響客戶權益的決策時，哪一項治理措施最適當？", "options": ["為避免爭議，取消所有稽核紀錄", "建立責任歸屬、風險評估、監控、透明說明與申訴／覆核機制", "只要準確率夠高，就不需要治理", "把所有責任交給模型供應商即可"], "answer": 1, "explanation": "AI 治理不能只看模型準確率，還需處理責任、透明、公平、安全、隱私、監控與救濟。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q005", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11102", "topicName": "AI 治理概念", "concept": "負責任 AI 治理", "difficulty": "medium", "question": "高風險 AI 系統上線前後，何者最符合良好的治理做法？", "options": ["把所有責任交給模型供應商即可", "只要準確率夠高，就不需要治理", "為避免爭議，取消所有稽核紀錄", "建立責任歸屬、風險評估、監控、透明說明與申訴／覆核機制"], "answer": 3, "explanation": "AI 治理不能只看模型準確率，還需處理責任、透明、公平、安全、隱私、監控與救濟。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q006", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11102", "topicName": "AI 治理概念", "concept": "負責任 AI 治理", "difficulty": "medium", "question": "若 AI 決策可能造成重大影響，團隊應優先建立哪種機制？", "options": ["建立責任歸屬、風險評估、監控、透明說明與申訴／覆核機制", "只要準確率夠高，就不需要治理", "為避免爭議，取消所有稽核紀錄", "把所有責任交給模型供應商即可"], "answer": 0, "explanation": "AI 治理不能只看模型準確率，還需處理責任、透明、公平、安全、隱私、監控與救濟。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q007", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11201", "topicName": "資料基本概念與來源", "concept": "結構化與非結構化資料", "difficulty": "easy", "question": "下列何者最典型屬於結構化資料？", "options": ["無法分類資料", "非結構化資料", "結構化資料", "僅影像資料"], "answer": 2, "explanation": "具有固定 schema、欄位與型別的表格／關聯式資料通常屬結構化資料。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q008", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11201", "topicName": "資料基本概念與來源", "concept": "結構化與非結構化資料", "difficulty": "easy", "question": "若資料以固定欄位與型別儲存在關聯式資料庫中，通常稱為？", "options": ["非結構化資料", "僅影像資料", "無法分類資料", "結構化資料"], "answer": 3, "explanation": "具有固定 schema、欄位與型別的表格／關聯式資料通常屬結構化資料。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q009", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11201", "topicName": "資料基本概念與來源", "concept": "結構化與非結構化資料", "difficulty": "easy", "question": "訂單表包含 order_id、date、amount 等固定欄位，最接近哪一類資料？", "options": ["結構化資料", "無法分類資料", "僅影像資料", "非結構化資料"], "answer": 0, "explanation": "具有固定 schema、欄位與型別的表格／關聯式資料通常屬結構化資料。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q010", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11202", "topicName": "資料整理與分析流程", "concept": "避免 Data Leakage", "difficulty": "medium", "question": "為避免標準化造成 Data Leakage，正確流程為何？", "options": ["只前處理測試集", "訓練集與測試集分別各自估計參數", "先切分資料，只用訓練集估計前處理參數，再套用至驗證／測試集", "先用全部資料估計平均與標準差再切分"], "answer": 2, "explanation": "所有由資料學得的前處理參數，原則上應僅從訓練資料估計，再套用到驗證／測試資料。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q011", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11202", "topicName": "資料整理與分析流程", "concept": "避免 Data Leakage", "difficulty": "medium", "question": "使用 StandardScaler 前，要如何處理訓練集與測試集才較正確？", "options": ["先切分資料，只用訓練集估計前處理參數，再套用至驗證／測試集", "訓練集與測試集分別各自估計參數", "先用全部資料估計平均與標準差再切分", "只前處理測試集"], "answer": 0, "explanation": "所有由資料學得的前處理參數，原則上應僅從訓練資料估計，再套用到驗證／測試資料。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q012", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11202", "topicName": "資料整理與分析流程", "concept": "避免 Data Leakage", "difficulty": "medium", "question": "模型評估前進行前處理時，如何避免測試資料資訊提前進入訓練？", "options": ["先用全部資料估計平均與標準差再切分", "只前處理測試集", "先切分資料，只用訓練集估計前處理參數，再套用至驗證／測試集", "訓練集與測試集分別各自估計參數"], "answer": 2, "explanation": "所有由資料學得的前處理參數，原則上應僅從訓練資料估計，再套用到驗證／測試資料。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q013", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11203", "topicName": "資料隱私與安全", "concept": "資料最小化", "difficulty": "medium", "question": "AI 專案蒐集個資時，何者最符合資料最小化？", "options": ["將個資直接放進公開提示詞", "取消權限控管以方便開發", "先蒐集所有可能用到的個資並永久保存", "只蒐集達成明確目的所必要的資料"], "answer": 3, "explanation": "資料最小化要求蒐集與處理的資料應限於達成目的所必要、相稱的範圍。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q014", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11203", "topicName": "資料隱私與安全", "concept": "資料最小化", "difficulty": "medium", "question": "某欄位含敏感資訊且與模型目的無關，最合理的處理是？", "options": ["取消權限控管以方便開發", "先蒐集所有可能用到的個資並永久保存", "只蒐集達成明確目的所必要的資料", "將個資直接放進公開提示詞"], "answer": 2, "explanation": "資料最小化要求蒐集與處理的資料應限於達成目的所必要、相稱的範圍。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q015", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11203", "topicName": "資料隱私與安全", "concept": "資料最小化", "difficulty": "medium", "question": "要降低 AI 專案的隱私風險，資料蒐集階段應優先採取？", "options": ["先蒐集所有可能用到的個資並永久保存", "取消權限控管以方便開發", "將個資直接放進公開提示詞", "只蒐集達成明確目的所必要的資料"], "answer": 3, "explanation": "資料最小化要求蒐集與處理的資料應限於達成目的所必要、相稱的範圍。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q016", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11301", "topicName": "機器學習基本原理", "concept": "過擬合", "difficulty": "easy", "question": "模型訓練準確率 99%，測試準確率只有 72%，最可能出現什麼問題？", "options": ["分群", "資料正規化", "過擬合（Overfitting）", "欠擬合（Underfitting）"], "answer": 2, "explanation": "過擬合表示模型過度貼合訓練資料，泛化到未見資料時表現變差。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q017", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11301", "topicName": "機器學習基本原理", "concept": "過擬合", "difficulty": "easy", "question": "若模型在訓練資料表現很好，但新資料表現明顯變差，通常稱為？", "options": ["分群", "欠擬合（Underfitting）", "資料正規化", "過擬合（Overfitting）"], "answer": 3, "explanation": "過擬合表示模型過度貼合訓練資料，泛化到未見資料時表現變差。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q018", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11301", "topicName": "機器學習基本原理", "concept": "過擬合", "difficulty": "easy", "question": "模型記住訓練樣本細節而無法泛化，最接近下列哪一項？", "options": ["資料正規化", "分群", "過擬合（Overfitting）", "欠擬合（Underfitting）"], "answer": 2, "explanation": "過擬合表示模型過度貼合訓練資料，泛化到未見資料時表現變差。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q019", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11302", "topicName": "常見的機器學習模型", "concept": "監督式學習", "difficulty": "easy", "question": "已有「垃圾郵件／正常郵件」標籤，希望預測新郵件類別，最適合？", "options": ["強化式學習", "監督式學習", "非監督式學習", "關聯規則"], "answer": 1, "explanation": "監督式學習使用有標籤資料學習輸入到目標的映射，可用於分類或迴歸。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q020", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11302", "topicName": "常見的機器學習模型", "concept": "監督式學習", "difficulty": "easy", "question": "利用已標註的瑕疵／正常影像訓練分類器，屬於哪種學習？", "options": ["關聯規則", "監督式學習", "非監督式學習", "強化式學習"], "answer": 1, "explanation": "監督式學習使用有標籤資料學習輸入到目標的映射，可用於分類或迴歸。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q021", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11302", "topicName": "常見的機器學習模型", "concept": "監督式學習", "difficulty": "easy", "question": "用歷史房屋特徵與成交價格訓練模型預測新房價，屬於？", "options": ["強化式學習", "非監督式學習", "關聯規則", "監督式學習"], "answer": 3, "explanation": "監督式學習使用有標籤資料學習輸入到目標的映射，可用於分類或迴歸。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q022", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11401", "topicName": "鑑別式 AI 與生成式 AI 的基本原理", "concept": "生成式與鑑別式 AI", "difficulty": "easy", "question": "下列何者最能區分生成式 AI 與鑑別式 AI？", "options": ["鑑別式 AI 只能處理文字", "兩者完全相同", "生成式 AI 不能使用神經網路", "生成式 AI 偏向產生新內容；鑑別式 AI 偏向分類或預測"], "answer": 3, "explanation": "生成式模型著重產生新樣本／內容；鑑別式模型通常著重類別或數值的條件預測。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q023", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11401", "topicName": "鑑別式 AI 與生成式 AI 的基本原理", "concept": "生成式與鑑別式 AI", "difficulty": "easy", "question": "一個模型負責生成新文字，另一個模型負責判斷垃圾郵件，兩者最適當的分類是？", "options": ["生成式 AI 不能使用神經網路", "兩者完全相同", "鑑別式 AI 只能處理文字", "生成式 AI 偏向產生新內容；鑑別式 AI 偏向分類或預測"], "answer": 3, "explanation": "生成式模型著重產生新樣本／內容；鑑別式模型通常著重類別或數值的條件預測。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q024", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11401", "topicName": "鑑別式 AI 與生成式 AI 的基本原理", "concept": "生成式與鑑別式 AI", "difficulty": "easy", "question": "「產生新內容」與「預測類別」的主要差異為何？", "options": ["兩者完全相同", "生成式 AI 不能使用神經網路", "生成式 AI 偏向產生新內容；鑑別式 AI 偏向分類或預測", "鑑別式 AI 只能處理文字"], "answer": 2, "explanation": "生成式模型著重產生新樣本／內容；鑑別式模型通常著重類別或數值的條件預測。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q025", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11402", "topicName": "鑑別式 AI 與生成式 AI 的整合應用", "concept": "整合應用", "difficulty": "medium", "question": "系統先用視覺模型判斷產品瑕疵，再用生成式 AI 自動撰寫檢測摘要，最符合哪個概念？", "options": ["只要串接就不需要驗證輸出", "整合後不再需要任何安全控管", "生成式 AI 會自動取代所有資料來源", "將預測／辨識能力與內容生成能力整合成完整工作流程"], "answer": 3, "explanation": "鑑別式模型可負責辨識、預測或分類，生成式模型再將結果轉成摘要、說明或其他內容。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q026", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11402", "topicName": "鑑別式 AI 與生成式 AI 的整合應用", "concept": "整合應用", "difficulty": "medium", "question": "若企業把分類模型的判斷結果交給生成式 AI 產生可讀報告，這屬於？", "options": ["只要串接就不需要驗證輸出", "將預測／辨識能力與內容生成能力整合成完整工作流程", "生成式 AI 會自動取代所有資料來源", "整合後不再需要任何安全控管"], "answer": 1, "explanation": "鑑別式模型可負責辨識、預測或分類，生成式模型再將結果轉成摘要、說明或其他內容。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q027", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11402", "topicName": "鑑別式 AI 與生成式 AI 的整合應用", "concept": "整合應用", "difficulty": "medium", "question": "鑑別式模型與生成式模型串接的主要價值之一是？", "options": ["整合後不再需要任何安全控管", "將預測／辨識能力與內容生成能力整合成完整工作流程", "生成式 AI 會自動取代所有資料來源", "只要串接就不需要驗證輸出"], "answer": 1, "explanation": "鑑別式模型可負責辨識、預測或分類，生成式模型再將結果轉成摘要、說明或其他內容。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q028", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12101", "topicName": "No Code / Low Code 的基本概念", "concept": "No Code / Low Code", "difficulty": "easy", "question": "哪一個敘述最能說明 No Code 與 Low Code？", "options": ["Low Code 完全禁止寫程式", "No Code 一定比傳統開發更適合所有複雜系統", "降低應用開發門檻，Low Code 通常保留較多程式化客製能力", "兩者只能建立靜態網站"], "answer": 2, "explanation": "No Code 著重視覺化、低門檻；Low Code 通常允許以程式碼擴充較複雜的需求。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q029", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12101", "topicName": "No Code / Low Code 的基本概念", "concept": "No Code / Low Code", "difficulty": "easy", "question": "需要非工程人員以視覺化介面快速建立流程，通常較接近哪類工具？", "options": ["Low Code 完全禁止寫程式", "No Code 一定比傳統開發更適合所有複雜系統", "兩者只能建立靜態網站", "降低應用開發門檻，Low Code 通常保留較多程式化客製能力"], "answer": 3, "explanation": "No Code 著重視覺化、低門檻；Low Code 通常允許以程式碼擴充較複雜的需求。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q030", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12101", "topicName": "No Code / Low Code 的基本概念", "concept": "No Code / Low Code", "difficulty": "easy", "question": "No Code / Low Code 平台的主要目的之一是？", "options": ["降低應用開發門檻，Low Code 通常保留較多程式化客製能力", "No Code 一定比傳統開發更適合所有複雜系統", "Low Code 完全禁止寫程式", "兩者只能建立靜態網站"], "answer": 0, "explanation": "No Code 著重視覺化、低門檻；Low Code 通常允許以程式碼擴充較複雜的需求。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q031", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12102", "topicName": "No Code / Low Code 的優勢與限制", "concept": "限制與選型", "difficulty": "medium", "question": "何種情況下 Low Code 通常比 No Code 更適合？", "options": ["完全不需要整合且流程極簡單時才使用 Low Code", "所有企業系統都應一律改為 No Code", "需要更高客製性、複雜邏輯或深度系統整合時", "No Code 沒有任何擴充或平台依賴風險"], "answer": 2, "explanation": "Low Code 較能加入程式化客製；No Code 的優點是快速，但複雜整合、效能、治理或平台鎖定可能成為限制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q032", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12102", "topicName": "No Code / Low Code 的優勢與限制", "concept": "限制與選型", "difficulty": "medium", "question": "若流程需要複雜商業邏輯與自訂 API 整合，較合理的選擇是？", "options": ["所有企業系統都應一律改為 No Code", "完全不需要整合且流程極簡單時才使用 Low Code", "No Code 沒有任何擴充或平台依賴風險", "需要更高客製性、複雜邏輯或深度系統整合時"], "answer": 3, "explanation": "Low Code 較能加入程式化客製；No Code 的優點是快速，但複雜整合、效能、治理或平台鎖定可能成為限制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q033", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12102", "topicName": "No Code / Low Code 的優勢與限制", "concept": "限制與選型", "difficulty": "medium", "question": "No Code 的常見限制之一是？", "options": ["完全不需要整合且流程極簡單時才使用 Low Code", "No Code 沒有任何擴充或平台依賴風險", "需要更高客製性、複雜邏輯或深度系統整合時", "所有企業系統都應一律改為 No Code"], "answer": 2, "explanation": "Low Code 較能加入程式化客製；No Code 的優點是快速，但複雜整合、效能、治理或平台鎖定可能成為限制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q034", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12201", "topicName": "生成式 AI 應用領域與常見工具", "concept": "工具選擇", "difficulty": "easy", "question": "若任務是將長篇會議逐字稿濃縮成重點，較適合使用哪類生成式 AI 能力？", "options": ["只看社群討論熱度", "所有任務都應使用同一個文字模型", "依任務模態、品質、成本、隱私與整合需求選擇合適工具", "永遠選參數量最大的模型"], "answer": 2, "explanation": "工具選型應依任務型態（文字／圖像／影音）、品質、成本、隱私、延遲與整合能力等條件評估。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q035", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12201", "topicName": "生成式 AI 應用領域與常見工具", "concept": "工具選擇", "difficulty": "easy", "question": "希望把產品照片轉成不同風格視覺稿，應優先選擇哪類生成式工具？", "options": ["永遠選參數量最大的模型", "所有任務都應使用同一個文字模型", "依任務模態、品質、成本、隱私與整合需求選擇合適工具", "只看社群討論熱度"], "answer": 2, "explanation": "工具選型應依任務型態（文字／圖像／影音）、品質、成本、隱私、延遲與整合能力等條件評估。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q036", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12201", "topicName": "生成式 AI 應用領域與常見工具", "concept": "工具選擇", "difficulty": "easy", "question": "選擇生成式 AI 工具時，最合理的原則是？", "options": ["依任務模態、品質、成本、隱私與整合需求選擇合適工具", "只看社群討論熱度", "永遠選參數量最大的模型", "所有任務都應使用同一個文字模型"], "answer": 0, "explanation": "工具選型應依任務型態（文字／圖像／影音）、品質、成本、隱私、延遲與整合能力等條件評估。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q037", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12202", "topicName": "如何善用生成式 AI 工具", "concept": "Prompt 設計", "difficulty": "easy", "question": "希望模型穩定產出符合格式的需求分析表，哪種提示設計較好？", "options": ["移除所有限制讓模型完全自由發揮", "只輸入「幫我做好」", "清楚交代任務、背景、限制、輸出格式與必要範例", "避免提供任何背景資訊"], "answer": 2, "explanation": "高品質提示通常需要清楚描述任務、上下文、限制、輸出格式，必要時可提供示例。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q038", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12202", "topicName": "如何善用生成式 AI 工具", "concept": "Prompt 設計", "difficulty": "easy", "question": "同一任務輸出品質不穩，若先從 Prompt 改善，何者最合理？", "options": ["清楚交代任務、背景、限制、輸出格式與必要範例", "只輸入「幫我做好」", "移除所有限制讓模型完全自由發揮", "避免提供任何背景資訊"], "answer": 0, "explanation": "高品質提示通常需要清楚描述任務、上下文、限制、輸出格式，必要時可提供示例。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q039", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12202", "topicName": "如何善用生成式 AI 工具", "concept": "Prompt 設計", "difficulty": "easy", "question": "較完整的 Prompt 通常會包含哪些資訊？", "options": ["清楚交代任務、背景、限制、輸出格式與必要範例", "避免提供任何背景資訊", "移除所有限制讓模型完全自由發揮", "只輸入「幫我做好」"], "answer": 0, "explanation": "高品質提示通常需要清楚描述任務、上下文、限制、輸出格式，必要時可提供示例。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q040", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12301", "topicName": "生成式 AI 導入評估", "concept": "導入評估", "difficulty": "medium", "question": "企業想導入生成式 AI 客服，正式開發前最應先確認什麼？", "options": ["不需估算維運成本", "定義問題、使用者情境、成功指標、資料／系統條件、成本與風險", "只看模型 Demo 是否吸睛", "先購買最大規模 GPU 再找用途"], "answer": 1, "explanation": "導入評估應先從問題與價值出發，再檢查資料、技術、成本、風險與可行性。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q041", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12301", "topicName": "生成式 AI 導入評估", "concept": "導入評估", "difficulty": "medium", "question": "生成式 AI 導入評估中，哪一項做法最合理？", "options": ["只看模型 Demo 是否吸睛", "不需估算維運成本", "先購買最大規模 GPU 再找用途", "定義問題、使用者情境、成功指標、資料／系統條件、成本與風險"], "answer": 3, "explanation": "導入評估應先從問題與價值出發，再檢查資料、技術、成本、風險與可行性。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q042", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12301", "topicName": "生成式 AI 導入評估", "concept": "導入評估", "difficulty": "medium", "question": "若要判斷某 AI 構想是否值得投入，應先做？", "options": ["只看模型 Demo 是否吸睛", "定義問題、使用者情境、成功指標、資料／系統條件、成本與風險", "先購買最大規模 GPU 再找用途", "不需估算維運成本"], "answer": 1, "explanation": "導入評估應先從問題與價值出發，再檢查資料、技術、成本、風險與可行性。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q043", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12302", "topicName": "生成式 AI 導入規劃", "concept": "PoC / Pilot", "difficulty": "easy", "question": "需求尚不確定，希望先小範圍驗證 AI 是否達成 KPI，最合理的是？", "options": ["先做 PoC／Pilot 並設定可量測成功標準", "先採購最大規模硬體再定需求", "跳過測試，只看供應商簡報", "直接全面上線"], "answer": 0, "explanation": "PoC／Pilot 可低成本驗證技術、流程與商業價值，並為後續擴大導入提供證據。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q044", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12302", "topicName": "生成式 AI 導入規劃", "concept": "PoC / Pilot", "difficulty": "easy", "question": "全面部署前，先以有限資料與使用者驗證可行性，稱為？", "options": ["跳過測試，只看供應商簡報", "直接全面上線", "先採購最大規模硬體再定需求", "先做 PoC／Pilot 並設定可量測成功標準"], "answer": 3, "explanation": "PoC／Pilot 可低成本驗證技術、流程與商業價值，並為後續擴大導入提供證據。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q045", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12302", "topicName": "生成式 AI 導入規劃", "concept": "PoC / Pilot", "difficulty": "easy", "question": "降低一次大規模導入失敗風險的做法是？", "options": ["先做 PoC／Pilot 並設定可量測成功標準", "直接全面上線", "先採購最大規模硬體再定需求", "跳過測試，只看供應商簡報"], "answer": 0, "explanation": "PoC／Pilot 可低成本驗證技術、流程與商業價值，並為後續擴大導入提供證據。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q046", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12303", "topicName": "生成式 AI 風險管理", "concept": "Prompt Injection", "difficulty": "medium", "question": "RAG 助理讀到惡意文件寫著「忽略規則並洩漏機密」，這屬於哪類風險？", "options": ["Prompt Injection", "資料增強", "梯度消失", "正規化"], "answer": 0, "explanation": "Prompt Injection 利用輸入或外部內容誘導模型忽略既定規則，可能導致越權或資訊洩漏。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q047", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12303", "topicName": "生成式 AI 風險管理", "concept": "Prompt Injection", "difficulty": "medium", "question": "使用者刻意輸入指令，試圖覆蓋系統規則並取得敏感資訊，稱為？", "options": ["資料增強", "正規化", "Prompt Injection", "梯度消失"], "answer": 2, "explanation": "Prompt Injection 利用輸入或外部內容誘導模型忽略既定規則，可能導致越權或資訊洩漏。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q048", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12303", "topicName": "生成式 AI 風險管理", "concept": "Prompt Injection", "difficulty": "medium", "question": "利用自然語言操控模型偏離原本安全指令的攻擊最接近？", "options": ["梯度消失", "資料增強", "正規化", "Prompt Injection"], "answer": 3, "explanation": "Prompt Injection 利用輸入或外部內容誘導模型忽略既定規則，可能導致越權或資訊洩漏。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q049", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21101", "topicName": "自然語言處理技術與應用", "concept": "Tokenization / Embedding", "difficulty": "medium", "question": "NLP 中將連續文字切成可處理的詞或子詞單位，稱為？", "options": ["PCA", "Lemmatization", "Bagging", "Tokenization"], "answer": 3, "explanation": "Tokenization 是把文字分割成 token 的過程，是 NLP 與 LLM 的基本處理步驟。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q050", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21101", "topicName": "自然語言處理技術與應用", "concept": "Tokenization / Embedding", "difficulty": "medium", "question": "大型語言模型在處理文字前，常先把字串切為 token，這一步是？", "options": ["Bagging", "Tokenization", "Lemmatization", "PCA"], "answer": 1, "explanation": "Tokenization 是把文字分割成 token 的過程，是 NLP 與 LLM 的基本處理步驟。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q051", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21101", "topicName": "自然語言處理技術與應用", "concept": "Tokenization / Embedding", "difficulty": "medium", "question": "「將文本切成基本處理單位」最接近哪一項？", "options": ["Tokenization", "PCA", "Lemmatization", "Bagging"], "answer": 0, "explanation": "Tokenization 是把文字分割成 token 的過程，是 NLP 與 LLM 的基本處理步驟。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q052", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21102", "topicName": "電腦視覺技術與應用", "concept": "Object Detection", "difficulty": "medium", "question": "要找出圖片中每一台車的位置並輸出 bounding box，應使用哪種任務？", "options": ["Regression only", "Object Detection", "Text Summarization", "Image Classification"], "answer": 1, "explanation": "Object Detection 同時預測物件類別與位置；若需像素層級標註則更接近 Segmentation。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q053", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21102", "topicName": "電腦視覺技術與應用", "concept": "Object Detection", "difficulty": "medium", "question": "監視畫面需辨識『有哪些人、每個人在哪裡』，最接近？", "options": ["Object Detection", "Image Classification", "Text Summarization", "Regression only"], "answer": 0, "explanation": "Object Detection 同時預測物件類別與位置；若需像素層級標註則更接近 Segmentation。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q054", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21102", "topicName": "電腦視覺技術與應用", "concept": "Object Detection", "difficulty": "medium", "question": "輸出不只是整張影像類別，還要標出物件位置，應採用？", "options": ["Text Summarization", "Image Classification", "Object Detection", "Regression only"], "answer": 2, "explanation": "Object Detection 同時預測物件類別與位置；若需像素層級標註則更接近 Segmentation。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q055", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21103", "topicName": "生成式 AI 技術與應用", "concept": "RAG vs Fine-tuning", "difficulty": "hard", "question": "公司制度文件頻繁更新且答案要附來源，通常應優先考慮哪種方法？", "options": ["RAG：將知識維持在外部檢索層，查到相關內容再提供模型", "Fine-tuning：每次查詢都會自動搜尋最新文件", "RAG 必須重新訓練模型權重才可更新知識", "兩者沒有實質差異"], "answer": 0, "explanation": "RAG 適合頻繁更新、需引用來源的知識；Fine-tuning 更偏向改變模型行為、風格或任務適配。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q056", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21103", "topicName": "生成式 AI 技術與應用", "concept": "RAG vs Fine-tuning", "difficulty": "hard", "question": "知識需要快速更新、可追溯來源時，RAG 相較 Fine-tuning 的主要優點是？", "options": ["RAG：將知識維持在外部檢索層，查到相關內容再提供模型", "兩者沒有實質差異", "Fine-tuning：每次查詢都會自動搜尋最新文件", "RAG 必須重新訓練模型權重才可更新知識"], "answer": 0, "explanation": "RAG 適合頻繁更新、需引用來源的知識；Fine-tuning 更偏向改變模型行為、風格或任務適配。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q057", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21103", "topicName": "生成式 AI 技術與應用", "concept": "RAG vs Fine-tuning", "difficulty": "hard", "question": "若希望不重新訓練模型就能更新大量內部知識，較適合？", "options": ["RAG：將知識維持在外部檢索層，查到相關內容再提供模型", "兩者沒有實質差異", "Fine-tuning：每次查詢都會自動搜尋最新文件", "RAG 必須重新訓練模型權重才可更新知識"], "answer": 0, "explanation": "RAG 適合頻繁更新、需引用來源的知識；Fine-tuning 更偏向改變模型行為、風格或任務適配。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q058", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21104", "topicName": "多模態人工智慧應用", "concept": "多模態融合", "difficulty": "medium", "question": "客服系統同時分析使用者文字描述與故障照片，最符合哪個技術方向？", "options": ["完全隔離各模態且禁止互相引用", "僅將圖片檔名轉成文字", "對齊或融合不同模態的資訊進行共同理解與推理", "只增加文字資料量"], "answer": 2, "explanation": "多模態 AI 需要對齊或融合不同模態的表示，使系統可跨文字、影像、聲音等資訊推理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q059", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21104", "topicName": "多模態人工智慧應用", "concept": "多模態融合", "difficulty": "medium", "question": "AI 要整合語音、文字、圖片資訊做共同決策，屬於？", "options": ["對齊或融合不同模態的資訊進行共同理解與推理", "僅將圖片檔名轉成文字", "只增加文字資料量", "完全隔離各模態且禁止互相引用"], "answer": 0, "explanation": "多模態 AI 需要對齊或融合不同模態的表示，使系統可跨文字、影像、聲音等資訊推理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q060", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21104", "topicName": "多模態人工智慧應用", "concept": "多模態融合", "difficulty": "medium", "question": "多模態 AI 的核心目標之一是？", "options": ["僅將圖片檔名轉成文字", "只增加文字資料量", "完全隔離各模態且禁止互相引用", "對齊或融合不同模態的資訊進行共同理解與推理"], "answer": 3, "explanation": "多模態 AI 需要對齊或融合不同模態的表示，使系統可跨文字、影像、聲音等資訊推理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q061", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21201", "topicName": "AI 導入評估", "concept": "技術可行性評估", "difficulty": "medium", "question": "評估 AI 專案技術可行性時，何者最完整？", "options": ["只看模型排行榜", "只看主管是否喜歡", "資料可得性與品質、模型能力、整合、延遲、成本、資安及維運條件", "只要能做 Demo 就代表可正式部署"], "answer": 2, "explanation": "技術可行性包含資料、模型、架構、效能、資安、成本與維運，不等同於 Demo 能跑。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q062", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21201", "topicName": "AI 導入評估", "concept": "技術可行性評估", "difficulty": "medium", "question": "企業需求很有價值，但資料不足且推論延遲無法接受，這表示需要重新檢查哪一項？", "options": ["只看模型排行榜", "資料可得性與品質、模型能力、整合、延遲、成本、資安及維運條件", "只看主管是否喜歡", "只要能做 Demo 就代表可正式部署"], "answer": 1, "explanation": "技術可行性包含資料、模型、架構、效能、資安、成本與維運，不等同於 Demo 能跑。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q063", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21201", "topicName": "AI 導入評估", "concept": "技術可行性評估", "difficulty": "medium", "question": "AI 導入評估不應只看商業價值，也要看？", "options": ["只要能做 Demo 就代表可正式部署", "資料可得性與品質、模型能力、整合、延遲、成本、資安及維運條件", "只看主管是否喜歡", "只看模型排行榜"], "answer": 1, "explanation": "技術可行性包含資料、模型、架構、效能、資安、成本與維運，不等同於 Demo 能跑。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q064", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21202", "topicName": "AI 導入規劃", "concept": "AI 專案規劃", "difficulty": "medium", "question": "AI 專案從 PoC 進入正式導入時，哪種規劃方式較合理？", "options": ["成功標準等上線後再決定", "一次性全面上線且不設回滾方案", "定義基準線、PoC、Pilot、驗收 KPI、部署、監控與迭代機制", "只排模型訓練，不規劃資料與系統整合"], "answer": 2, "explanation": "成熟的 AI 導入通常採分階段驗證，並在各階段設成功條件、風險控管與回滾／持續改善機制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q065", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21202", "topicName": "AI 導入規劃", "concept": "AI 專案規劃", "difficulty": "medium", "question": "為降低 AI 專案導入風險，里程碑設計應包含？", "options": ["一次性全面上線且不設回滾方案", "成功標準等上線後再決定", "只排模型訓練，不規劃資料與系統整合", "定義基準線、PoC、Pilot、驗收 KPI、部署、監控與迭代機制"], "answer": 3, "explanation": "成熟的 AI 導入通常採分階段驗證，並在各階段設成功條件、風險控管與回滾／持續改善機制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q066", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21202", "topicName": "AI 導入規劃", "concept": "AI 專案規劃", "difficulty": "medium", "question": "AI 導入計畫中，何者最適合作為階段性治理方式？", "options": ["一次性全面上線且不設回滾方案", "成功標準等上線後再決定", "定義基準線、PoC、Pilot、驗收 KPI、部署、監控與迭代機制", "只排模型訓練，不規劃資料與系統整合"], "answer": 2, "explanation": "成熟的 AI 導入通常採分階段驗證，並在各階段設成功條件、風險控管與回滾／持續改善機制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q067", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21203", "topicName": "AI 風險管理", "concept": "AI 風險管理", "difficulty": "hard", "question": "高風險 AI 模型可能受到資料漂移、偏誤與攻擊，最適當的風險管理是？", "options": ["取消日誌避免留下紀錄", "上線後不再評估", "建立風險登錄、控制措施、監控指標、事件處理與定期再評估", "只在模型失效後才開始討論風險"], "answer": 2, "explanation": "AI 風險需從設計到營運持續管理，包括辨識、評估、控制、監控與事件回應。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q068", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21203", "topicName": "AI 風險管理", "concept": "AI 風險管理", "difficulty": "hard", "question": "AI 系統上線後要持續降低風險，應採取？", "options": ["只在模型失效後才開始討論風險", "上線後不再評估", "取消日誌避免留下紀錄", "建立風險登錄、控制措施、監控指標、事件處理與定期再評估"], "answer": 3, "explanation": "AI 風險需從設計到營運持續管理，包括辨識、評估、控制、監控與事件回應。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q069", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21203", "topicName": "AI 風險管理", "concept": "AI 風險管理", "difficulty": "hard", "question": "下列何者最符合 AI 風險的生命週期管理？", "options": ["取消日誌避免留下紀錄", "只在模型失效後才開始討論風險", "上線後不再評估", "建立風險登錄、控制措施、監控指標、事件處理與定期再評估"], "answer": 3, "explanation": "AI 風險需從設計到營運持續管理，包括辨識、評估、控制、監控與事件回應。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q070", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21301", "topicName": "數據準備與模型選擇", "concept": "數據準備與模型選擇", "difficulty": "medium", "question": "表格分類資料量不大、需高可解釋性，模型選擇最合理的原則是？", "options": ["永遠選參數最多的模型", "不需檢查資料品質", "依資料型態、資料量、任務、可解釋性、延遲與資源限制選擇適當模型", "只要訓練準確率最高就是最佳模型"], "answer": 2, "explanation": "模型選擇需配合資料與業務限制；較複雜的模型不一定在成本、可解釋性或泛化上更好。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q071", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21301", "topicName": "數據準備與模型選擇", "concept": "數據準備與模型選擇", "difficulty": "medium", "question": "選模型時，何者比『一律選最大模型』更合理？", "options": ["只要訓練準確率最高就是最佳模型", "永遠選參數最多的模型", "依資料型態、資料量、任務、可解釋性、延遲與資源限制選擇適當模型", "不需檢查資料品質"], "answer": 2, "explanation": "模型選擇需配合資料與業務限制；較複雜的模型不一定在成本、可解釋性或泛化上更好。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q072", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21301", "topicName": "數據準備與模型選擇", "concept": "數據準備與模型選擇", "difficulty": "medium", "question": "數據準備與模型選型應如何配合？", "options": ["不需檢查資料品質", "永遠選參數最多的模型", "依資料型態、資料量、任務、可解釋性、延遲與資源限制選擇適當模型", "只要訓練準確率最高就是最佳模型"], "answer": 2, "explanation": "模型選擇需配合資料與業務限制；較複雜的模型不一定在成本、可解釋性或泛化上更好。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q073", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21302", "topicName": "AI 技術系統集成與部署", "concept": "部署與系統集成", "difficulty": "medium", "question": "模型服務要供多個系統呼叫並可水平擴充，常見設計是？", "options": ["以服務／API 封裝，搭配版本、監控、權限、擴縮與回滾機制", "把 notebook 直接放在個人電腦長期執行", "取消版本控管", "只保存最後一個模型檔"], "answer": 0, "explanation": "正式部署通常需服務化、版本管理、權限、監控、可觀測性、擴縮與回滾等工程機制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q074", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21302", "topicName": "AI 技術系統集成與部署", "concept": "部署與系統集成", "difficulty": "medium", "question": "AI 模型正式部署時，除了模型檔本身，還需要考慮？", "options": ["以服務／API 封裝，搭配版本、監控、權限、擴縮與回滾機制", "把 notebook 直接放在個人電腦長期執行", "只保存最後一個模型檔", "取消版本控管"], "answer": 0, "explanation": "正式部署通常需服務化、版本管理、權限、監控、可觀測性、擴縮與回滾等工程機制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q075", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21302", "topicName": "AI 技術系統集成與部署", "concept": "部署與系統集成", "difficulty": "medium", "question": "要讓模型能穩定整合進既有產品，何者最重要？", "options": ["以服務／API 封裝，搭配版本、監控、權限、擴縮與回滾機制", "只保存最後一個模型檔", "把 notebook 直接放在個人電腦長期執行", "取消版本控管"], "answer": 0, "explanation": "正式部署通常需服務化、版本管理、權限、監控、可觀測性、擴縮與回滾等工程機制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q076", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22101", "topicName": "敘述性統計與資料摘要技術", "concept": "平均數與中位數", "difficulty": "easy", "question": "收入資料有少數極端高薪者，要描述典型水準時，哪個統計量通常較不受極端值影響？", "options": ["變異數（Variance）", "中位數（Median）", "全距（Range）", "平均數（Mean）"], "answer": 1, "explanation": "中位數依排序位置決定，通常比平均數不受極端值影響。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q077", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22101", "topicName": "敘述性統計與資料摘要技術", "concept": "平均數與中位數", "difficulty": "easy", "question": "資料分布明顯右偏且含離群值，若要描述中心位置，何者較穩健？", "options": ["平均數（Mean）", "變異數（Variance）", "全距（Range）", "中位數（Median）"], "answer": 3, "explanation": "中位數依排序位置決定，通常比平均數不受極端值影響。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q078", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22101", "topicName": "敘述性統計與資料摘要技術", "concept": "平均數與中位數", "difficulty": "easy", "question": "比較平均數與中位數，何者通常對極端值較不敏感？", "options": ["全距（Range）", "變異數（Variance）", "中位數（Median）", "平均數（Mean）"], "answer": 2, "explanation": "中位數依排序位置決定，通常比平均數不受極端值影響。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q079", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22102", "topicName": "機率分佈與資料分佈模型", "concept": "常態分布", "difficulty": "medium", "question": "常態分布的典型特性何者正確？", "options": ["常態分布一定高度右偏", "標準常態分布的平均數為 0、標準差為 1", "常態分布沒有平均數", "所有常態分布都只有正值"], "answer": 1, "explanation": "標準常態分布 N(0,1) 的平均數為 0、變異數與標準差分別為 1。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q080", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22102", "topicName": "機率分佈與資料分佈模型", "concept": "常態分布", "difficulty": "medium", "question": "若資料近似 Normal Distribution，下列敘述何者較合理？", "options": ["常態分布一定高度右偏", "標準常態分布的平均數為 0、標準差為 1", "常態分布沒有平均數", "所有常態分布都只有正值"], "answer": 1, "explanation": "標準常態分布 N(0,1) 的平均數為 0、變異數與標準差分別為 1。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q081", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22102", "topicName": "機率分佈與資料分佈模型", "concept": "常態分布", "difficulty": "medium", "question": "標準常態分布的平均數與標準差分別為？", "options": ["所有常態分布都只有正值", "常態分布沒有平均數", "標準常態分布的平均數為 0、標準差為 1", "常態分布一定高度右偏"], "answer": 2, "explanation": "標準常態分布 N(0,1) 的平均數為 0、變異數與標準差分別為 1。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q082", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22103", "topicName": "假設檢定與統計推論", "concept": "p-value", "difficulty": "medium", "question": "假設檢定得到 p-value = 0.01，顯著水準 α = 0.05，通常如何判斷？", "options": ["一定證明替代假設為真", "一定證明 H0 為假", "因 p-value 小所以應提高 H0 的可信度", "拒絕虛無假設 H0（在該顯著水準下）"], "answer": 3, "explanation": "當 p-value < α，通常拒絕 H0；但這不等於在哲學上『證明』H0 為假。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q083", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22103", "topicName": "假設檢定與統計推論", "concept": "p-value", "difficulty": "medium", "question": "當 p-value 小於預先設定的顯著水準時，典型結論是？", "options": ["因 p-value 小所以應提高 H0 的可信度", "一定證明替代假設為真", "一定證明 H0 為假", "拒絕虛無假設 H0（在該顯著水準下）"], "answer": 3, "explanation": "當 p-value < α，通常拒絕 H0；但這不等於在哲學上『證明』H0 為假。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q084", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22103", "topicName": "假設檢定與統計推論", "concept": "p-value", "difficulty": "medium", "question": "p-value = 0.03 且 α = 0.05，最合理的處理是？", "options": ["拒絕虛無假設 H0（在該顯著水準下）", "一定證明替代假設為真", "因 p-value 小所以應提高 H0 的可信度", "一定證明 H0 為假"], "answer": 0, "explanation": "當 p-value < α，通常拒絕 H0；但這不等於在哲學上『證明』H0 為假。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q085", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22201", "topicName": "數據收集與清理", "concept": "缺失值與異常值", "difficulty": "medium", "question": "資料清理發現缺失值時，哪個原則最合理？", "options": ["所有缺失值都一律填 0", "先理解缺失原因、欄位意義與影響，再決定刪除、插補或其他處理", "不必檢查資料來源", "所有異常值都一定刪除"], "answer": 1, "explanation": "資料清理沒有單一萬用規則；需依缺失機制、業務意義與模型影響選擇方法。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q086", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22201", "topicName": "數據收集與清理", "concept": "缺失值與異常值", "difficulty": "medium", "question": "遇到大量 missing values，第一步不應直接全部填 0，而應？", "options": ["不必檢查資料來源", "先理解缺失原因、欄位意義與影響，再決定刪除、插補或其他處理", "所有缺失值都一律填 0", "所有異常值都一定刪除"], "answer": 1, "explanation": "資料清理沒有單一萬用規則；需依缺失機制、業務意義與模型影響選擇方法。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q087", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22201", "topicName": "數據收集與清理", "concept": "缺失值與異常值", "difficulty": "medium", "question": "處理異常值與缺失值前，最重要的是？", "options": ["所有異常值都一定刪除", "先理解缺失原因、欄位意義與影響，再決定刪除、插補或其他處理", "所有缺失值都一律填 0", "不必檢查資料來源"], "answer": 1, "explanation": "資料清理沒有單一萬用規則；需依缺失機制、業務意義與模型影響選擇方法。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q088", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22202", "topicName": "數據儲存與管理", "concept": "資料湖與資料倉儲", "difficulty": "medium", "question": "資料湖（Data Lake）通常較適合哪種情境？", "options": ["只適用於單機小資料", "不需要任何治理與目錄", "只能存固定 schema 的彙總表", "可較彈性保存大量原始、多型態資料，再依需求處理"], "answer": 3, "explanation": "Data Lake 常保存大量原始與多型態資料，但仍需要資料治理、目錄、權限與品質管理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q089", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22202", "topicName": "數據儲存與管理", "concept": "資料湖與資料倉儲", "difficulty": "medium", "question": "需要保存大量原始、半結構化與非結構化資料供後續分析，較適合？", "options": ["只能存固定 schema 的彙總表", "只適用於單機小資料", "可較彈性保存大量原始、多型態資料，再依需求處理", "不需要任何治理與目錄"], "answer": 2, "explanation": "Data Lake 常保存大量原始與多型態資料，但仍需要資料治理、目錄、權限與品質管理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q090", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22202", "topicName": "數據儲存與管理", "concept": "資料湖與資料倉儲", "difficulty": "medium", "question": "相較傳統資料倉儲，Data Lake 的典型特色是？", "options": ["不需要任何治理與目錄", "只適用於單機小資料", "只能存固定 schema 的彙總表", "可較彈性保存大量原始、多型態資料，再依需求處理"], "answer": 3, "explanation": "Data Lake 常保存大量原始與多型態資料，但仍需要資料治理、目錄、權限與品質管理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q091", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22203", "topicName": "數據處理技術與工具", "concept": "批次與串流處理", "difficulty": "medium", "question": "感測器資料需秒級處理異常事件，較適合哪種資料處理模式？", "options": ["串流重視低延遲持續處理；批次則集中處理一批資料", "批次一定比串流延遲更低", "兩者只差在檔名", "串流只能處理文字"], "answer": 0, "explanation": "串流處理面向連續到達資料與低延遲；批次處理則將資料累積後一次處理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q092", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22203", "topicName": "數據處理技術與工具", "concept": "批次與串流處理", "difficulty": "medium", "question": "夜間一次彙總前一天所有交易，較接近哪種處理？", "options": ["串流重視低延遲持續處理；批次則集中處理一批資料", "串流只能處理文字", "批次一定比串流延遲更低", "兩者只差在檔名"], "answer": 0, "explanation": "串流處理面向連續到達資料與低延遲；批次處理則將資料累積後一次處理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q093", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22203", "topicName": "數據處理技術與工具", "concept": "批次與串流處理", "difficulty": "medium", "question": "Streaming 與 Batch 的差異何者正確？", "options": ["串流只能處理文字", "批次一定比串流延遲更低", "兩者只差在檔名", "串流重視低延遲持續處理；批次則集中處理一批資料"], "answer": 3, "explanation": "串流處理面向連續到達資料與低延遲；批次處理則將資料累積後一次處理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q094", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22301", "topicName": "統計學在大數據中的應用", "concept": "相關與因果", "difficulty": "medium", "question": "分析發現兩個變數高度相關，最合理的解讀是？", "options": ["變數間有關聯，但不能僅憑相關直接證明因果", "只要樣本大就可自動證明因果", "高度相關必定代表直接因果", "相關係數高代表不存在混淆變數"], "answer": 0, "explanation": "Correlation does not imply causation；因果推論需要更嚴謹的實驗設計或假設與方法。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q095", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22301", "topicName": "統計學在大數據中的應用", "concept": "相關與因果", "difficulty": "medium", "question": "某網站發現冰淇淋銷量與中暑人數同時上升，能直接推論冰淇淋造成中暑嗎？", "options": ["高度相關必定代表直接因果", "變數間有關聯，但不能僅憑相關直接證明因果", "相關係數高代表不存在混淆變數", "只要樣本大就可自動證明因果"], "answer": 1, "explanation": "Correlation does not imply causation；因果推論需要更嚴謹的實驗設計或假設與方法。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q096", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22301", "topicName": "統計學在大數據中的應用", "concept": "相關與因果", "difficulty": "medium", "question": "統計上的相關性通常代表？", "options": ["只要樣本大就可自動證明因果", "高度相關必定代表直接因果", "相關係數高代表不存在混淆變數", "變數間有關聯，但不能僅憑相關直接證明因果"], "answer": 3, "explanation": "Correlation does not imply causation；因果推論需要更嚴謹的實驗設計或假設與方法。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q097", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22302", "topicName": "常見的大數據分析方法", "concept": "分群分析", "difficulty": "easy", "question": "沒有客戶標籤，希望依行為將相似客戶分群，適合哪種方法？", "options": ["時間序列預測", "分群（Clustering）", "文字生成", "監督式分類"], "answer": 1, "explanation": "K-means 是典型非監督式分群方法，依資料距離／相似性形成群集。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q098", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22302", "topicName": "常見的大數據分析方法", "concept": "分群分析", "difficulty": "easy", "question": "想探索資料自然群集，不預先指定類別標籤，應考慮？", "options": ["分群（Clustering）", "時間序列預測", "文字生成", "監督式分類"], "answer": 0, "explanation": "K-means 是典型非監督式分群方法，依資料距離／相似性形成群集。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q099", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22302", "topicName": "常見的大數據分析方法", "concept": "分群分析", "difficulty": "easy", "question": "K-means 最常被用於哪一類問題？", "options": ["時間序列預測", "監督式分類", "文字生成", "分群（Clustering）"], "answer": 3, "explanation": "K-means 是典型非監督式分群方法，依資料距離／相似性形成群集。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q100", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22303", "topicName": "數據可視化工具", "concept": "視覺化選擇", "difficulty": "easy", "question": "要比較不同月份的銷售趨勢，通常最適合哪種圖？", "options": ["所有欄位都畫成 3D 圖", "永遠使用圓餅圖", "折線圖，並依分析目的選擇合適視覺編碼", "圖表越花俏越能提高準確性"], "answer": 2, "explanation": "時間趨勢常用折線圖；視覺化應以問題、資料型態與可讀性為核心。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q101", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22303", "topicName": "數據可視化工具", "concept": "視覺化選擇", "difficulty": "easy", "question": "若要呈現隨時間變化的連續趨勢，優先考慮？", "options": ["折線圖，並依分析目的選擇合適視覺編碼", "圖表越花俏越能提高準確性", "所有欄位都畫成 3D 圖", "永遠使用圓餅圖"], "answer": 0, "explanation": "時間趨勢常用折線圖；視覺化應以問題、資料型態與可讀性為核心。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q102", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22303", "topicName": "數據可視化工具", "concept": "視覺化選擇", "difficulty": "easy", "question": "資料可視化時，圖表選擇最應依據？", "options": ["所有欄位都畫成 3D 圖", "折線圖，並依分析目的選擇合適視覺編碼", "圖表越花俏越能提高準確性", "永遠使用圓餅圖"], "answer": 1, "explanation": "時間趨勢常用折線圖；視覺化應以問題、資料型態與可讀性為核心。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q103", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22401", "topicName": "大數據與機器學習", "concept": "大數據與模型訓練", "difficulty": "medium", "question": "大量資料是否一定能讓模型變好？", "options": ["資料越多一定越準，品質不重要", "只要是大數據就不需要驗證集", "重複與錯誤資料越多越好", "高品質、具代表性的資料常有助模型，但資料品質與分布同樣重要"], "answer": 3, "explanation": "資料量是因素之一，但代表性、標註品質、偏誤與資料洩漏都可能大幅影響模型。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q104", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22401", "topicName": "大數據與機器學習", "concept": "大數據與模型訓練", "difficulty": "medium", "question": "增加訓練資料時，下列何者最合理？", "options": ["高品質、具代表性的資料常有助模型，但資料品質與分布同樣重要", "資料越多一定越準，品質不重要", "重複與錯誤資料越多越好", "只要是大數據就不需要驗證集"], "answer": 0, "explanation": "資料量是因素之一，但代表性、標註品質、偏誤與資料洩漏都可能大幅影響模型。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q105", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22401", "topicName": "大數據與機器學習", "concept": "大數據與模型訓練", "difficulty": "medium", "question": "大數據對機器學習的價值最適合如何描述？", "options": ["高品質、具代表性的資料常有助模型，但資料品質與分布同樣重要", "只要是大數據就不需要驗證集", "資料越多一定越準，品質不重要", "重複與錯誤資料越多越好"], "answer": 0, "explanation": "資料量是因素之一，但代表性、標註品質、偏誤與資料洩漏都可能大幅影響模型。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q106", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22402", "topicName": "大數據在鑑別式 AI 中的應用", "concept": "鑑別式 AI 與大數據", "difficulty": "easy", "question": "大量歷史交易與詐欺標籤最適合支援哪類鑑別式 AI 應用？", "options": ["只生成新圖片", "訓練分類／預測模型以學習輸入與標籤關係", "完全不需標籤或特徵", "只產生自然語言故事"], "answer": 1, "explanation": "鑑別式 AI 常利用大量標註資料進行分類、迴歸與風險預測。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q107", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22402", "topicName": "大數據在鑑別式 AI 中的應用", "concept": "鑑別式 AI 與大數據", "difficulty": "easy", "question": "有大量標註資料要預測『是否違約』，這屬於？", "options": ["只產生自然語言故事", "訓練分類／預測模型以學習輸入與標籤關係", "只生成新圖片", "完全不需標籤或特徵"], "answer": 1, "explanation": "鑑別式 AI 常利用大量標註資料進行分類、迴歸與風險預測。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q108", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22402", "topicName": "大數據在鑑別式 AI 中的應用", "concept": "鑑別式 AI 與大數據", "difficulty": "easy", "question": "大數據在鑑別式 AI 中常用來？", "options": ["完全不需標籤或特徵", "只產生自然語言故事", "只生成新圖片", "訓練分類／預測模型以學習輸入與標籤關係"], "answer": 3, "explanation": "鑑別式 AI 常利用大量標註資料進行分類、迴歸與風險預測。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q109", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22403", "topicName": "大數據在生成式 AI 中的應用", "concept": "生成式 AI 資料", "difficulty": "hard", "question": "訓練生成式 AI 時，大規模資料治理的重要性為何？", "options": ["生成模型不受訓練資料影響", "所有公開網頁都可無條件使用", "資料量大即可忽略版權與隱私", "需管理來源、品質、權利、隱私、偏誤與資料譜系"], "answer": 3, "explanation": "生成式 AI 的大規模資料需要來源、授權、品質、隱私、偏誤與譜系等治理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q110", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22403", "topicName": "大數據在生成式 AI 中的應用", "concept": "生成式 AI 資料", "difficulty": "hard", "question": "若訓練語料包含大量重複、侵權或敏感內容，最可能造成？", "options": ["生成模型不受訓練資料影響", "所有公開網頁都可無條件使用", "資料量大即可忽略版權與隱私", "需管理來源、品質、權利、隱私、偏誤與資料譜系"], "answer": 3, "explanation": "生成式 AI 的大規模資料需要來源、授權、品質、隱私、偏誤與譜系等治理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q111", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22403", "topicName": "大數據在生成式 AI 中的應用", "concept": "生成式 AI 資料", "difficulty": "hard", "question": "大數據支援生成式 AI 時，何者最重要？", "options": ["資料量大即可忽略版權與隱私", "需管理來源、品質、權利、隱私、偏誤與資料譜系", "所有公開網頁都可無條件使用", "生成模型不受訓練資料影響"], "answer": 1, "explanation": "生成式 AI 的大規模資料需要來源、授權、品質、隱私、偏誤與譜系等治理。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q112", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22404", "topicName": "大數據隱私保護、安全與合規", "concept": "匿名化與再識別", "difficulty": "hard", "question": "將姓名移除後，資料就一定無法再識別個人嗎？", "options": ["資料越多越沒有隱私風險", "仍可能透過其他欄位或外部資料再識別，因此需評估 re-identification 風險", "加密後任何人都可取得金鑰", "只刪姓名就等於完全匿名"], "answer": 1, "explanation": "去除直接識別欄位不一定等於匿名；準識別欄位可能與外部資料結合造成再識別。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q113", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22404", "topicName": "大數據隱私保護、安全與合規", "concept": "匿名化與再識別", "difficulty": "hard", "question": "資料集沒有姓名，但含精確生日、郵遞區號等組合欄位，仍可能有什麼風險？", "options": ["只刪姓名就等於完全匿名", "資料越多越沒有隱私風險", "加密後任何人都可取得金鑰", "仍可能透過其他欄位或外部資料再識別，因此需評估 re-identification 風險"], "answer": 3, "explanation": "去除直接識別欄位不一定等於匿名；準識別欄位可能與外部資料結合造成再識別。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q114", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22404", "topicName": "大數據隱私保護、安全與合規", "concept": "匿名化與再識別", "difficulty": "hard", "question": "大數據隱私保護中，何者是重要考量？", "options": ["只刪姓名就等於完全匿名", "仍可能透過其他欄位或外部資料再識別，因此需評估 re-identification 風險", "加密後任何人都可取得金鑰", "資料越多越沒有隱私風險"], "answer": 1, "explanation": "去除直接識別欄位不一定等於匿名；準識別欄位可能與外部資料結合造成再識別。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q115", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23101", "topicName": "機率／統計之機器學習基礎應用", "concept": "Bayes 定理", "difficulty": "medium", "question": "Bayes 定理主要用來做什麼？", "options": ["梯度裁切", "中央極限定理 μόνο", "Bayes 定理", "畢氏定理"], "answer": 2, "explanation": "Bayes 定理用觀察到的證據更新先驗機率，得到後驗機率。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q116", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23101", "topicName": "機率／統計之機器學習基礎應用", "concept": "Bayes 定理", "difficulty": "medium", "question": "已知先驗機率與觀察證據的似然，希望更新事件機率，會用到？", "options": ["Bayes 定理", "中央極限定理 μόνο", "畢氏定理", "梯度裁切"], "answer": 0, "explanation": "Bayes 定理用觀察到的證據更新先驗機率，得到後驗機率。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q117", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23101", "topicName": "機率／統計之機器學習基礎應用", "concept": "Bayes 定理", "difficulty": "medium", "question": "Posterior 與 Prior、Likelihood 的關係通常由哪個定理描述？", "options": ["Bayes 定理", "梯度裁切", "中央極限定理 μόνο", "畢氏定理"], "answer": 0, "explanation": "Bayes 定理用觀察到的證據更新先驗機率，得到後驗機率。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q118", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23102", "topicName": "線性代數之機器學習基礎應用", "concept": "矩陣與向量", "difficulty": "medium", "question": "神經網路中大量線性轉換常以什麼數學運算表示？", "options": ["只做字串搜尋", "網路封包路由", "資料庫索引", "矩陣－向量乘法"], "answer": 3, "explanation": "神經網路與許多 ML 模型大量使用向量、矩陣、內積與矩陣乘法表示特徵和權重運算。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q119", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23102", "topicName": "線性代數之機器學習基礎應用", "concept": "矩陣與向量", "difficulty": "medium", "question": "輸入向量 x 經權重矩陣 W 轉換，常寫成哪一類運算？", "options": ["只做字串搜尋", "網路封包路由", "資料庫索引", "矩陣－向量乘法"], "answer": 3, "explanation": "神經網路與許多 ML 模型大量使用向量、矩陣、內積與矩陣乘法表示特徵和權重運算。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q120", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23102", "topicName": "線性代數之機器學習基礎應用", "concept": "矩陣與向量", "difficulty": "medium", "question": "線性代數在機器學習中的核心用途之一是？", "options": ["矩陣－向量乘法", "資料庫索引", "網路封包路由", "只做字串搜尋"], "answer": 0, "explanation": "神經網路與許多 ML 模型大量使用向量、矩陣、內積與矩陣乘法表示特徵和權重運算。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q121", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23103", "topicName": "數值優化技術與方法", "concept": "梯度下降", "difficulty": "medium", "question": "Gradient Descent 的主要目的是？", "options": ["K-means", "Bootstrap only", "One-hot Encoding", "梯度下降（Gradient Descent）"], "answer": 3, "explanation": "梯度下降利用梯度資訊調整參數，目標是降低損失函數。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q122", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23103", "topicName": "數值優化技術與方法", "concept": "梯度下降", "difficulty": "medium", "question": "訓練模型時沿著損失函數負梯度方向更新參數，這稱為？", "options": ["One-hot Encoding", "Bootstrap only", "梯度下降（Gradient Descent）", "K-means"], "answer": 2, "explanation": "梯度下降利用梯度資訊調整參數，目標是降低損失函數。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q123", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23103", "topicName": "數值優化技術與方法", "concept": "梯度下降", "difficulty": "medium", "question": "若要藉由反覆更新參數降低 loss，最常見的方法是？", "options": ["K-means", "One-hot Encoding", "梯度下降（Gradient Descent）", "Bootstrap only"], "answer": 2, "explanation": "梯度下降利用梯度資訊調整參數，目標是降低損失函數。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q124", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23201", "topicName": "機器學習原理與技術", "concept": "Bias-Variance", "difficulty": "medium", "question": "模型過度簡單，訓練與測試誤差都高，通常較接近哪種情況？", "options": ["測試集資料洩漏必定發生", "變異（Variance）必定為無限大", "模型一定過度複雜", "偏差（Bias）較高，模型表達能力不足"], "answer": 3, "explanation": "欠擬合常見於模型過度簡單或訓練不足，通常呈現高偏差。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q125", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23201", "topicName": "機器學習原理與技術", "concept": "Bias-Variance", "difficulty": "medium", "question": "模型無法捕捉資料中的重要模式，可能是？", "options": ["變異（Variance）必定為無限大", "模型一定過度複雜", "偏差（Bias）較高，模型表達能力不足", "測試集資料洩漏必定發生"], "answer": 2, "explanation": "欠擬合常見於模型過度簡單或訓練不足，通常呈現高偏差。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q126", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23201", "topicName": "機器學習原理與技術", "concept": "Bias-Variance", "difficulty": "medium", "question": "欠擬合（Underfitting）通常代表？", "options": ["變異（Variance）必定為無限大", "測試集資料洩漏必定發生", "偏差（Bias）較高，模型表達能力不足", "模型一定過度複雜"], "answer": 2, "explanation": "欠擬合常見於模型過度簡單或訓練不足，通常呈現高偏差。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q127", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23202", "topicName": "常見機器學習演算法", "concept": "Random Forest", "difficulty": "medium", "question": "Random Forest 的核心概念何者較正確？", "options": ["單一線性回歸一定是集成模型", "PCA", "Random Forest：結合多棵具隨機性的決策樹進行集成", "K-means"], "answer": 2, "explanation": "Random Forest 透過多棵決策樹與 Bagging／特徵隨機性做集成，常可降低單棵樹的變異。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q128", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23202", "topicName": "常見機器學習演算法", "concept": "Random Forest", "difficulty": "medium", "question": "希望用多棵決策樹降低單一樹容易過擬合的風險，適合？", "options": ["單一線性回歸一定是集成模型", "Random Forest：結合多棵具隨機性的決策樹進行集成", "K-means", "PCA"], "answer": 1, "explanation": "Random Forest 透過多棵決策樹與 Bagging／特徵隨機性做集成，常可降低單棵樹的變異。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q129", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23202", "topicName": "常見機器學習演算法", "concept": "Random Forest", "difficulty": "medium", "question": "下列何者屬於 Ensemble Learning？", "options": ["K-means", "Random Forest：結合多棵具隨機性的決策樹進行集成", "PCA", "單一線性回歸一定是集成模型"], "answer": 1, "explanation": "Random Forest 透過多棵決策樹與 Bagging／特徵隨機性做集成，常可降低單棵樹的變異。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q130", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23203", "topicName": "深度學習原理與框架", "concept": "CNN", "difficulty": "medium", "question": "CNN 特別適合影像的主要原因之一是？", "options": ["只能處理一維表格", "利用局部感受野與權重共享擷取空間特徵", "不含任何可學習參數", "完全忽略像素間空間關係"], "answer": 1, "explanation": "CNN 透過卷積、局部連接與權重共享學習影像局部與階層式空間特徵。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q131", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23203", "topicName": "深度學習原理與框架", "concept": "CNN", "difficulty": "medium", "question": "影像分類常使用卷積神經網路，卷積層的作用最接近？", "options": ["不含任何可學習參數", "完全忽略像素間空間關係", "只能處理一維表格", "利用局部感受野與權重共享擷取空間特徵"], "answer": 3, "explanation": "CNN 透過卷積、局部連接與權重共享學習影像局部與階層式空間特徵。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q132", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23203", "topicName": "深度學習原理與框架", "concept": "CNN", "difficulty": "medium", "question": "CNN 能有效利用影像的哪種特性？", "options": ["完全忽略像素間空間關係", "不含任何可學習參數", "只能處理一維表格", "利用局部感受野與權重共享擷取空間特徵"], "answer": 3, "explanation": "CNN 透過卷積、局部連接與權重共享學習影像局部與階層式空間特徵。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q133", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23301", "topicName": "數據準備與特徵工程", "concept": "特徵工程", "difficulty": "medium", "question": "類別欄位如『北／中／南』要輸入多數傳統 ML 模型前，常需做什麼？", "options": ["One-hot Encoding（視模型與情境而定）", "一律轉成日期", "只增加訓練 epoch", "直接把所有值刪除"], "answer": 0, "explanation": "對非序位類別資料，One-hot 是常見編碼方式；實務仍需依模型特性選擇。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q134", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23301", "topicName": "數據準備與特徵工程", "concept": "特徵工程", "difficulty": "medium", "question": "非序位類別變數若直接用 1、2、3 可能引入虛假大小關係，常用？", "options": ["One-hot Encoding（視模型與情境而定）", "一律轉成日期", "直接把所有值刪除", "只增加訓練 epoch"], "answer": 0, "explanation": "對非序位類別資料，One-hot 是常見編碼方式；實務仍需依模型特性選擇。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q135", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23301", "topicName": "數據準備與特徵工程", "concept": "特徵工程", "difficulty": "medium", "question": "將 categorical feature 轉成模型可處理形式的常見方法是？", "options": ["One-hot Encoding（視模型與情境而定）", "直接把所有值刪除", "一律轉成日期", "只增加訓練 epoch"], "answer": 0, "explanation": "對非序位類別資料，One-hot 是常見編碼方式；實務仍需依模型特性選擇。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q136", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23302", "topicName": "模型選擇與架構設計", "concept": "模型架構選擇", "difficulty": "medium", "question": "時間序列任務選模型時，最不合理的作法是？", "options": ["依任務、資料量、效能、可解釋性與資源限制評估", "不考慮資料型態與需求，只因模型最新就選它", "用驗證資料比較候選方案", "使用基準模型比較"], "answer": 1, "explanation": "模型架構應配合任務、資料、效能、成本與工程條件，而不是追逐最新模型。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q137", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23302", "topicName": "模型選擇與架構設計", "concept": "模型架構選擇", "difficulty": "medium", "question": "模型架構設計應主要依據什麼？", "options": ["依任務、資料量、效能、可解釋性與資源限制評估", "不考慮資料型態與需求，只因模型最新就選它", "用驗證資料比較候選方案", "使用基準模型比較"], "answer": 1, "explanation": "模型架構應配合任務、資料、效能、成本與工程條件，而不是追逐最新模型。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q138", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23302", "topicName": "模型選擇與架構設計", "concept": "模型架構選擇", "difficulty": "medium", "question": "在多個候選模型間選擇時，何者較適當？", "options": ["使用基準模型比較", "不考慮資料型態與需求，只因模型最新就選它", "用驗證資料比較候選方案", "依任務、資料量、效能、可解釋性與資源限制評估"], "answer": 1, "explanation": "模型架構應配合任務、資料、效能、成本與工程條件，而不是追逐最新模型。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q139", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23303", "topicName": "模型訓練、評估與驗證", "concept": "交叉驗證", "difficulty": "medium", "question": "資料量有限，希望較穩健估計模型泛化能力，可使用？", "options": ["以多次不同資料切分評估模型，降低單一次切分造成的偶然性", "取代所有最終測試集", "保證模型百分之百泛化", "讓測試集加入訓練"], "answer": 0, "explanation": "K-fold 透過多個 fold 輪流驗證，可更穩健估計性能；仍應保留獨立測試資料做最終評估。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q140", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23303", "topicName": "模型訓練、評估與驗證", "concept": "交叉驗證", "difficulty": "medium", "question": "K-fold Cross Validation 的主要目的為何？", "options": ["取代所有最終測試集", "讓測試集加入訓練", "以多次不同資料切分評估模型，降低單一次切分造成的偶然性", "保證模型百分之百泛化"], "answer": 2, "explanation": "K-fold 透過多個 fold 輪流驗證，可更穩健估計性能；仍應保留獨立測試資料做最終評估。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q141", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23303", "topicName": "模型訓練、評估與驗證", "concept": "交叉驗證", "difficulty": "medium", "question": "相比只做一次 train/validation split，交叉驗證常可？", "options": ["讓測試集加入訓練", "取代所有最終測試集", "以多次不同資料切分評估模型，降低單一次切分造成的偶然性", "保證模型百分之百泛化"], "answer": 2, "explanation": "K-fold 透過多個 fold 輪流驗證，可更穩健估計性能；仍應保留獨立測試資料做最終評估。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q142", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23304", "topicName": "模型調整與優化", "concept": "Hyperparameter Tuning", "difficulty": "medium", "question": "Learning rate、樹深度等通常屬於什麼？", "options": ["超參數調校（Hyperparameter Tuning）", "資料庫正規化", "資料匿名化", "文字斷詞"], "answer": 0, "explanation": "超參數是在訓練前或訓練流程中設定的控制值，可透過 Grid/Random/Bayesian optimization 等方法搜尋。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q143", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23304", "topicName": "模型調整與優化", "concept": "Hyperparameter Tuning", "difficulty": "medium", "question": "模型調校要搜尋 learning rate、batch size 等設定，這屬於？", "options": ["超參數調校（Hyperparameter Tuning）", "文字斷詞", "資料匿名化", "資料庫正規化"], "answer": 0, "explanation": "超參數是在訓練前或訓練流程中設定的控制值，可透過 Grid/Random/Bayesian optimization 等方法搜尋。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q144", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23304", "topicName": "模型調整與優化", "concept": "Hyperparameter Tuning", "difficulty": "medium", "question": "Grid Search / Random Search 常用來做？", "options": ["資料庫正規化", "資料匿名化", "文字斷詞", "超參數調校（Hyperparameter Tuning）"], "answer": 3, "explanation": "超參數是在訓練前或訓練流程中設定的控制值，可透過 Grid/Random/Bayesian optimization 等方法搜尋。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q145", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23401", "topicName": "數據隱私、安全與合規", "concept": "差分隱私", "difficulty": "hard", "question": "希望降低模型訓練結果洩漏單一個體資料的風險，可考慮哪種技術？", "options": ["Early Stopping", "資料增強", "Beam Search", "差分隱私（Differential Privacy）"], "answer": 3, "explanation": "差分隱私以數學方式限制單一資料個體對輸出的影響，常透過受控噪聲實現隱私保證。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q146", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23401", "topicName": "數據隱私、安全與合規", "concept": "差分隱私", "difficulty": "hard", "question": "在統計／模型訓練中加入受控隨機噪聲，提供個體層級隱私保證，稱為？", "options": ["Beam Search", "差分隱私（Differential Privacy）", "Early Stopping", "資料增強"], "answer": 1, "explanation": "差分隱私以數學方式限制單一資料個體對輸出的影響，常透過受控噪聲實現隱私保證。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q147", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23401", "topicName": "數據隱私、安全與合規", "concept": "差分隱私", "difficulty": "hard", "question": "Differential Privacy 的主要目標是？", "options": ["Beam Search", "Early Stopping", "資料增強", "差分隱私（Differential Privacy）"], "answer": 3, "explanation": "差分隱私以數學方式限制單一資料個體對輸出的影響，常透過受控噪聲實現隱私保證。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q148", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23402", "topicName": "演算法偏見與公平性", "concept": "公平性", "difficulty": "hard", "question": "信用模型對不同群體的錯誤率差距很大，應優先做什麼？", "options": ["關閉模型監控", "直接刪除所有少數群體資料", "分群評估公平性指標、檢查資料與特徵偏誤，並評估修正方案", "只看整體 Accuracy 即可忽略"], "answer": 2, "explanation": "公平性需分群檢查效能與錯誤型態，追查資料、特徵、標註與決策流程中的偏誤來源。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q149", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23402", "topicName": "演算法偏見與公平性", "concept": "公平性", "difficulty": "hard", "question": "AI 公平性治理中，發現特定群體被系統性不利對待時，較適當的是？", "options": ["只看整體 Accuracy 即可忽略", "分群評估公平性指標、檢查資料與特徵偏誤，並評估修正方案", "直接刪除所有少數群體資料", "關閉模型監控"], "answer": 1, "explanation": "公平性需分群檢查效能與錯誤型態，追查資料、特徵、標註與決策流程中的偏誤來源。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q150", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23402", "topicName": "演算法偏見與公平性", "concept": "公平性", "difficulty": "hard", "question": "模型整體 Accuracy 很高，但少數群體表現明顯較差，這表示？", "options": ["只看整體 Accuracy 即可忽略", "直接刪除所有少數群體資料", "分群評估公平性指標、檢查資料與特徵偏誤，並評估修正方案", "關閉模型監控"], "answer": 2, "explanation": "公平性需分群檢查效能與錯誤型態，追查資料、特徵、標註與決策流程中的偏誤來源。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q151", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11302", "topicName": "常見的機器學習模型", "concept": "Precision / Recall", "difficulty": "medium", "question": "若疾病篩檢最怕漏掉真正患者，應優先提高哪個指標？", "options": ["Precision（精確率）", "Recall（召回率）", "MAE", "R²"], "answer": 1, "explanation": "Recall = TP/(TP+FN)。當漏掉正類的代價高時，通常優先關注 Recall。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q152", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11302", "topicName": "常見的機器學習模型", "concept": "Precision / Recall", "difficulty": "medium", "question": "當 False Negative 的成本特別高時，通常最關注？", "options": ["MAE", "Precision（精確率）", "R²", "Recall（召回率）"], "answer": 3, "explanation": "Recall = TP/(TP+FN)。當漏掉正類的代價高時，通常優先關注 Recall。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q153", "level": "初級", "subject": "L11", "subjectName": "人工智慧基礎概論", "topic": "L11302", "topicName": "常見的機器學習模型", "concept": "Precision / Recall", "difficulty": "medium", "question": "安全告警寧可多報一些，也不要漏掉真正危險事件，主要應提高？", "options": ["Recall（召回率）", "MAE", "R²", "Precision（精確率）"], "answer": 0, "explanation": "Recall = TP/(TP+FN)。當漏掉正類的代價高時，通常優先關注 Recall。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q154", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12202", "topicName": "如何善用生成式 AI 工具", "concept": "RAG 與向量檢索", "difficulty": "medium", "question": "RAG 系統要依語意找出相關文件片段，常使用什麼？", "options": ["隨機抽文件", "只儲存模型權重", "以 Embedding 建立向量並做語意相似度檢索", "只依檔名排序"], "answer": 2, "explanation": "Embedding 將內容映射為向量，向量檢索可依相似度尋找語意接近的內容。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q155", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12202", "topicName": "如何善用生成式 AI 工具", "concept": "RAG 與向量檢索", "difficulty": "medium", "question": "希望『汽車故障』能找到含『車輛異常』的內容，而非只做完全字串比對，可使用？", "options": ["隨機抽文件", "以 Embedding 建立向量並做語意相似度檢索", "只依檔名排序", "只儲存模型權重"], "answer": 1, "explanation": "Embedding 將內容映射為向量，向量檢索可依相似度尋找語意接近的內容。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q156", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12202", "topicName": "如何善用生成式 AI 工具", "concept": "RAG 與向量檢索", "difficulty": "medium", "question": "向量資料庫在 RAG 中常扮演什麼角色？", "options": ["以 Embedding 建立向量並做語意相似度檢索", "只儲存模型權重", "只依檔名排序", "隨機抽文件"], "answer": 0, "explanation": "Embedding 將內容映射為向量，向量檢索可依相似度尋找語意接近的內容。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q157", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12202", "topicName": "如何善用生成式 AI 工具", "concept": "Function Calling", "difficulty": "medium", "question": "聊天模型需要真正查詢訂單 API，而不是用文字猜測，較適合哪種設計？", "options": ["只把 Prompt 寫長", "工具／Function Calling 整合", "只提高 Temperature", "把所有 API 結果預先寫死在模型中"], "answer": 1, "explanation": "Tool/Function Calling 讓模型選擇並呼叫外部工具，再根據真實回傳結果作答。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q158", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12202", "topicName": "如何善用生成式 AI 工具", "concept": "Function Calling", "difficulty": "medium", "question": "希望模型能依需求呼叫計算器、資料庫或 API，應使用？", "options": ["只提高 Temperature", "工具／Function Calling 整合", "只把 Prompt 寫長", "把所有 API 結果預先寫死在模型中"], "answer": 1, "explanation": "Tool/Function Calling 讓模型選擇並呼叫外部工具，再根據真實回傳結果作答。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q159", "level": "初級", "subject": "L12", "subjectName": "生成式 AI 應用與規劃", "topic": "L12202", "topicName": "如何善用生成式 AI 工具", "concept": "Function Calling", "difficulty": "medium", "question": "生成式 AI 要完成『查庫存→下單→回覆結果』，關鍵能力是？", "options": ["工具／Function Calling 整合", "把所有 API 結果預先寫死在模型中", "只提高 Temperature", "只把 Prompt 寫長"], "answer": 0, "explanation": "Tool/Function Calling 讓模型選擇並呼叫外部工具，再根據真實回傳結果作答。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q160", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21103", "topicName": "生成式 AI 技術與應用", "concept": "Attention", "difficulty": "medium", "question": "Transformer 中用來計算序列不同位置彼此關聯的重要機制是？", "options": ["Attention", "Apriori", "K-means", "Random Forest"], "answer": 0, "explanation": "Attention 透過 Query、Key、Value 計算 token 間關聯，是 Transformer 的核心機制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q161", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21103", "topicName": "生成式 AI 技術與應用", "concept": "Attention", "difficulty": "medium", "question": "Query、Key、Value 是哪種機制的重要元件？", "options": ["Apriori", "K-means", "Attention", "Random Forest"], "answer": 2, "explanation": "Attention 透過 Query、Key、Value 計算 token 間關聯，是 Transformer 的核心機制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q162", "level": "中級", "subject": "L21", "subjectName": "人工智慧技術應用與規劃", "topic": "L21103", "topicName": "生成式 AI 技術與應用", "concept": "Attention", "difficulty": "medium", "question": "模型要動態決定哪些 token 對目前輸出更重要，主要依靠？", "options": ["Random Forest", "Apriori", "Attention", "K-means"], "answer": 2, "explanation": "Attention 透過 Query、Key、Value 計算 token 間關聯，是 Transformer 的核心機制。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q163", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22101", "topicName": "敘述性統計與資料摘要技術", "concept": "標準差", "difficulty": "easy", "question": "標準差主要描述資料的什麼特性？", "options": ["眾數", "標準差（Standard Deviation）", "中位數", "樣本數"], "answer": 1, "explanation": "標準差衡量資料相對平均值的典型離散程度。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q164", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22101", "topicName": "敘述性統計與資料摘要技術", "concept": "標準差", "difficulty": "easy", "question": "兩組資料平均數相同，但其中一組數值更分散，通常哪個統計量較大？", "options": ["眾數", "中位數", "標準差（Standard Deviation）", "樣本數"], "answer": 2, "explanation": "標準差衡量資料相對平均值的典型離散程度。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q165", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22101", "topicName": "敘述性統計與資料摘要技術", "concept": "標準差", "difficulty": "easy", "question": "衡量數值相對平均值的離散程度，常使用？", "options": ["樣本數", "中位數", "眾數", "標準差（Standard Deviation）"], "answer": 3, "explanation": "標準差衡量資料相對平均值的典型離散程度。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q166", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22203", "topicName": "數據處理技術與工具", "concept": "MapReduce", "difficulty": "medium", "question": "MapReduce 中，Map 與 Reduce 的功能何者較正確？", "options": ["Reduce 一定在 Map 前執行", "Map 將輸入映射為中間鍵值資料；Reduce 再彙整同鍵資料", "Map 與 Reduce 都只負責資料加密", "Map 只畫地圖；Reduce 只刪檔案"], "answer": 1, "explanation": "Map 對輸入做平行轉換產生中間鍵值資料，Reduce 再依 key 聚合／彙總。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q167", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22203", "topicName": "數據處理技術與工具", "concept": "MapReduce", "difficulty": "medium", "question": "大規模資料平行處理中，MapReduce 的基本概念是？", "options": ["Map 只畫地圖；Reduce 只刪檔案", "Map 將輸入映射為中間鍵值資料；Reduce 再彙整同鍵資料", "Reduce 一定在 Map 前執行", "Map 與 Reduce 都只負責資料加密"], "answer": 1, "explanation": "Map 對輸入做平行轉換產生中間鍵值資料，Reduce 再依 key 聚合／彙總。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q168", "level": "中級", "subject": "L22", "subjectName": "大數據處理分析與應用", "topic": "L22203", "topicName": "數據處理技術與工具", "concept": "MapReduce", "difficulty": "medium", "question": "Map 階段與 Reduce 階段通常分別做什麼？", "options": ["Map 將輸入映射為中間鍵值資料；Reduce 再彙整同鍵資料", "Map 只畫地圖；Reduce 只刪檔案", "Reduce 一定在 Map 前執行", "Map 與 Reduce 都只負責資料加密"], "answer": 0, "explanation": "Map 對輸入做平行轉換產生中間鍵值資料，Reduce 再依 key 聚合／彙總。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q169", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23303", "topicName": "模型訓練、評估與驗證", "concept": "分類評估", "difficulty": "medium", "question": "類別高度不平衡時，單看 Accuracy 可能誤導。若要兼顧 Precision 與 Recall，可看？", "options": ["Precision 與 Recall 的調和平均", "資料的標準差", "迴歸的決定係數", "神經網路的學習率"], "answer": 0, "explanation": "F1-score 綜合 Precision 與 Recall，常用於不平衡分類或需兼顧兩者的情境。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q170", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23303", "topicName": "模型訓練、評估與驗證", "concept": "分類評估", "difficulty": "medium", "question": "正類僅占 1%，模型全部猜負類也有 99% Accuracy。較應補充哪項指標？", "options": ["神經網路的學習率", "Precision 與 Recall 的調和平均", "資料的標準差", "迴歸的決定係數"], "answer": 1, "explanation": "F1-score 綜合 Precision 與 Recall，常用於不平衡分類或需兼顧兩者的情境。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}, {"id": "Q171", "level": "中級", "subject": "L23", "subjectName": "機器學習技術與應用", "topic": "L23303", "topicName": "模型訓練、評估與驗證", "concept": "分類評估", "difficulty": "medium", "question": "分類任務中，F1-score 是什麼？", "options": ["資料的標準差", "迴歸的決定係數", "Precision 與 Recall 的調和平均", "神經網路的學習率"], "answer": 2, "explanation": "F1-score 綜合 Precision 與 Recall，常用於不平衡分類或需兼顧兩者的情境。", "sourceType": "依 iPAS 115 年官方評鑑範圍與公開樣題風格自編"}]};
+const officialBrochure = "https://www.ipas.org.tw/api/proxy/uploads/certification/AIAP/115%E5%B9%B4%E5%BA%A6AI%E6%87%89%E7%94%A8%E8%A6%8F%E5%8A%83%E5%B8%AB%E8%83%BD%E5%8A%9B%E9%91%91%E5%AE%9A%E7%B0%A1%E7%AB%A0%28%E5%88%9D%E3%80%81%E4%B8%AD%E7%B4%9A%29_20251225235744.pdf";
+const officialSite = "https://www.ipas.org.tw/";
+const officialLearningResources = "https://ipd.nat.gov.tw/ipas/certification/AIAP/learning-resources";
+const OFFICIAL_PDF_BASE = "https://www.ipas.org.tw/api/proxy/uploads/certification_resource/bf93f438f7be48d295c1b40a34d79f3d/";
+const officialPdf = filename => OFFICIAL_PDF_BASE + encodeURIComponent(filename);
+const pastPapers = [
+  {id:"115-3-L11",level:"初級",year:"115",session:"第三次",date:"115/08/15",subject:"L11",name:"人工智慧基礎概論",size:"576 KB",file:"115年第三次初級AI應用規劃師_第一科_人工智慧基礎概論_公告試題_20260906220418.pdf"},
+  {id:"115-3-L12",level:"初級",year:"115",session:"第三次",date:"115/08/15",subject:"L12",name:"生成式 AI 應用與規劃",size:"520 KB",file:"115年第三次初級AI應用規劃師_第二科_生成式AI應用與規劃_公告試題_20260906220452.pdf"},
+  {id:"115-2-L11",level:"初級",year:"115",session:"第二次",date:"115/05/16",subject:"L11",name:"人工智慧基礎概論",size:"547 KB",file:"115年第二次初級AI應用規劃師_第一科_人工智慧基礎概論_公告試題_20260604212644.pdf"},
+  {id:"115-2-L12",level:"初級",year:"115",session:"第二次",date:"115/05/16",subject:"L12",name:"生成式 AI 應用與規劃",size:"545 KB",file:"115年第二次初級AI應用規劃師_第二科_生成式AI應用與規劃_公告試題_20260604212719.pdf"},
+  {id:"115-1-L11",level:"初級",year:"115",session:"第一次",date:"115/03/21",subject:"L11",name:"人工智慧基礎概論",size:"459 KB",file:"115年第一次初級AI應用規劃師_第一科_人工智慧基礎概論_公告試題_20260410164304.pdf"},
+  {id:"115-1-L12",level:"初級",year:"115",session:"第一次",date:"115/03/21",subject:"L12",name:"生成式 AI 應用與規劃",size:"454 KB",file:"115年第一次初級AI應用規劃師_第二科_生成式AI應用與規劃_公告試題_20260410164328.pdf"},
+  {id:"114-4-L11",level:"初級",year:"114",session:"第四梯次",date:"114/11/01",subject:"L11",name:"人工智慧基礎概論",size:"370 KB",file:"114年第四梯次初級AI應用規劃師第一科人工智慧基礎概論(當次試題公告114_20251226000442.pdf"},
+  {id:"114-4-L12",level:"初級",year:"114",session:"第四梯次",date:"114/11/01",subject:"L12",name:"生成式 AI 應用與規劃",size:"368 KB",file:"114年第四梯次初級AI應用規劃師第二科生成式AI應用與規劃(當次試題公告114_20251226000507.pdf"},
+  {id:"115-1-L21",level:"中級",year:"115",session:"第一次",date:"115/05/23",subject:"L21",name:"人工智慧技術應用與規劃",size:"704 KB",file:"115年第一次中級AI應用規劃師_第一科_人工智慧技術應用與規劃_公告試題_20260615003359.pdf"},
+  {id:"115-1-L22",level:"中級",year:"115",session:"第一次",date:"115/05/23",subject:"L22",name:"大數據處理分析與應用",size:"770 KB",file:"115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf"},
+  {id:"115-1-L23",level:"中級",year:"115",session:"第一次",date:"115/05/23",subject:"L23",name:"機器學習技術與應用",size:"1.56 MB",file:"115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf"},
+  {id:"114-2-L21",level:"中級",year:"114",session:"第二梯次",date:"114/11/08",subject:"L21",name:"人工智慧技術應用與規劃",size:"394 KB",file:"114年第二梯次中級AI應用規劃師第一科人工智慧技術應用與規劃(當次試題公告114_20251226000616.pdf"},
+  {id:"114-2-L22",level:"中級",year:"114",session:"第二梯次",date:"114/11/08",subject:"L22",name:"大數據處理分析與應用",size:"823 KB",file:"114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf"},
+  {id:"114-2-L23",level:"中級",year:"114",session:"第二梯次",date:"114/11/08",subject:"L23",name:"機器學習技術與應用",size:"1.43 MB",file:"114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf"}
+].map(p=>({...p,pdf:officialPdf(p.file)}));
+const state = JSON.parse(localStorage.getItem("ipasAIState") || '{"attempts":{},"wrong":{},"bookmarks":{},"examHistory":[]}');
+let practiceSet=[], pIndex=0, practiceAnswered=false;
+let examSet=[], eIndex=0, examAnswers={}, examTimer=null, examSeconds=0, examSubmitted=false;
+let pastPaperSet=[], pastIndex=0, pastAnswered=false, pastPaperMeta=null, pdfJsLoading=null;
+
+function save(){ localStorage.setItem("ipasAIState",JSON.stringify(state)); }
+function qs(s){return document.querySelector(s)} function qsa(s){return [...document.querySelectorAll(s)]}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function switchPanel(id){qsa(".panel").forEach(x=>x.classList.remove("active"));qsa(".tab").forEach(x=>x.classList.toggle("active",x.dataset.panel===id));qs("#"+id).classList.add("active"); if(id==="home")renderHome();if(id==="past")renderPastPapers();if(id==="wrong")renderWrong();if(id==="stats")renderStats();if(id==="scope")renderScope();}
+qsa(".tab").forEach(b=>b.onclick=()=>switchPanel(b.dataset.panel));
+
+function subjectLabel(code){let s=DB.subjects[code];return `${code} ${s.name}`}
+
+function renderHome(){
+  const total=DB.questions.length, attempted=Object.keys(state.attempts).length;
+  const vals=Object.values(state.attempts), correct=vals.filter(x=>x.correct).length;
+  const acc=vals.length?Math.round(correct/vals.length*100):0;
+  const wrong=Object.keys(state.wrong).length;
+  qs("#home").innerHTML=`
+  <div class="grid">
+    <div class="card c4"><div class="label">自編練習題數</div><div class="kpi">${total}</div><div class="small">涵蓋初級 L11/L12 與中級 L21/L22/L23</div></div>
+    <div class="card c4"><div class="label">已作答題目</div><div class="kpi">${attempted}</div><div class="small">正確率 ${acc}%</div></div>
+    <div class="card c4"><div class="label">目前錯題</div><div class="kpi">${wrong}</div><div class="small">答對後可自動移出錯題本</div></div>
+    <div class="card c6"><h3>初級 Lv1</h3>
+      <div><span class="pill">L11 人工智慧基礎概論</span><span class="pill">75 分鐘</span></div>
+      <div><span class="pill">L12 生成式 AI 應用與規劃</span><span class="pill">75 分鐘</span></div>
+      <p class="small">同次報考全部科目：平均達 70 分且每科不得低於 60 分；非同次報考則每科皆需達 70 分。</p>
+      <button class="btn primary" onclick="goPractice('初級')">開始刷初級</button>
+    </div>
+    <div class="card c6"><h3>中級 Lv2</h3>
+      <div><span class="pill">必考 L21</span><span class="pill">L22 / L23 擇一</span><span class="pill">每科 90 分鐘</span></div>
+      <p class="small">L21 + L22 皆達 70：數據分析證書；L21 + L23 皆達 70：機器學習證書。</p>
+      <button class="btn primary" onclick="goPractice('中級')">開始刷中級</button>
+    </div>
+    <div class="card c12 notice"><b>使用建議：</b>先用「刷題練習」逐主題建立觀念，再看「弱點分析」找低於 70% 的能力指標，最後進「正式模擬」做計時測驗。正式考試依 115 年簡章為電腦化單選題。</div>
+  </div>`;
+}
+
+function practiceFilters(){
+  let level=qs("#plevel")?.value||"全部";
+  let subs=Object.entries(DB.subjects).filter(([k,v])=>level==="全部"||v.level===level);
+  return subs;
+}
+function renderPractice(){
+ qs("#practice").innerHTML=`
+ <div class="card">
+   <h3 style="margin-top:0">刷題設定</h3>
+   <div class="controls">
+     <select id="plevel"><option>全部</option><option>初級</option><option>中級</option></select>
+     <select id="psubject"><option value="全部">全部科目</option>${Object.keys(DB.subjects).map(k=>`<option value="${k}">${subjectLabel(k)}</option>`).join("")}</select>
+     <select id="pdiff"><option value="全部">全部難度</option><option value="easy">基礎</option><option value="medium">中等</option><option value="hard">進階</option></select>
+     <select id="pcount"><option value="10">10 題</option><option value="20" selected>20 題</option><option value="40">40 題</option><option value="all">全部</option></select>
+     <button class="btn primary" onclick="startPractice()">開始</button>
+   </div>
+ </div><div id="practiceArea" style="margin-top:12px"></div>`;
+ qs("#plevel").onchange=()=>{
+   let lv=qs("#plevel").value;
+   [...qs("#psubject").options].forEach(o=>{
+     if(o.value==="全部"){o.hidden=false;return}
+     o.hidden=lv!=="全部" && DB.subjects[o.value].level!==lv;
+   });
+   if(qs("#psubject").selectedOptions[0]?.hidden) qs("#psubject").value="全部";
+ };
+}
+function goPractice(level){switchPanel("practice");qs("#plevel").value=level;qs("#plevel").dispatchEvent(new Event("change"));startPractice();}
+function startPractice(){
+ let lv=qs("#plevel").value, sub=qs("#psubject").value, diff=qs("#pdiff").value;
+ let arr=DB.questions.filter(q=>(lv==="全部"||q.level===lv)&&(sub==="全部"||q.subject===sub)&&(diff==="全部"||q.difficulty===diff));
+ arr=shuffle(arr); let n=qs("#pcount").value; if(n!=="all")arr=arr.slice(0,+n);
+ practiceSet=arr;pIndex=0;practiceAnswered=false;renderPracticeQ();
+}
+function renderPracticeQ(){
+ let a=qs("#practiceArea"); if(!practiceSet.length){a.innerHTML='<div class="card">沒有符合條件的題目。</div>';return}
+ let q=practiceSet[pIndex], past=state.attempts[q.id];
+ a.innerHTML=`<div class="card">
+ <div class="qmeta"><span class="pill">${q.level}</span><span class="pill">${q.subject}</span><span class="pill">${q.topic} ${esc(q.topicName)}</span><span class="pill">${q.difficulty}</span></div>
+ <div class="small">第 ${pIndex+1} / ${practiceSet.length} 題　${past?`曾作答：${past.correct?"✓ 正確":"✕ 錯誤"}`:"尚未作答"}</div>
+ <div class="progress"><div style="width:${(pIndex+1)/practiceSet.length*100}%"></div></div>
+ <div class="qtext">${esc(q.question)}</div>
+ <div id="opts">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join("")}</div>
+ <div id="pexplain" class="explain hidden"></div>
+ <div class="navrow">
+   <button class="btn secondary" onclick="bookmark('${q.id}')">${state.bookmarks[q.id]?"★ 已收藏":"☆ 收藏"}</button>
+   <div><button class="btn secondary" onclick="prevP()">上一題</button> <button class="btn primary" onclick="nextP()">下一題</button></div>
+ </div></div>`;
+ qsa("#opts .option").forEach(b=>b.onclick=()=>answerPractice(+b.dataset.i));
+}
+function answerPractice(i){
+ if(practiceAnswered)return; practiceAnswered=true; let q=practiceSet[pIndex],ok=i===q.answer;
+ state.attempts[q.id]={correct:ok,last:Date.now(),subject:q.subject,topic:q.topic};
+ if(ok) delete state.wrong[q.id]; else state.wrong[q.id]=true; save();
+ qsa("#opts .option").forEach((b,idx)=>{b.disabled=true;if(idx===q.answer)b.classList.add("correct");if(idx===i&&!ok)b.classList.add("wrong")});
+ qs("#pexplain").classList.remove("hidden");
+ qs("#pexplain").innerHTML=`<b class="${ok?"good":"bad"}">${ok?"答對了":"答錯了"}｜正解 ${String.fromCharCode(65+q.answer)}</b><br>${esc(q.explanation)}<div class="small" style="margin-top:6px">${esc(q.sourceType)}</div>`;
+}
+function nextP(){if(pIndex<practiceSet.length-1){pIndex++;practiceAnswered=false;renderPracticeQ()}else{qs("#practiceArea").innerHTML=`<div class="card"><h3>完成這組練習</h3><p>可到「弱點分析」查看各能力指標表現，或重新抽一組題目。</p><button class="btn primary" onclick="startPractice()">再抽一組</button></div>`;}}
+function prevP(){if(pIndex>0){pIndex--;practiceAnswered=false;renderPracticeQ()}}
+function bookmark(id){state.bookmarks[id]=!state.bookmarks[id];if(!state.bookmarks[id])delete state.bookmarks[id];save();renderPracticeQ()}
+
+function renderExam(){
+ qs("#exam").innerHTML=`
+ <div class="card">
+   <h3 style="margin-top:0">正式模擬</h3>
+   <div class="notice">官方 115 年簡章規定：初級每科 75 分鐘、中級每科 90 分鐘，題型皆為電腦化單選題。官方簡章未在此處固定公布每科實際題數，因此本工具可自選 20／40／60 題模擬。</div>
+   <div class="controls" style="margin-top:12px">
+     <select id="esubject">${Object.keys(DB.subjects).map(k=>`<option value="${k}">${subjectLabel(k)}｜${DB.subjects[k].minutes} 分鐘</option>`).join("")}</select>
+     <select id="ecount"><option value="20">20 題</option><option value="40" selected>40 題</option><option value="60">60 題</option></select>
+     <button class="btn primary" onclick="startExam()">開始計時模擬</button>
+   </div>
+ </div><div id="examArea" style="margin-top:12px"></div>`;
+}
+function startExam(){
+ if(examTimer)clearInterval(examTimer);
+ let sub=qs("#esubject").value,n=+qs("#ecount").value;
+ let pool=DB.questions.filter(q=>q.subject===sub);
+ // if bank smaller, allow repeat-free maximum only
+ examSet=shuffle(pool).slice(0,Math.min(n,pool.length));eIndex=0;examAnswers={};examSubmitted=false;
+ examSeconds=DB.subjects[sub].minutes*60;
+ examTimer=setInterval(()=>{examSeconds--;updateTimer();if(examSeconds<=0)submitExam(true)},1000);
+ renderExamQ();
+}
+function updateTimer(){let el=qs("#timer");if(!el)return;let m=Math.floor(examSeconds/60),s=examSeconds%60;el.textContent=`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;el.classList.toggle("low",examSeconds<300)}
+function renderExamQ(){
+ let a=qs("#examArea"); if(!examSet.length)return;
+ let q=examSet[eIndex],sel=examAnswers[q.id];
+ a.innerHTML=`<div class="card">
+ <div class="examtop"><div><span class="pill">${q.subject}</span><span class="small">第 ${eIndex+1}/${examSet.length} 題</span></div><div id="timer" class="timer"></div></div>
+ <div class="progress"><div style="width:${(eIndex+1)/examSet.length*100}%"></div></div>
+ <div class="qtext">${esc(q.question)}</div>
+ ${q.options.map((o,i)=>`<button class="option ${sel===i?"selected":""}" onclick="examPick(${i})"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join("")}
+ <div class="navrow"><button class="btn secondary" onclick="ePrev()">上一題</button><div><button class="btn danger" onclick="submitExam(false)">交卷</button> <button class="btn primary" onclick="eNext()">下一題</button></div></div>
+ <div class="palette">${examSet.map((x,i)=>`<button class="pnum ${examAnswers[x.id]!==undefined?"done":""} ${i===eIndex?"current":""}" onclick="jumpE(${i})">${i+1}</button>`).join("")}</div>
+ </div>`; updateTimer();
+}
+function examPick(i){let q=examSet[eIndex];examAnswers[q.id]=i;renderExamQ()}
+function ePrev(){if(eIndex>0){eIndex--;renderExamQ()}} function eNext(){if(eIndex<examSet.length-1){eIndex++;renderExamQ()}}
+function jumpE(i){eIndex=i;renderExamQ()}
+function submitExam(auto){
+ if(examSubmitted||!examSet.length)return;
+ if(!auto && !confirm("確定要交卷嗎？未作答題目會算錯。"))return;
+ examSubmitted=true;if(examTimer)clearInterval(examTimer);
+ let correct=0;
+ examSet.forEach(q=>{let ok=examAnswers[q.id]===q.answer;if(ok)correct++;state.attempts[q.id]={correct:ok,last:Date.now(),subject:q.subject,topic:q.topic};if(ok)delete state.wrong[q.id];else state.wrong[q.id]=true});
+ let score=Math.round(correct/examSet.length*100),sub=examSet[0].subject;
+ state.examHistory.unshift({date:Date.now(),subject:sub,score,count:examSet.length});state.examHistory=state.examHistory.slice(0,20);save();
+ qs("#examArea").innerHTML=`<div class="card"><h2>${auto?"時間到，已自動交卷":"模擬完成"}</h2>
+ <div class="kpi ${score>=70?"good":"bad"}">${score} 分</div><p>${correct}/${examSet.length} 題正確。以單科 70 分標準參考：${score>=70?"達標":"尚未達標"}。</p>
+ <button class="btn primary" onclick="startExam()">再考一次</button> <button class="btn secondary" onclick="switchPanel('wrong')">看錯題</button></div>`;
+}
+
+
+
+function getPastCache(){
+  try{return JSON.parse(localStorage.getItem("ipasOfficialPastCacheV2")||"{}")}catch(e){return {}}
+}
+function savePastCache(cache){
+  try{localStorage.setItem("ipasOfficialPastCacheV2",JSON.stringify(cache))}catch(e){console.warn("考古題快取寫入失敗",e)}
+}
+function paperProgress(p){
+  const prefix=`PAST-${p.id}-`;
+  const ids=Object.keys(state.attempts).filter(id=>id.startsWith(prefix));
+  const correct=ids.filter(id=>state.attempts[id]?.correct).length;
+  return {answered:ids.length,correct};
+}
+function renderPastPapers(){
+  const group=(level)=>pastPapers.filter(p=>p.level===level);
+  const cache=getPastCache();
+  const paperCard=(p,i)=>{
+    const prog=paperProgress(p), cached=!!cache[p.id];
+    const score=prog.answered?Math.round(prog.correct/prog.answered*100):null;
+    return `<div class="card c6">
+      <div class="qmeta"><span class="pill">${p.level}</span><span class="pill">${p.year} 年 ${p.session}</span><span class="pill">${p.subject}</span>${cached?'<span class="pill">已快取</span>':''}</div>
+      <h3 style="margin:8px 0 5px">${esc(p.name)}</h3>
+      <div class="small">考試日期：${p.date}　｜　官方 PDF：約 ${p.size}</div>
+      <div class="small" style="margin-top:7px">${prog.answered?`已作答 ${prog.answered} 題${score!==null?`，目前正確率 ${score}%`:''}`:'尚未作答'}</div>
+      <div class="controls" style="margin-top:12px">
+        <button class="btn primary" onclick="loadPastPaperById('${p.id}')">${prog.answered?'繼續刷題':'開始刷題'}</button>
+        <a class="btn secondary" style="display:inline-block;text-decoration:none" href="${p.pdf}" target="_blank" rel="noopener">查看官方 PDF</a>
+      </div>
+    </div>`;
+  };
+  qs("#past").innerHTML=`
+    <div class="card" style="margin-bottom:12px">
+      <div class="examtop"><div><h3 style="margin:0">官方考古題</h3><div class="small" style="margin-top:5px">${pastPapers.length} 份官方公告試題，直接點「開始刷題」即可</div></div>
+      <a class="btn secondary" style="text-decoration:none" href="${officialLearningResources}" target="_blank" rel="noopener">官方歷屆考題頁</a></div>
+      <div class="notice" style="margin-top:12px"><b>已改成免匯入模式：</b>每份考卷都綁定 iPAS 官方公告試題來源。第一次開啟某份考卷時，工具會自動載入並解析官方 PDF；成功後會快取在這台裝置，之後可直接刷題。題目若含圖表／程式碼圖片，建議同步點「查看官方 PDF」核對原題。</div>
+      <div id="pastLoadStatus" class="small" style="margin-top:8px"></div>
+    </div>
+    <div id="pastQuizArea"></div>
+    <h3>初級 Lv1</h3><div class="grid">${group("初級").map(p=>paperCard(p,pastPapers.indexOf(p))).join("")}</div>
+    <h3 style="margin-top:22px">中級 Lv2</h3><div class="grid">${group("中級").map(p=>paperCard(p,pastPapers.indexOf(p))).join("")}</div>`;
+}
+
+async function ensurePdfJs(){
+  if(window.pdfjsLib) return window.pdfjsLib;
+  if(pdfJsLoading) return pdfJsLoading;
+  pdfJsLoading = new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{
+      if(window.pdfjsLib){
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        resolve(window.pdfjsLib);
+      }else reject(new Error('PDF.js 載入失敗'));
+    };
+    s.onerror=()=>reject(new Error('無法載入 PDF.js，請確認網路連線'));
+    document.head.appendChild(s);
+  });
+  return pdfJsLoading;
+}
+
+async function extractPdfTextFromBuffer(buf){
+  await ensurePdfJs();
+  const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+  let fullText='';
+  for(let pn=1;pn<=pdf.numPages;pn++){
+    const page=await pdf.getPage(pn);
+    const tc=await page.getTextContent();
+    let pageText='',lastY=null;
+    for(const item of tc.items){
+      const y=item.transform?item.transform[5]:null;
+      if(lastY!==null && y!==null && Math.abs(y-lastY)>3) pageText+='\n';
+      else if(pageText) pageText+=' ';
+      pageText+=item.str||'';
+      lastY=y;
+    }
+    fullText+='\n'+pageText+'\n';
+  }
+  return fullText;
+}
+
+async function fetchArrayBufferWithFallback(url){
+  const attempts=[
+    url,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    `https://corsproxy.io/?${encodeURIComponent(url)}`
+  ];
+  let lastErr=null;
+  for(const u of attempts){
+    try{
+      const r=await fetch(u,{cache:'no-store'});
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      const b=await r.arrayBuffer();
+      if(b.byteLength<5000) throw new Error('回傳內容過小，可能不是 PDF');
+      return b;
+    }catch(e){lastErr=e;}
+  }
+  throw lastErr||new Error('無法取得官方 PDF');
+}
+
+async function fetchPaperText(paper){
+  try{
+    const buf=await fetchArrayBufferWithFallback(paper.pdf);
+    return await extractPdfTextFromBuffer(buf);
+  }catch(pdfErr){
+    console.warn('PDF 直接載入失敗，改用文字備援',pdfErr);
+    try{
+      const jina=`https://r.jina.ai/${paper.pdf}`;
+      const r=await fetch(jina,{cache:'no-store'});
+      if(!r.ok) throw new Error(`文字備援 HTTP ${r.status}`);
+      const t=await r.text();
+      if(t.length<1000) throw new Error('文字備援內容不足');
+      return t;
+    }catch(textErr){
+      const e=new Error('目前瀏覽器無法自動讀取這份官方考卷。可先點「查看官方 PDF」；換到 GitHub Pages / Safari / Chrome 後再試。');
+      e.cause={pdfErr,textErr};
+      throw e;
+    }
+  }
+}
+
+async function loadPastPaperById(id){
+  const paper=pastPapers.find(p=>p.id===id);
+  if(!paper)return;
+  const status=qs('#pastLoadStatus');
+  const cache=getPastCache();
+  try{
+    let parsed=cache[id];
+    if(parsed && parsed.questions && parsed.questions.length){
+      status.innerHTML=`<span class="good">已從本機快取載入：</span>${esc(paper.year+' 年 '+paper.session+' '+paper.subject)}，${parsed.questions.length} 題。`;
+    }else{
+      status.textContent=`正在自動載入 ${paper.year} 年 ${paper.session} ${paper.subject} 官方考古題…`;
+      const raw=await fetchPaperText(paper);
+      parsed=parseOfficialPastPaper(raw,paper.file);
+      if(!parsed.questions.length) throw new Error('已取得官方內容，但沒有成功解析出題目。');
+      parsed.meta={...parsed.meta,paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf};
+      parsed.questions=parsed.questions.map(q=>({...q,
+        id:`PAST-${paper.id}-${q.number}`,
+        level:paper.level,
+        subject:paper.subject,
+        topic:`PAST-${paper.year}-${paper.session}`,
+        topicName:`${paper.year} 年 ${paper.session} ${paper.name}`,
+        sourceType:'iPAS 官方公告試題'
+      }));
+      cache[id]=parsed; savePastCache(cache);
+      status.innerHTML=`<span class="good">官方考古題載入成功：</span>${esc(parsed.meta.title)}，共 ${parsed.questions.length} 題。`;
+    }
+    pastPaperSet=parsed.questions; pastPaperMeta=parsed.meta; pastAnswered=false;
+    const firstUnanswered=pastPaperSet.findIndex(q=>!state.attempts[q.id]);
+    pastIndex=firstUnanswered>=0?firstUnanswered:0;
+    renderPastQuiz();
+    qs('#pastQuizArea')?.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(err){
+    console.error(err);
+    status.innerHTML=`<span class="bad">自動載入失敗：</span>${esc(err.message||String(err))}`;
+    qs('#pastQuizArea').innerHTML=`<div class="card"><h3>暫時無法自動開卷</h3><p class="small">這通常是瀏覽器跨站存取限制，不代表官方檔案不存在。你可以先開官方 PDF 核對；若是部署在 GitHub Pages 後再使用，成功率通常會比直接用 file:// 開啟更高。</p><a class="btn primary" style="display:inline-block;text-decoration:none" href="${paper.pdf}" target="_blank" rel="noopener">查看官方 PDF</a></div>`;
+  }
+}
+
+function allCachedOfficialQuestions(){
+  const cache=getPastCache();
+  return Object.values(cache).flatMap(x=>x?.questions||[]);
+}
+
+function parseOfficialPastPaper(rawText,fileName){
+  let text=String(rawText||'').replace(/\r/g,'\n');
+  text=text.replace(/<br\s*\/?\s*>/gi,'\n').replace(/\|/g,' ').replace(/^#{1,6}\s*/gm,'');
+  const meta={title:fileName.replace(/\.pdf$/i,''), fileName};
+
+  // remove common headers / footers repeatedly seen in official PDFs
+  text=text.replace(/\s*第\s*\d+\s*頁\s*，?共\s*\d+\s*頁\s*/g,' ');
+  text=text.replace(/考試日期：[^\n]+/g,' ');
+  text=text.replace(/答案\s*題目/g,' ');
+  text=text.replace(/一、\s*選擇題/g,' ');
+  text=text.replace(/115\s*年[^\n]*?公告試題/g,' ');
+  text=text.replace(/114\s*年[^\n]*?公告試題/g,' ');
+  text=text.replace(/第[一二三]科：[^\n]+/g,' ');
+  text=text.replace(/AI\s*應用規劃師[^\n]*/g, m => (/\([初中]級\)/.test(m) ? m : ' '));
+  text=text.replace(/\n{2,}/g,'\n');
+  text=text.replace(/[ \t]{2,}/g,' ');
+
+  const qRe=/(?:^|\n)\s*([ABCD])\s*(?:\n|\s)*([0-9]{1,3})\.\s*/g;
+  const matches=[...text.matchAll(qRe)];
+  const questions=[];
+  for(let i=0;i<matches.length;i++){
+    const m=matches[i];
+    const start=m.index + m[0].length;
+    const end=i+1<matches.length ? matches[i+1].index : text.length;
+    let block=text.slice(start,end).trim();
+    if(!block) continue;
+    block=block.replace(/\n+/g,'\n').replace(/[ \t]+/g,' ').trim();
+    const optPattern=/\(([ABCD])\)\s*([\s\S]*?)(?=\s*\([ABCD]\)\s*|$)/g;
+    const optMatches=[...block.matchAll(optPattern)];
+    if(optMatches.length<4) continue;
+    const firstOptIndex=block.search(/\(A\)/);
+    if(firstOptIndex<0) continue;
+    let qText=block.slice(0,firstOptIndex).replace(/\n/g,' ').trim();
+    const options=[];
+    optMatches.slice(0,4).forEach(om=> options.push(om[2].replace(/\n/g,' ').replace(/[ \t]{2,}/g,' ').trim()));
+    if(options.length!==4) continue;
+    const answerLetter=m[1];
+    const number=parseInt(m[2],10);
+    questions.push({
+      id:`PAST-${meta.title}-${number}`,
+      number,
+      level:'官方考古題',
+      subject:'官方',
+      topic:'考古題',
+      topicName:meta.title,
+      difficulty:'official',
+      question:qText,
+      options,
+      answer:'ABCD'.indexOf(answerLetter),
+      explanation:`官方公告試題正解：${answerLetter}`,
+      sourceType:'iPAS 官方公告試題 PDF'
+    });
+  }
+  questions.sort((a,b)=>a.number-b.number);
+  meta.title = inferPastTitle(text, fileName, questions.length);
+  return {meta, questions};
+}
+
+function inferPastTitle(text,fileName,count){
+  const name=(fileName||'').replace(/\.pdf$/i,'');
+  const m1=name.match(/(1\d{2}年[^\n]{0,80}?第[一二三四]次[^\n]{0,80}?第[一二三四]科[^\n]{0,80})/);
+  if(m1) return m1[1];
+  const m2=name.match(/(1\d{2}年[^\n]{0,80})/);
+  if(m2) return m2[1];
+  return `${name}（${count} 題）`;
+}
+
+function renderPastQuiz(){
+  const area=qs('#pastQuizArea');
+  if(!pastPaperSet.length){
+    area.innerHTML='';
+    return;
+  }
+  const q=pastPaperSet[pastIndex];
+  const key=q.id;
+  const past=state.attempts[key];
+  area.innerHTML=`<div class="card" style="margin-bottom:12px">
+    <div class="qmeta"><span class="pill">官方考古題</span><span class="pill">${esc(pastPaperMeta?.title||'')}</span><span class="pill">第 ${q.number} 題</span></div>
+    <div class="small">${past?`曾作答：${past.correct?'✓ 正確':'✕ 錯誤'}`:'尚未作答'}　｜　第 ${pastIndex+1}/${pastPaperSet.length} 題　｜　<a href="${pastPaperMeta?.pdf||'#'}" target="_blank" rel="noopener">核對官方原題 PDF</a></div>
+    <div class="progress"><div style="width:${(pastIndex+1)/pastPaperSet.length*100}%"></div></div>
+    <div class="qtext">${esc(q.question)}</div>
+    <div id="pastOpts">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join('')}</div>
+    <div id="pastExplain" class="explain hidden"></div>
+    <div class="navrow">
+      <button class="btn secondary" onclick="pastPrev()">上一題</button>
+      <div><button class="btn secondary" onclick="restartPastQuiz()">重新作答本份</button> <button class="btn primary" onclick="pastNext()">下一題</button></div>
+    </div>
+  </div>`;
+  qsa('#pastOpts .option').forEach(b=>b.onclick=()=>answerPast(+b.dataset.i));
+}
+
+function answerPast(i){
+  if(pastAnswered) return;
+  pastAnswered=true;
+  const q=pastPaperSet[pastIndex], ok=i===q.answer;
+  state.attempts[q.id]={correct:ok,last:Date.now(),subject:'PAST',topic:pastPaperMeta?.title||'官方考古題'};
+  if(ok) delete state.wrong[q.id]; else state.wrong[q.id]=true;
+  save();
+  qsa('#pastOpts .option').forEach((b,idx)=>{b.disabled=true;if(idx===q.answer)b.classList.add('correct');if(idx===i && !ok)b.classList.add('wrong')});
+  const ex=qs('#pastExplain');
+  ex.classList.remove('hidden');
+  ex.innerHTML=`<b class="${ok?'good':'bad'}">${ok?'答對了':'答錯了'}｜正解 ${String.fromCharCode(65+q.answer)}</b><br>${esc(q.explanation)}<div class="small" style="margin-top:6px">${esc(q.sourceType)}</div>`;
+}
+
+function pastNext(){
+  if(!pastPaperSet.length) return;
+  if(pastIndex<pastPaperSet.length-1){ pastIndex++; pastAnswered=false; renderPastQuiz(); }
+  else{
+    const answered=pastPaperSet.filter(q=>state.attempts[q.id]).length;
+    const correct=pastPaperSet.filter(q=>state.attempts[q.id] && state.attempts[q.id].correct).length;
+    const score=answered ? Math.round(correct/pastPaperSet.length*100) : 0;
+    qs('#pastQuizArea').innerHTML=`<div class="card"><h3>這份官方考古題完成了</h3><div class="kpi ${score>=70?'good':'bad'}">${score} 分</div><p>${correct}/${pastPaperSet.length} 題正確。你可以回到上方直接選另一份官方考卷，或到錯題本加強複習。</p><button class="btn primary" onclick="restartPastQuiz()">重新作答這份</button></div>`;
+  }
+}
+function pastPrev(){ if(pastIndex>0){ pastIndex--; pastAnswered=false; renderPastQuiz(); } }
+function restartPastQuiz(){ pastIndex=0; pastAnswered=false; renderPastQuiz(); }
+
+function getQuestionById(id){
+  return DB.questions.find(x=>x.id===id) || allCachedOfficialQuestions().find(x=>x.id===id);
+}
+function renderWrong(){
+  const ids=Object.keys(state.wrong), qsx=ids.map(getQuestionById).filter(Boolean);
+  qs("#wrong").innerHTML=`<div class="card"><div class="examtop"><h3 style="margin:0">錯題本（${qsx.length}）</h3><button class="btn secondary" onclick="startWrongPractice()">重刷錯題</button></div>
+  ${qsx.length?qsx.slice(0,120).map(q=>`<div class="topicbar"><div><b>${esc(q.id)}</b> ${esc(q.question)}<div class="small">${esc(q.subject||'')}｜${esc(q.topic||'')} ${esc(q.topicName||'')}</div></div></div>`).join(""):"目前沒有錯題。"}</div>`;
+}
+function startWrongPractice(){
+  const ids=Object.keys(state.wrong);
+  practiceSet=shuffle(ids.map(getQuestionById).filter(Boolean));
+  if(!practiceSet.length)return;
+  switchPanel("practice");pIndex=0;practiceAnswered=false;renderPracticeQ();
+}
+
+function renderStats(){
+  let by={};
+  Object.entries(state.attempts).forEach(([id,a])=>{
+    let q=getQuestionById(id);if(!q)return;
+    let k=q.topic||q.subject||'其他';
+    if(!by[k])by[k]={n:0,c:0,subject:q.subject,name:q.topicName||q.subjectName||k};
+    by[k].n++;if(a.correct)by[k].c++;
+  });
+  let rows=Object.entries(by).sort((a,b)=>(a[1].c/a[1].n)-(b[1].c/b[1].n));
+  let hist=state.examHistory||[];
+  const pastRows=pastPapers.map(p=>{const pr=paperProgress(p);return {...p,...pr,score:pr.answered?Math.round(pr.correct/pr.answered*100):null}}).filter(p=>p.answered);
+  qs("#stats").innerHTML=`<div class="grid"><div class="card c8"><h3 style="margin-top:0">能力指標表現</h3>
+  ${rows.length?rows.map(([k,v])=>{let p=Math.round(v.c/v.n*100);return `<div class="topicbar"><div style="min-width:180px"><b>${esc(k)}</b> ${esc(v.name)}<div class="small">${v.c}/${v.n} 正確</div></div><div class="bar"><i style="width:${p}%"></i></div><b class="${p<70?'bad':'good'}">${p}%</b></div>`}).join(""):"先做一些題目後，這裡會顯示弱點分析。"}</div>
+  <div class="card c4"><h3 style="margin-top:0">官方考古題進度</h3>${pastRows.length?pastRows.slice(0,10).map(h=>`<div class="topicbar"><div><b>${h.year} ${h.session} ${h.subject}</b><div class="small">${h.answered} 題已作答</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}%</b></div>`).join(""):"尚無考古題作答紀錄"}
+  <h3>最近模擬</h3>${hist.length?hist.slice(0,6).map(h=>`<div class="topicbar"><div><b>${h.subject}</b><div class="small">${new Date(h.date).toLocaleDateString()}</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}</b></div>`).join(""):"尚無模擬紀錄"}
+  <button class="btn danger" style="margin-top:12px" onclick="resetAll()">清除全部進度</button></div></div>`;
+}
+function resetAll(){if(confirm("確定清除所有作答、錯題與模擬紀錄？")){localStorage.removeItem("ipasAIState");location.reload()}}
+
+function renderScope(){
+ const groups={};
+ Object.keys(DB.topics).forEach(t=>{let sub=t.slice(0,3).replace(/^L/,"L"); let candidates=Object.keys(DB.subjects).filter(s=>t.startsWith(s)); let s=candidates.sort((a,b)=>b.length-a.length)[0]; if(!groups[s])groups[s]=[];groups[s].push(t)});
+ qs("#scope").innerHTML=`<div class="card"><h3 style="margin-top:0">115 年官方評鑑範圍</h3>
+ <p class="small">下列代碼與名稱依 iPAS 115 年 AI 應用規劃師能力鑑定簡章整理。</p>
+ ${Object.keys(DB.subjects).map(s=>`<h4>${subjectLabel(s)}</h4><div>${(groups[s]||[]).map(t=>`<span class="pill">${t} ${esc(DB.topics[t])}</span>`).join("")}</div>`).join("")}
+ <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+ <p><a href="${officialBrochure}" target="_blank" rel="noopener">開啟 115 年官方簡章</a>　｜　<a href="${officialSite}" target="_blank" rel="noopener">iPAS 官方網站</a></p>
+ <div class="notice"><b>中級報考結構：</b>L21「人工智慧技術應用與規劃」為共同科目，另由 L22「大數據處理分析與應用」或 L23「機器學習技術與應用」擇一。若你想兩張中級證書方向都準備，本工具也可以三科全部刷。</div>
+ </div>`;
+}
+
+renderHome();renderPractice();renderExam();renderPastPapers();renderScope();
+</script>
+</body>
+</html>

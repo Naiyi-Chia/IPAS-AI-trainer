@@ -140,6 +140,12 @@ Important gates:
 
 ## Standard development lifecycle
 
+Quick reference:
+
+`Feature → dev → Mobile Dev Human Verify → Release PR → main → Production Smoke`
+
+The full lifecycle is:
+
 ```text
 Issue
 → scoped branch from latest dev

@@ -133,7 +133,8 @@ Feedback / idea
 Important gates:
 
 - Merge to `dev` alone does **not** mean Done.
-- `Ready for Release` requires both Human Verify and integration to `dev`.
+- `Ready for Release` requires integration to `dev` plus Dev Preview Human Verify.
+- The fixed Dev Preview URL is `https://naiyi-chia.github.io/IPAS-AI-trainer/dev/`.
 - User-facing deployable work reaches `Done` only after `main` release and Production Smoke passes.
 - Docs / maintenance work with no production deployment may reach Done after its defined final verification gate.
 
@@ -146,8 +147,9 @@ Issue
 → commit + push
 → ChatGPT diff / scope review
 → Feature PR: scoped branch → dev
-→ Human Verify
+→ Human merge approval
 → merge to dev
+→ Dev Preview Human Verify (/dev/)
 → Ready for Release
 → Release PR: dev → main
 → Human release approval

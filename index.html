@@ -11,23 +11,23 @@
 button,select,input{font:inherit}.app{max-width:1050px;margin:auto;padding:18px 16px 90px}.top{display:flex;align-items:center;gap:12px;margin-bottom:15px}
 .logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center;color:white;font-weight:800}
 h1{font-size:20px;margin:0}.sub{font-size:13px;color:var(--muted);margin-top:3px}.tabs{display:flex;gap:7px;overflow-x:auto;overflow-y:hidden;padding:5px 2px 12px;position:sticky;top:0;background:rgba(246,247,251,.96);backdrop-filter:blur(10px);z-index:5;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}
-.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:999px;cursor:pointer;scroll-snap-align:start;transition:.16s ease}.tab:hover{transform:translateY(-1px);border-color:#c7d2fe}.tab.active{background:#111827;color:white;border-color:#111827;box-shadow:0 4px 12px rgba(17,24,39,.12)}
+.tab{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:999px;cursor:pointer;scroll-snap-align:start;transition:.16s ease;min-height:44px}.tab:hover{transform:translateY(-1px);border-color:#c7d2fe}.tab.active{background:#111827;color:white;border-color:#111827;box-shadow:0 4px 12px rgba(17,24,39,.12)}
 .panel{display:none}.panel.active{display:block}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:0 5px 18px rgba(16,24,40,.045)}
 .c6{grid-column:span 6}.c4{grid-column:span 4}.c8{grid-column:span 8}.c12{grid-column:span 12}
 .kpi{font-size:28px;font-weight:800}.label{font-size:12px;color:var(--muted)}.pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:var(--soft);color:#3730a3;font-size:12px;margin:2px}
-.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.controls select,.controls input{border:1px solid var(--line);background:white;border-radius:10px;padding:9px}
-.btn{border:0;border-radius:11px;padding:10px 14px;cursor:pointer;font-weight:650;min-height:42px;transition:.15s ease}.btn:hover{transform:translateY(-1px)}.primary{background:var(--brand);color:white}.secondary{background:#fff;border:1px solid var(--line)}.danger{background:#fff1f0;color:var(--bad);border:1px solid #fecdca}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.controls select,.controls input{border:1px solid var(--line);background:white;border-radius:10px;padding:9px;min-height:44px}.settingsControls{align-items:flex-end}.field{display:flex;flex-direction:column;gap:5px;flex:1 1 150px;min-width:0}.field label{font-size:12px;font-weight:650;color:var(--muted)}.sessionbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.sessionbar .small{line-height:1.5}
+.btn{border:0;border-radius:11px;padding:10px 14px;cursor:pointer;font-weight:650;min-height:44px;transition:.15s ease}.btn:disabled{cursor:not-allowed;opacity:.45;transform:none}.btn:hover{transform:translateY(-1px)}.primary{background:var(--brand);color:white}.secondary{background:#fff;border:1px solid var(--line)}.danger{background:#fff1f0;color:var(--bad);border:1px solid #fecdca}
 .qmeta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.qtext{font-size:19px;font-weight:700;line-height:1.55;margin:8px 0 14px}
 .option{display:block;width:100%;text-align:left;padding:14px 15px;margin:9px 0;border:1px solid var(--line);background:white;border-radius:13px;cursor:pointer;line-height:1.52;transition:.14s ease}
 .option:hover{border-color:#a5b4fc}.option.selected{border-color:var(--brand);background:#eef2ff}.option.correct{border-color:#6ce9a6;background:#ecfdf3}.option.wrong{border-color:#fda29b;background:#fef3f2}
 .explain{margin-top:14px;padding:13px 14px;border-radius:12px;background:#f8fafc;border:1px solid var(--line);line-height:1.6}.hidden{display:none!important}
 .navrow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px}.progress{height:8px;background:#eaecf0;border-radius:999px;overflow:hidden;margin:10px 0}.progress>div{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
 .examtop{display:flex;justify-content:space-between;gap:12px;align-items:center}.timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:20px}.timer.low{color:var(--bad)}
-.palette{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:12px}.pnum{border:1px solid var(--line);background:white;border-radius:7px;padding:6px 0;font-size:11px;cursor:pointer}.pnum.done{background:#e0e7ff;border-color:#a5b4fc}.pnum.current{outline:2px solid #111827}
+.palette{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:12px}.pnum{border:1px solid var(--line);background:white;border-radius:7px;padding:6px;font-size:12px;cursor:pointer;min-width:44px;min-height:44px}.pnum.done{background:#e0e7ff;border-color:#a5b4fc}.pnum.current{outline:2px solid #111827}
 .topicbar{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:10px 0}.reviewItem{border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}.reviewItem summary{cursor:pointer;padding:13px 14px;font-weight:700;background:#fafafa}.reviewBody{padding:14px;line-height:1.6}.reviewChoice{padding:8px 10px;border-radius:9px;margin:5px 0;background:#f8fafc}.reviewChoice.correct{background:#ecfdf3}.reviewChoice.wrong{background:#fef3f2}.swipehint{display:none;text-align:center;font-size:11px;color:var(--muted);margin:-7px 0 10px}.modebadge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:#f2f4f7;font-size:12px;color:#475467}.bar{height:7px;background:#eaecf0;border-radius:999px;overflow:hidden;flex:1;max-width:240px}.bar i{display:block;height:100%;background:var(--brand)}
 .small{font-size:12px;color:var(--muted)}.feedbackbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.72)}.feedbackbar .copy{font-size:12px;color:var(--muted);line-height:1.45}.feedbackbar .btn{white-space:nowrap}.questionFeedback{display:flex;justify-content:flex-end;margin-top:10px}.questionFeedback .btn{font-size:13px}.notice{background:#fffaeb;border:1px solid #fedf89;border-radius:13px;padding:12px;line-height:1.55}.good{color:var(--ok)}.bad{color:var(--bad)}
 a{color:var(--brand)}.footer{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.6}
-@media(max-width:720px){.c6,.c4,.c8{grid-column:span 12}.app{padding:12px 10px 80px}.feedbackbar{align-items:stretch}.feedbackbar .copy{align-self:center}.feedbackbar .btn{flex:0 0 auto}.qtext{font-size:17px}.palette{grid-template-columns:repeat(8,1fr)}.top{align-items:flex-start}.top .sub{max-width:270px;line-height:1.45}.swipehint{display:block}.controls{align-items:stretch}.controls select{flex:1 1 160px;min-width:0}.controls .btn{flex:1 1 auto}.navrow{align-items:stretch;flex-direction:column}.navrow>div{display:flex;gap:7px}.navrow>div .btn{flex:1}.card{padding:15px;border-radius:16px}.tabs{margin-right:-10px;padding-right:24px}.tab{min-height:42px}.examtop{align-items:flex-start}.reviewItem summary{padding:12px}.footer{padding:0 4px}}
+@media(max-width:720px){.c6,.c4,.c8{grid-column:span 12}.app{padding:12px 10px 80px}.feedbackbar{align-items:stretch}.feedbackbar .copy{align-self:center}.feedbackbar .btn{flex:0 0 auto}.qtext{font-size:17px}.palette{grid-template-columns:repeat(5,minmax(44px,1fr))}.sessionbar{align-items:stretch;flex-direction:column}.sessionbar .btn{width:100%}.settingsControls{align-items:stretch}.field{flex-basis:100%}.top{align-items:flex-start}.top .sub{max-width:270px;line-height:1.45}.swipehint{display:block}.controls{align-items:stretch}.controls select{flex:1 1 160px;min-width:0}.controls .btn{flex:1 1 auto}.navrow{align-items:stretch;flex-direction:column}.navrow>div{display:flex;gap:7px}.navrow>div .btn{flex:1}.card{padding:15px;border-radius:16px}.tabs{margin-right:-10px;padding-right:24px}.tab{min-height:44px}.examtop{align-items:flex-start}.reviewItem summary{padding:12px}.footer{padding:0 4px}}
 </style>
 </head>
 <body>
@@ -154,7 +154,7 @@ const pastPapers = [
   {id:"114-2-L23",level:"中級",year:"114",session:"第二梯次",date:"114/11/08",subject:"L23",name:"機器學習技術與應用",size:"1.43 MB",file:"114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf"}
 ].map(p=>({...p,pdf:officialPdf(p.file)}));
 const state = JSON.parse(localStorage.getItem("ipasAIState") || '{"attempts":{},"wrong":{},"bookmarks":{},"examHistory":[]}');
-let practiceSet=[], pIndex=0, practiceAnswered=false;
+let practiceSet=[], pIndex=0, practiceAnswered=false, practiceSessionAnswered=new Set();
 let examSet=[], eIndex=0, examAnswers={}, examTimer=null, examSeconds=0, examSubmitted=false, lastExamReview=null;
 let pastPaperSet=[], pastIndex=0, pastAnswered=false, pastPaperMeta=null, pdfJsLoading=null;
 
@@ -199,20 +199,24 @@ function practiceFilters(){
 }
 function renderPractice(){
  qs("#practice").innerHTML=`
- <div class="card">
+ <div class="card sessionbar hidden" id="practiceSessionBar">
+   <div><b>本輪練習</b><div class="small" id="practiceSessionSummary"></div></div>
+   <button class="btn secondary" onclick="showPracticeSettings()">調整設定</button>
+ </div>
+ <div class="card" id="practiceSettings">
    <h3 style="margin-top:0">刷題設定</h3>
-   <div class="controls">
-     <select id="plevel"><option>全部</option><option>初級</option><option>中級</option></select>
-     <select id="psubject"><option value="全部">全部科目</option>${Object.keys(DB.subjects).map(k=>`<option value="${k}">${subjectLabel(k)}</option>`).join("")}</select>
-     <select id="pdiff"><option value="全部">全部難度</option><option value="easy">基礎</option><option value="medium">中等</option><option value="hard">進階</option></select>
-     <select id="pmode">
+   <div class="controls settingsControls">
+     <div class="field"><label for="plevel">級別</label><select id="plevel"><option>全部</option><option>初級</option><option>中級</option></select></div>
+     <div class="field"><label for="psubject">科目</label><select id="psubject"><option value="全部">全部科目</option>${Object.keys(DB.subjects).map(k=>`<option value="${k}">${subjectLabel(k)}</option>`).join("")}</select></div>
+     <div class="field"><label for="pdiff">難度</label><select id="pdiff"><option value="全部">全部難度</option><option value="easy">基礎</option><option value="medium">中等</option><option value="hard">進階</option></select></div>
+     <div class="field"><label for="pmode">練習模式</label><select id="pmode">
        <option value="all">全部題目</option>
        <option value="unanswered">只刷未作答</option>
        <option value="wrong">只刷錯題</option>
        <option value="weak">只刷弱項</option>
-     </select>
-     <select id="pcount"><option value="10">10 題</option><option value="20" selected>20 題</option><option value="40">40 題</option><option value="50">50 題</option><option value="all">全部</option></select>
-     <button class="btn primary" onclick="startPractice()">開始</button>
+     </select></div>
+     <div class="field"><label for="pcount">題數</label><select id="pcount"><option value="10">10 題</option><option value="20" selected>20 題</option><option value="40">40 題</option><option value="50">50 題</option><option value="all">全部</option></select></div>
+     <button class="btn primary" onclick="startPractice()">開始練習</button>
    </div>
    <div class="small" style="margin-top:9px">弱項判定：優先找已作答至少 3 題且正確率低於 70% 的能力指標；資料不足時改抓目前正確率最低的主題。</div>
  </div><div id="practiceArea" style="margin-top:12px"></div>`;
@@ -239,6 +243,10 @@ function weakTopicSet(){
   }
   return new Set(weak);
 }
+function showPracticeSettings(){
+ qs("#practiceSettings")?.classList.remove("hidden");
+ qs("#practiceSessionBar")?.classList.add("hidden");
+}
 function startPractice(){
  let lv=qs("#plevel").value, sub=qs("#psubject").value, diff=qs("#pdiff").value, mode=qs("#pmode").value;
  const weak=mode==="weak"?weakTopicSet():new Set();
@@ -249,33 +257,47 @@ function startPractice(){
  if(mode==="unanswered")arr=arr.filter(q=>!state.attempts[q.id]);
  if(mode==="weak")arr=arr.filter(q=>weak.has(q.topic));
  arr=shuffle(arr); let n=qs("#pcount").value; if(n!=="all")arr=arr.slice(0,+n);
- practiceSet=arr;pIndex=0;practiceAnswered=false;
+ practiceSet=arr;pIndex=0;practiceAnswered=false;practiceSessionAnswered=new Set();
  if(!arr.length){
    const msg=mode==="weak"?'目前還沒有足夠的弱項作答資料。先刷一組「全部題目」，之後再回來使用弱項模式。':mode==="wrong"?'目前篩選條件下沒有錯題。':'目前沒有符合這組篩選條件的題目。';
    qs("#practiceArea").innerHTML=`<div class="card"><h3>沒有可刷的題目</h3><p>${msg}</p></div>`;return;
  }
+ const summary=[
+   qs("#plevel").selectedOptions[0]?.textContent,
+   qs("#psubject").selectedOptions[0]?.textContent,
+   qs("#pdiff").selectedOptions[0]?.textContent,
+   qs("#pmode").selectedOptions[0]?.textContent,
+   arr.length+" 題"
+ ].filter(Boolean).join("｜");
+ qs("#practiceSessionSummary").textContent=summary;
+ qs("#practiceSettings").classList.add("hidden");
+ qs("#practiceSessionBar").classList.remove("hidden");
  renderPracticeQ();
 }
 function renderPracticeQ(){
  let a=qs("#practiceArea"); if(!practiceSet.length){a.innerHTML='<div class="card">沒有符合條件的題目。</div>';return}
- let q=practiceSet[pIndex], past=state.attempts[q.id];
+ let q=practiceSet[pIndex], past=state.attempts[q.id], answered=practiceSessionAnswered.size;
  a.innerHTML=`<div class="card">
  <div class="qmeta"><span class="pill">${q.level}</span><span class="pill">${q.subject}</span><span class="pill">${q.topic} ${esc(q.topicName)}</span><span class="pill">${q.difficulty}</span></div>
- <div class="small">第 ${pIndex+1} / ${practiceSet.length} 題　${past?`曾作答：${past.correct?"✓ 正確":"✕ 錯誤"}`:"尚未作答"}</div>
- <div class="progress"><div style="width:${(pIndex+1)/practiceSet.length*100}%"></div></div>
+ <div class="small">第 ${pIndex+1} / ${practiceSet.length} 題　｜　<span id="practiceAnsweredCount">已答 ${answered} / ${practiceSet.length}</span>　｜　<span id="practiceAttemptStatus">${past?`曾作答：${past.correct?"✓ 正確":"✕ 錯誤"}`:"尚未作答"}</span></div>
+ <div class="progress" aria-label="本輪作答進度"><div id="practiceProgressFill" style="width:${practiceSet.length?answered/practiceSet.length*100:0}%"></div></div>
  <div class="qtext">${esc(q.question)}</div>
  <div id="opts">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join("")}</div>
  <div id="pexplain" class="explain hidden"></div>
  <div class="navrow">
    <div><button class="btn secondary" onclick="bookmark('${q.id}')">${state.bookmarks[q.id]?"★ 已收藏":"☆ 收藏"}</button> <button class="btn secondary" onclick="reportPracticeQuestion()">回報此題</button></div>
-   <div><button class="btn secondary" onclick="prevP()">上一題</button> <button class="btn primary" onclick="nextP()">下一題</button></div>
+   <div><button class="btn secondary" onclick="prevP()" ${pIndex===0?"disabled":""}>上一題</button> <button class="btn primary" onclick="nextP()">${pIndex===practiceSet.length-1?"完成這組":"下一題"}</button></div>
  </div></div>`;
  qsa("#opts .option").forEach(b=>b.onclick=()=>answerPractice(+b.dataset.i));
 }
 function answerPractice(i){
- if(practiceAnswered)return; practiceAnswered=true; let q=practiceSet[pIndex],ok=i===q.answer;
+ if(practiceAnswered)return; practiceAnswered=true; let q=practiceSet[pIndex],ok=i===q.answer;practiceSessionAnswered.add(q.id);
  state.attempts[q.id]={correct:ok,last:Date.now(),subject:q.subject,topic:q.topic};
  if(ok) delete state.wrong[q.id]; else state.wrong[q.id]=true; save();
+ const answered=practiceSessionAnswered.size;
+ const countEl=qs("#practiceAnsweredCount");if(countEl)countEl.textContent=`已答 ${answered} / ${practiceSet.length}`;
+ const fill=qs("#practiceProgressFill");if(fill)fill.style.width=`${practiceSet.length?answered/practiceSet.length*100:0}%`;
+ const status=qs("#practiceAttemptStatus");if(status)status.textContent=ok?"本次：✓ 正確":"本次：✕ 錯誤";
  qsa("#opts .option").forEach((b,idx)=>{b.disabled=true;if(idx===q.answer)b.classList.add("correct");if(idx===i&&!ok)b.classList.add("wrong")});
  qs("#pexplain").classList.remove("hidden");
  qs("#pexplain").innerHTML=`<b class="${ok?"good":"bad"}">${ok?"答對了":"答錯了"}｜正解 ${String.fromCharCode(65+q.answer)}</b><br>${esc(q.explanation)}<div class="small" style="margin-top:6px">${esc(q.sourceType)}</div>`;
@@ -286,15 +308,23 @@ function bookmark(id){state.bookmarks[id]=!state.bookmarks[id];if(!state.bookmar
 
 function renderExam(){
  qs("#exam").innerHTML=`
- <div class="card">
+ <div class="card sessionbar hidden" id="examSessionBar">
+   <div><b>本次模擬</b><div class="small" id="examSessionSummary"></div></div>
+   <button class="btn secondary" onclick="showExamSettings()">調整設定</button>
+ </div>
+ <div class="card" id="examSettings">
    <h3 style="margin-top:0">正式模擬</h3>
    <div class="notice"><b>完整模擬預設 50 題：</b>官方近期公告試題每科採 50 題單選題的形式；初級科目計時 75 分鐘、中級 90 分鐘。本工具完整模擬會依能力指標分層抽題，避免 50 題集中在少數主題。</div>
-   <div class="controls" style="margin-top:12px">
-     <select id="esubject">${Object.keys(DB.subjects).map(k=>`<option value="${k}">${subjectLabel(k)}｜${DB.subjects[k].minutes} 分鐘</option>`).join("")}</select>
-     <select id="emode"><option value="50" selected>完整模擬｜50 題</option><option value="40">加強模擬｜40 題</option><option value="20">快速模擬｜20 題</option></select>
+   <div class="controls settingsControls" style="margin-top:12px">
+     <div class="field"><label for="esubject">模擬科目</label><select id="esubject">${Object.keys(DB.subjects).map(k=>`<option value="${k}">${subjectLabel(k)}｜${DB.subjects[k].minutes} 分鐘</option>`).join("")}</select></div>
+     <div class="field"><label for="emode">模擬題數</label><select id="emode"><option value="50" selected>完整模擬｜50 題</option><option value="40">加強模擬｜40 題</option><option value="20">快速模擬｜20 題</option></select></div>
      <button class="btn primary" onclick="startExam()">開始計時模擬</button>
    </div>
  </div><div id="examArea" style="margin-top:12px"></div>`;
+}
+function showExamSettings(){
+ qs("#examSettings")?.classList.remove("hidden");
+ qs("#examSessionBar")?.classList.add("hidden");
 }
 function buildStratifiedExam(pool,n){
   const groups={};
@@ -316,6 +346,9 @@ function startExam(){
  let pool=DB.questions.filter(q=>q.subject===sub);
  examSet=buildStratifiedExam(pool,Math.min(n,pool.length));eIndex=0;examAnswers={};examSubmitted=false;lastExamReview=null;
  examSeconds=DB.subjects[sub].minutes*60;
+ qs("#examSessionSummary").textContent=subjectLabel(sub)+"｜"+examSet.length+" 題｜"+DB.subjects[sub].minutes+" 分鐘";
+ qs("#examSettings").classList.add("hidden");
+ qs("#examSessionBar").classList.remove("hidden");
  examTimer=setInterval(()=>{examSeconds--;updateTimer();if(examSeconds<=0)submitExam(true)},1000);
  renderExamQ();
 }
@@ -328,7 +361,7 @@ function renderExamQ(){
  <div class="progress"><div style="width:${(eIndex+1)/examSet.length*100}%"></div></div>
  <div class="qtext">${esc(q.question)}</div>
  ${q.options.map((o,i)=>`<button class="option ${sel===i?"selected":""}" onclick="examPick(${i})"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join("")}
- <div class="navrow"><button class="btn secondary" onclick="ePrev()">上一題</button><div><button class="btn danger" onclick="submitExam(false)">交卷</button> <button class="btn primary" onclick="eNext()">下一題</button></div></div>
+ <div class="navrow"><button class="btn secondary" onclick="ePrev()" ${eIndex===0?"disabled":""}>上一題</button><div><button class="btn danger" onclick="submitExam(false)">交卷</button> ${eIndex<examSet.length-1?'<button class="btn primary" onclick="eNext()">下一題</button>':'<span class="small">已到最後一題，可檢查後交卷。</span>'}</div></div>
  <div class="questionFeedback"><button class="btn secondary" onclick="reportExamQuestion()">回報此題</button></div>
  <div class="palette">${examSet.map((x,i)=>`<button aria-label="第 ${i+1} 題" class="pnum ${examAnswers[x.id]!==undefined?"done":""} ${i===eIndex?"current":""}" onclick="jumpE(${i})">${i+1}</button>`).join("")}</div>
  </div>`; updateTimer();
@@ -692,8 +725,8 @@ function renderPastQuiz(){
     <div id="pastOpts">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join('')}</div>
     <div id="pastExplain" class="explain hidden"></div>
     <div class="navrow">
-      <div><button class="btn secondary" onclick="pastPrev()">上一題</button> <button class="btn secondary" onclick="reportPastQuestion()">回報此題</button></div>
-      <div><button class="btn secondary" onclick="restartPastQuiz()">重新作答本份</button> <button class="btn primary" onclick="pastNext()">下一題</button></div>
+      <div><button class="btn secondary" onclick="pastPrev()" ${pastIndex===0?"disabled":""}>上一題</button> <button class="btn secondary" onclick="reportPastQuestion()">回報此題</button></div>
+      <div><button class="btn secondary" onclick="restartPastQuiz()">重新作答本份</button> <button class="btn primary" onclick="pastNext()">${pastIndex===pastPaperSet.length-1?"完成這份":"下一題"}</button></div>
     </div>
   </div>`;
   qsa('#pastOpts .option').forEach(b=>b.onclick=()=>answerPast(+b.dataset.i));

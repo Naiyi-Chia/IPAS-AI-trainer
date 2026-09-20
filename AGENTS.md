@@ -116,6 +116,10 @@ Human Verify and release approval are separate gates from agent testing.
 ## Branch and release model
 Default lifecycle:
 
+Quick reference:
+
+`Feature → dev → Mobile Dev Human Verify → Release PR → main → Production Smoke`
+
 ```text
 Issue
 → scoped branch from latest dev
@@ -123,8 +127,9 @@ Issue
 → commit + push
 → ChatGPT diff / scope review
 → Feature PR: scoped branch → dev
-→ Human Verify
+→ Human merge approval
 → merge to dev
+→ Dev Preview Human Verify (/dev/)
 → Ready for Release (Issue remains open)
 → Release PR: dev → main
 → Human release approval

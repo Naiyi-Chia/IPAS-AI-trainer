@@ -210,7 +210,7 @@ const pastPapers = [
   {id:"114-2-L23",level:"中級",year:"114",session:"第二梯次",date:"114/11/08",subject:"L23",name:"機器學習技術與應用",size:"1.43 MB",file:"114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf"}
 ].map(p=>({...p,pdf:officialPdf(p.file)}));
 const state = JSON.parse(localStorage.getItem("ipasAIState") || '{"attempts":{},"wrong":{},"bookmarks":{},"examHistory":[]}');
-let practiceSet=[], pIndex=0, practiceAnswered=false, practiceSessionAnswered=new Set();
+let practiceSet=[], pIndex=0, practiceSessionResults={}, practiceStartedAt=0, practiceSessionSummaryText="";
 let examSet=[], eIndex=0, examAnswers={}, examTimer=null, examSeconds=0, examSubmitted=false, lastExamReview=null;
 let pastPaperSet=[], pastIndex=0, pastAnswered=false, pastPaperMeta=null, pdfJsLoading=null;
 
@@ -303,6 +303,19 @@ function showPracticeSettings(){
  qs("#practiceSettings")?.classList.remove("hidden");
  qs("#practiceSessionBar")?.classList.add("hidden");
 }
+function beginPracticeSession(arr,summary){
+ practiceSet=arr;pIndex=0;practiceSessionResults={};practiceStartedAt=Date.now();practiceSessionSummaryText=summary||`${arr.length} 題`;
+ const summaryEl=qs("#practiceSessionSummary");if(summaryEl)summaryEl.textContent=practiceSessionSummaryText;
+ qs("#practiceSettings")?.classList.add("hidden");
+ qs("#practiceSessionBar")?.classList.remove("hidden");
+ renderPracticeQ();
+}
+function practiceAnsweredCount(){return Object.keys(practiceSessionResults).length}
+function practiceFirstUnansweredIndex(){return practiceSet.findIndex(q=>!practiceSessionResults[q.id])}
+function formatPracticeDuration(ms){
+ const total=Math.max(0,Math.round(ms/1000)),min=Math.floor(total/60),sec=total%60;
+ return min?`${min} 分 ${String(sec).padStart(2,"0")} 秒`:`${sec} 秒`;
+}
 function startPractice(){
  let lv=qs("#plevel").value, sub=qs("#psubject").value, diff=qs("#pdiff").value, mode=qs("#pmode").value;
  const weak=mode==="weak"?weakTopicSet():new Set();
@@ -313,7 +326,6 @@ function startPractice(){
  if(mode==="unanswered")arr=arr.filter(q=>!state.attempts[q.id]);
  if(mode==="weak")arr=arr.filter(q=>weak.has(q.topic));
  arr=shuffle(arr); let n=qs("#pcount").value; if(n!=="all")arr=arr.slice(0,+n);
- practiceSet=arr;pIndex=0;practiceAnswered=false;practiceSessionAnswered=new Set();
  if(!arr.length){
    const msg=mode==="weak"?'目前還沒有足夠的弱項作答資料。先刷一組「全部題目」，之後再回來使用弱項模式。':mode==="wrong"?'目前篩選條件下沒有錯題。':'目前沒有符合這組篩選條件的題目。';
    qs("#practiceArea").innerHTML=`<div class="card"><h3>沒有可刷的題目</h3><p>${msg}</p></div>`;return;
@@ -325,41 +337,95 @@ function startPractice(){
    qs("#pmode").selectedOptions[0]?.textContent,
    arr.length+" 題"
  ].filter(Boolean).join("｜");
- qs("#practiceSessionSummary").textContent=summary;
- qs("#practiceSettings").classList.add("hidden");
- qs("#practiceSessionBar").classList.remove("hidden");
- renderPracticeQ();
+ beginPracticeSession(arr,summary);
 }
 function renderPracticeQ(){
  let a=qs("#practiceArea"); if(!practiceSet.length){a.innerHTML='<div class="card">沒有符合條件的題目。</div>';return}
- let q=practiceSet[pIndex], past=state.attempts[q.id], answered=practiceSessionAnswered.size;
+ let q=practiceSet[pIndex], past=state.attempts[q.id], current=practiceSessionResults[q.id], answered=practiceAnsweredCount();
+ const attemptStatus=current
+   ? `本輪：${current.ok?"✓ 正確":"✕ 錯誤"}`
+   : past?`曾作答：${past.correct?"✓ 正確":"✕ 錯誤"}`:"尚未作答";
  a.innerHTML=`<div class="card">
  <div class="qmeta"><span class="pill">${q.level}</span><span class="pill">${q.subject}</span><span class="pill">${q.topic} ${esc(q.topicName)}</span><span class="pill">${q.difficulty}</span></div>
- <div class="small">第 ${pIndex+1} / ${practiceSet.length} 題　｜　<span id="practiceAnsweredCount">已答 ${answered} / ${practiceSet.length}</span>　｜　<span id="practiceAttemptStatus">${past?`曾作答：${past.correct?"✓ 正確":"✕ 錯誤"}`:"尚未作答"}</span></div>
+ <div class="small">第 ${pIndex+1} / ${practiceSet.length} 題　｜　<span id="practiceAnsweredCount">已答 ${answered} / ${practiceSet.length}</span>　｜　<span id="practiceAttemptStatus">${attemptStatus}</span></div>
  <div class="progress" aria-label="本輪作答進度"><div id="practiceProgressFill" style="width:${practiceSet.length?answered/practiceSet.length*100:0}%"></div></div>
  <div class="qtext">${esc(q.question)}</div>
  <div id="opts">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join("")}</div>
  <div id="pexplain" class="explain hidden"></div>
  <div class="navrow">
    <div><button class="btn secondary" onclick="bookmark('${q.id}')">${state.bookmarks[q.id]?"★ 已收藏":"☆ 收藏"}</button> <button class="btn secondary" onclick="reportPracticeQuestion()">回報此題</button></div>
-   <div><button class="btn secondary" onclick="prevP()" ${pIndex===0?"disabled":""}>上一題</button> <button class="btn primary" onclick="nextP()">${pIndex===practiceSet.length-1?"完成這組":"下一題"}</button></div>
+   <div><button class="btn secondary" onclick="prevP()" ${pIndex===0?"disabled":""}>上一題</button> <button class="btn primary" onclick="nextP()">${pIndex===practiceSet.length-1?"完成本輪":"下一題"}</button></div>
  </div></div>`;
  qsa("#opts .option").forEach(b=>b.onclick=()=>answerPractice(+b.dataset.i));
+ if(current)restorePracticeAnswer(current,q);
+}
+function restorePracticeAnswer(result,q){
+ qsa("#opts .option").forEach((b,idx)=>{
+   b.disabled=true;
+   if(idx===q.answer)b.classList.add("correct");
+   if(idx===result.choice&&!result.ok)b.classList.add("wrong");
+ });
+ const explain=qs("#pexplain");if(!explain)return;
+ explain.classList.remove("hidden");
+ explain.innerHTML=`<b class="${result.ok?"good":"bad"}">${result.ok?"答對了":"答錯了"}｜正解 ${String.fromCharCode(65+q.answer)}</b><br>${esc(q.explanation)}<div class="small" style="margin-top:6px">${esc(q.sourceType)}</div>`;
 }
 function answerPractice(i){
- if(practiceAnswered)return; practiceAnswered=true; let q=practiceSet[pIndex],ok=i===q.answer;practiceSessionAnswered.add(q.id);
+ let q=practiceSet[pIndex];if(practiceSessionResults[q.id])return;
+ const ok=i===q.answer;practiceSessionResults[q.id]={choice:i,ok};
  state.attempts[q.id]={correct:ok,last:Date.now(),subject:q.subject,topic:q.topic};
  if(ok) delete state.wrong[q.id]; else state.wrong[q.id]=true; save();
- const answered=practiceSessionAnswered.size;
+ const answered=practiceAnsweredCount();
  const countEl=qs("#practiceAnsweredCount");if(countEl)countEl.textContent=`已答 ${answered} / ${practiceSet.length}`;
  const fill=qs("#practiceProgressFill");if(fill)fill.style.width=`${practiceSet.length?answered/practiceSet.length*100:0}%`;
- const status=qs("#practiceAttemptStatus");if(status)status.textContent=ok?"本次：✓ 正確":"本次：✕ 錯誤";
- qsa("#opts .option").forEach((b,idx)=>{b.disabled=true;if(idx===q.answer)b.classList.add("correct");if(idx===i&&!ok)b.classList.add("wrong")});
- qs("#pexplain").classList.remove("hidden");
- qs("#pexplain").innerHTML=`<b class="${ok?"good":"bad"}">${ok?"答對了":"答錯了"}｜正解 ${String.fromCharCode(65+q.answer)}</b><br>${esc(q.explanation)}<div class="small" style="margin-top:6px">${esc(q.sourceType)}</div>`;
+ const status=qs("#practiceAttemptStatus");if(status)status.textContent=ok?"本輪：✓ 正確":"本輪：✕ 錯誤";
+ restorePracticeAnswer(practiceSessionResults[q.id],q);
 }
-function nextP(){if(pIndex<practiceSet.length-1){pIndex++;practiceAnswered=false;renderPracticeQ()}else{qs("#practiceArea").innerHTML=`<div class="card"><h3>完成這組練習</h3><p>可到「弱點分析」查看能力指標，或直接改成「只刷弱項／只刷錯題」繼續。</p><button class="btn primary" onclick="startPractice()">依目前條件再抽一組</button></div>`;}}
-function prevP(){if(pIndex>0){pIndex--;practiceAnswered=false;renderPracticeQ()}}
+function nextP(){if(pIndex<practiceSet.length-1){pIndex++;renderPracticeQ()}else{requestFinishPractice()}}
+function prevP(){if(pIndex>0){pIndex--;renderPracticeQ()}}
+function requestFinishPractice(){
+ const unanswered=practiceSet.length-practiceAnsweredCount();
+ if(!unanswered){finishPractice();return}
+ qs("#practiceArea").innerHTML=`<div class="card">
+   <h3 style="margin-top:0">還有 ${unanswered} 題未作答</h3>
+   <p>你可以先回到第一題未作答；若仍要結束，本輪結果會把這些題目列為「未作答」。</p>
+   <div class="controls"><button class="btn primary" onclick="goFirstUnansweredPractice()">回到第一題未答</button><button class="btn secondary" onclick="finishPractice()">仍要結束本輪</button></div>
+ </div>`;
+}
+function goFirstUnansweredPractice(){
+ const idx=practiceFirstUnansweredIndex();if(idx<0){finishPractice();return}
+ pIndex=idx;renderPracticeQ();
+}
+function finishPractice(){
+ const answered=practiceAnsweredCount(),total=practiceSet.length;
+ const results=Object.values(practiceSessionResults),correct=results.filter(x=>x.ok).length,wrong=answered-correct,blank=total-answered;
+ const accuracy=answered?Math.round(correct/answered*100):0;
+ const elapsed=practiceStartedAt?formatPracticeDuration(Date.now()-practiceStartedAt):"—";
+ const hasWrong=wrong>0;
+ qs("#practiceArea").innerHTML=`<div class="card">
+   <h3 id="practiceResultTitle" tabindex="-1" style="margin-top:0">本輪結果</h3>
+   <div class="grid" style="margin-top:8px">
+     <div class="card c4"><div class="label">答對</div><div class="kpi">${correct}</div></div>
+     <div class="card c4"><div class="label">答錯</div><div class="kpi">${wrong}</div></div>
+     <div class="card c4"><div class="label">未作答</div><div class="kpi">${blank}</div></div>
+     <div class="card c4"><div class="label">已答</div><div class="kpi">${answered} / ${total}</div></div>
+     <div class="card c4"><div class="label">作答正確率</div><div class="kpi">${accuracy}%</div></div>
+     <div class="card c4"><div class="label">本輪時間</div><div class="kpi" style="font-size:20px">${elapsed}</div></div>
+   </div>
+   <p class="small">統計只計算這一輪的作答；未作答不納入「作答正確率」分母。</p>
+   <div class="controls">${hasWrong?'<button class="btn primary" onclick="retryPracticeMistakes()">重練本輪錯題</button>':''}<button class="btn ${hasWrong?"secondary":"primary"}" onclick="resetPracticeRound()">再開一輪</button></div>
+ </div>`;
+ setTimeout(()=>qs("#practiceResultTitle")?.focus(),0);
+}
+function retryPracticeMistakes(){
+ const retry=practiceSet.filter(q=>practiceSessionResults[q.id]&&!practiceSessionResults[q.id].ok);
+ if(!retry.length){resetPracticeRound();return}
+ beginPracticeSession(retry,`重練本輪錯題｜${retry.length} 題`);
+}
+function resetPracticeRound(){
+ practiceSet=[];pIndex=0;practiceSessionResults={};practiceStartedAt=0;practiceSessionSummaryText="";
+ renderPractice();
+ setTimeout(()=>qs("#plevel")?.focus(),0);
+}
 function bookmark(id){state.bookmarks[id]=!state.bookmarks[id];if(!state.bookmarks[id])delete state.bookmarks[id];save();renderPracticeQ()}
 
 function renderExam(){
@@ -823,10 +889,10 @@ function renderWrong(){
   ${qsx.length?qsx.slice(0,120).map(q=>`<div class="topicbar"><div><b>${esc(q.id)}</b> ${esc(q.question)}<div class="small">${esc(q.subject||'')}｜${esc(q.topic||'')} ${esc(q.topicName||'')}</div></div></div>`).join(""):"目前沒有錯題。"}</div>`;
 }
 function startWrongPractice(){
-  const ids=Object.keys(state.wrong);
-  practiceSet=shuffle(ids.map(getQuestionById).filter(Boolean));
-  if(!practiceSet.length)return;
-  switchPanel("practice");pIndex=0;practiceAnswered=false;renderPracticeQ();
+  const ids=Object.keys(state.wrong),arr=shuffle(ids.map(getQuestionById).filter(Boolean));
+  if(!arr.length)return;
+  switchPanel("practice");renderPractice();
+  beginPracticeSession(arr,`錯題本｜${arr.length} 題`);
 }
 
 function renderStats(){

@@ -1,6 +1,6 @@
 # GitHub Project Workflow — IPAS AI Trainer
 
-This document defines the target GitHub Project configuration for IPAS AI Trainer, aligned with the workflow currently used by PMP Trainer.
+This document defines the target GitHub Project configuration for IPAS AI Trainer according to AI Product Development Playbook v1.1.
 
 > Note: GitHub Project (Projects v2) fields are account-level project metadata and are not currently exposed by the connected GitHub actions available in ChatGPT. The configuration below is therefore the verification target and manual setup checklist.
 
@@ -8,8 +8,12 @@ This document defines the target GitHub Project configuration for IPAS AI Traine
 
 ```text
 main = production / GitHub Pages deploy
-dev  = integration
+dev  = integration + staging / Dev Preview
 ```
+
+Fixed Dev Preview:
+
+`https://naiyi-chia.github.io/IPAS-AI-trainer/dev/`
 
 All normal implementation work starts from the latest `dev` on an Issue-scoped branch.
 
@@ -43,10 +47,33 @@ Definitions:
 - **Inbox** — recorded but not fully triaged / specified.
 - **Ready** — Issue has clear Goal / Scope / Acceptance Criteria and can be handed to an Engineering Agent.
 - **In Progress** — implementation is active.
-- **Review** — code / diff / scope review is in progress.
-- **Verify** — Human functional / UX verification is in progress.
-- **Ready for Release** — Human Verify passed and feature has been integrated into `dev`; Issue remains open.
+- **Review** — implementation is complete or nearly complete; ChatGPT Technical Review / PR review and Integration Approval are in progress.
+- **Verify** — change is integrated into `dev` and Human Product Verify is in progress on the fixed Dev Preview.
+- **Ready for Release** — change is integrated into `dev` and Human Product Verify passed; Issue remains open.
 - **Done** — production / final verification gate passed and Issue may be closed.
+
+## Human Gates
+
+There are three separate Human Gates:
+
+1. **Integration Approval**
+   - Before Feature PR merge to `dev`.
+   - Approves the reviewed change entering the integration / staging environment.
+   - Does not mean Product Acceptance.
+
+2. **Product Verify**
+   - After merge to `dev`.
+   - Performed on the fixed Dev Preview.
+   - Covers UX, functionality, mobile / target-browser behavior, Acceptance Criteria, and integration behavior.
+   - Failure returns the work to fix → review → integration → verify.
+
+3. **Release Approval**
+   - On the Release PR from `dev` to `main`.
+   - Approves releasing the verified `dev` state to production.
+
+Key rule:
+
+`merge to dev` ≠ Product Verify passed ≠ Ready for Release.
 
 ## Deployment
 
@@ -96,6 +123,7 @@ v1.0
 ## Recommended Views
 
 ### Current Work
+
 Filter Status to:
 
 ```text
@@ -107,6 +135,7 @@ Ready for Release
 ```
 
 ### Inbox / Backlog
+
 Filter Status to:
 
 ```text
@@ -115,6 +144,7 @@ Ready
 ```
 
 ### Release
+
 Group by `Release / Version`.
 
 ## State transitions
@@ -130,43 +160,51 @@ Feedback / idea
 → Done
 ```
 
-Important gates:
+State meanings across the release flow:
 
-- Merge to `dev` alone does **not** mean Done.
-- `Ready for Release` requires integration to `dev` plus Dev Preview Human Verify.
-- The fixed Dev Preview URL is `https://naiyi-chia.github.io/IPAS-AI-trainer/dev/`.
-- User-facing deployable work reaches `Done` only after `main` release and Production Smoke passes.
+- **Review** covers Technical Review, Feature PR review, and waiting for Integration Approval.
+- After Integration Approval and merge to `dev`, move to **Verify**.
+- After Human Product Verify passes, move to **Ready for Release**.
+- Keep the Issue open through release.
+- Move to **Done** only after `main` release and Production Smoke passes.
 - Docs / maintenance work with no production deployment may reach Done after its defined final verification gate.
 
 ## Standard development lifecycle
 
 Quick reference:
 
-`Feature → dev → Mobile Dev Human Verify → Release PR → main → Production Smoke`
+`Feature → Technical Review → Integration Approval → dev → Dev Preview → Product Verify → Ready for Release → Release PR → Release Approval → main → Production Smoke`
 
-The full lifecycle is:
+Full lifecycle:
 
 ```text
 Issue
 → scoped branch from latest dev
 → implementation + local/browser QA
 → commit + push
-→ ChatGPT diff / scope review
+→ ChatGPT Technical Review
 → Feature PR: scoped branch → dev
-→ Human merge approval
+→ Human Integration Approval
 → merge to dev
-→ Dev Preview Human Verify (/dev/)
+→ Dev Preview / staging
+→ Human Product Verify
 → Ready for Release
 → Release PR: dev → main
-→ Human release approval
+→ ChatGPT Release Review
+→ Human Release Approval
 → merge to main
 → Production Smoke
 → Done / Close Issue
 ```
 
+Feature PRs may use squash merge. Release PRs should normally use a normal merge so `dev` ancestry is preserved.
+
+After a release, sync `dev` to the latest `main` with a fast-forward when safe. If it cannot fast-forward, inspect branch history first; never force blindly.
+
 ## Manual verification checklist
 
 - [ ] Project contains Status field with all seven states.
+- [ ] Status descriptions match the v1.1 semantics above.
 - [ ] Deployment is a separate field with Dev / Production (if useful for the board).
 - [ ] Priority contains P0 / P1 / P2 / P3.
 - [ ] Type contains Bug / Feature / UX / Question / Maintenance / Docs.

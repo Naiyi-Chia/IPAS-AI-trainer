@@ -8,8 +8,8 @@ IPAS AI Trainer is a single-page, static iPAS AI 應用規劃師 practice tool p
 - No build system or framework is currently required.
 - UI copy is primarily Traditional Chinese (Taiwan usage).
 - `main` is the production / deploy branch.
-- `dev` is the integration branch.
-- Cross-project workflow follows the same AI Product Development Playbook pattern used by `Naiyi-Chia/pmp-trainer`.
+- `dev` is the integration + staging / Dev Preview branch.
+- Cross-project workflow follows the canonical AI Product Development Playbook v1.1 in `Naiyi-Chia/naiyi-product-playbook`.
 
 ## Source of Truth
 The GitHub Issue is the Source of Truth for each development task.
@@ -107,32 +107,53 @@ Unless explicitly authorized by the human, an Engineering Agent must not indepen
 - merge into `dev`;
 - merge into `main`;
 - close the Issue;
-- declare Human Verify complete;
+- declare Product Verify complete;
 - make a release decision;
 - claim the production site is verified.
 
-Human Verify and release approval are separate gates from agent testing.
+There are three separate Human Gates:
+
+1. **Integration Approval**
+   - Happens before Feature PR merge to `dev`.
+   - Means the change has completed the required technical review and may enter the integration / staging environment.
+   - It is not Product Acceptance.
+
+2. **Product Verify**
+   - Happens after the change is integrated into `dev`.
+   - Must verify the integrated Dev Preview for UX, functional behavior, mobile / target browser behavior, Acceptance Criteria, and integration behavior.
+   - A failed Product Verify keeps the Issue open and requires another fix → review → integration → verify loop.
+
+3. **Release Approval**
+   - Happens on the Release PR from `dev` to `main`.
+   - Means the human approves releasing the verified `dev` state to production.
+
+Merge to `dev` does not mean Product Verify passed and does not mean Ready for Release.
+
+Ready for Release requires:
+- the change is integrated into `dev`; and
+- Human Product Verify passed.
 
 ## Branch and release model
 Default lifecycle:
 
 Quick reference:
 
-`Feature → dev → Mobile Dev Human Verify → Release PR → main → Production Smoke`
+`Feature → Technical Review → Integration Approval → dev → Dev Preview → Product Verify → Release PR → Release Approval → main → Production Smoke`
 
 ```text
 Issue
 → scoped branch from latest dev
 → implementation + local/browser QA
 → commit + push
-→ ChatGPT diff / scope review
+→ ChatGPT Technical Review
 → Feature PR: scoped branch → dev
-→ Human merge approval
+→ Human Integration Approval
 → merge to dev
-→ Dev Preview Human Verify (/dev/)
+→ Dev Preview / staging (/dev/)
+→ Human Product Verify
 → Ready for Release (Issue remains open)
 → Release PR: dev → main
-→ Human release approval
+→ Human Release Approval
 → merge to main
 → Production Smoke
 → Done / Close Issue

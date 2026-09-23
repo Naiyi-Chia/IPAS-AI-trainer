@@ -9,7 +9,7 @@ IPAS AI Trainer is a single-page, static iPAS AI 應用規劃師 practice tool p
 - UI copy is primarily Traditional Chinese (Taiwan usage).
 - `main` is the production / deploy branch.
 - `dev` is the integration + staging / Dev Preview branch.
-- Cross-project workflow follows the canonical AI Product Development Playbook v1.2 in `Naiyi-Chia/naiyi-product-playbook`.
+- Cross-project workflow follows the canonical AI Product Development Playbook v1.4 in `Naiyi-Chia/naiyi-product-playbook`.
 
 ## Source of Truth
 The GitHub Issue is the Source of Truth for each development task.
@@ -26,12 +26,12 @@ Do not keep requirement changes only in chat, commit messages, PR comments, or h
 ## Before making changes
 1. Confirm the repository root.
 2. Fetch origin.
-3. Switch to `dev` and update from `origin/dev`.
-4. Confirm the working tree is clean.
-5. Read the relevant GitHub Issue.
+3. Read the relevant GitHub Issue and determine the explicit integration strategy.
+4. By default, switch to `dev` and update from `origin/dev`. If the Parent Issue has Human-approved the canonical Optional Epic Integration Branch pattern, use the named Epic Integration Branch as the implementation baseline instead.
+5. Confirm the working tree is clean.
 6. Read this `AGENTS.md`.
 7. Read `PROJECT_CONTEXT.md` for stable project context.
-8. Create a scoped branch from the latest `dev`, for example:
+8. Create a scoped branch from the correct baseline, for example:
    - `feat/issue-N-short-name`
    - `fix/issue-N-short-name`
    - `ux/issue-N-short-name`
@@ -130,10 +130,12 @@ Unless explicitly authorized by the human, an Engineering Agent must not indepen
 - make a release decision;
 - claim the production site is verified.
 
-There are three separate Human Gates:
+There are three canonical Human Gates:
 
 1. **Integration Approval**
-   - Happens before Feature PR merge to `dev`.
+   - Happens before a reviewed change enters `dev`.
+   - In the default flow, this is before Feature PR merge to `dev`.
+   - For an approved Epic Integration Branch, this is the final Human Gate before the Epic Integration Branch PR merges to `dev`.
    - Means the change has completed the required technical review and may enter the integration / staging environment.
    - It is not Product Acceptance.
 
@@ -152,8 +154,31 @@ Ready for Release requires:
 - the change is integrated into `dev`; and
 - Human Product Verify passed.
 
+### Optional Epic Integration Branch authorization
+
+The canonical Playbook v1.4 allows an **Optional Epic Integration Branch** for a large initiative made of multiple highly related Sub-issues that need to accumulate into one coherent result before entering shared `dev`.
+
+This pattern is an explicit exception, not the default.
+
+- ChatGPT may identify the pattern as a candidate, but must not enable it without a clear Human decision.
+- The Human decision, epic branch identity, sequencing / checkpoint strategy, and final integration plan belong in the **Parent Issue**.
+- Each **Sub-issue** keeps its own Goal / Scope / Acceptance Criteria and must state its explicit base / target branch.
+- A Sub-issue scoped branch starts from the latest named Epic Integration Branch and its PR targets that Epic Integration Branch.
+- Every Sub-issue still requires Engineering QA and independent ChatGPT Technical Review.
+- Before a reviewed Sub-issue PR merges to the Epic Integration Branch, require **Human Epic Integration Approval**.
+- Epic Integration Approval is an additional lightweight authorization. It is **not** canonical Integration Approval and does not replace any of the three Human Gates.
+- Human aggregate checkpoint reviews may be used at meaningful phases or when accumulated risk / conflict exposure warrants them. A checkpoint review is **not Product Verify**.
+- The Epic Integration Branch should sync latest `dev` at meaningful checkpoints and **must** sync current `dev` before final integration, followed by aggregate regression / conflict checks.
+- Do not arbitrarily rewrite shared epic-branch history. If branches diverge or conflict, inspect history first; do not blind force or rebase.
+- The Epic Integration Branch is not staging or production. Do not declare canonical Product Verify on it.
+- Final integration must still follow: Epic Integration Branch → PR to `dev` → Human Integration Approval → merge to `dev` → Dev Preview → Human Product Verify → Ready for Release → Release PR `dev → main` → Human Release Approval → Production Smoke.
+- Keep initiative-specific branch names and full initiative contracts out of `AGENTS.md`; store them in the Parent Issue / Sub-issues.
+
 ## Branch and release model
-Default lifecycle:
+
+### Default lifecycle
+
+The default path remains:
 
 Quick reference:
 
@@ -179,6 +204,34 @@ Issue
 → Done / Close Issue
 ```
 
-Feature PRs may use squash merge. Release PRs should normally use a normal merge so `dev` ancestry is preserved.
+### Optional Epic Integration Branch lifecycle
+
+Use this only when the Parent Issue contains the explicit Human decision enabling it.
+
+```text
+Parent Issue enables Epic Integration Branch
+→ Sub-issue scoped branch from latest Epic Integration Branch
+→ implementation + local/browser QA
+→ Engineering Ready for Review
+→ ChatGPT Technical Review
+→ Sub-issue PR: scoped branch → Epic Integration Branch
+→ Human Epic Integration Approval
+→ merge to Epic Integration Branch
+→ aggregate checkpoints / dev sync as needed
+→ final aggregate QA + sync current dev
+→ PR: Epic Integration Branch → dev
+→ Human Integration Approval
+→ merge to dev
+→ Dev Preview / staging
+→ Human Product Verify
+→ Ready for Release
+→ Release PR: dev → main
+→ Human Release Approval
+→ merge to main
+→ Production Smoke
+→ Done / Close Issue
+```
+
+Feature and Sub-issue PRs may use squash merge. Release PRs should normally use a normal merge so `dev` ancestry is preserved.
 
 After a release, sync `dev` to the latest `main` with a fast-forward when safe. If it cannot fast-forward, inspect branch history first; never force blindly.

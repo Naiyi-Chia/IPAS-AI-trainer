@@ -23,7 +23,7 @@ The product supports practice, mock exam, official past-paper, wrong-question, w
 
 Use the following hierarchy when deciding what to trust:
 
-1. **Canonical cross-project workflow** — `Naiyi-Chia/naiyi-product-playbook`, AI Product Development Playbook v1.1.
+1. **Canonical cross-project workflow** — `Naiyi-Chia/naiyi-product-playbook`, AI Product Development Playbook v1.2.
 2. **GitHub Issue** — task-level Source of Truth for Goal, Scope, Expected Behavior, Constraints, and Acceptance Criteria.
 3. **AGENTS.md** — repository execution rules and agent guardrails.
 4. **docs/GITHUB_PROJECT_WORKFLOW.md** — IPAS-specific mapping of the workflow to GitHub Project states / fields.
@@ -48,6 +48,7 @@ Feedback / Requirement
 → scoped branch from latest dev
 → implementation + local/browser QA
 → commit + push
+→ Engineering Ready for Review Issue comment (or handoff fallback)
 → ChatGPT Technical Review
 → Feature PR: scoped branch → dev
 → Human Integration Approval

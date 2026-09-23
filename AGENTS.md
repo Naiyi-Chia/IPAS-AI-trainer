@@ -9,7 +9,7 @@ IPAS AI Trainer is a single-page, static iPAS AI 應用規劃師 practice tool p
 - UI copy is primarily Traditional Chinese (Taiwan usage).
 - `main` is the production / deploy branch.
 - `dev` is the integration + staging / Dev Preview branch.
-- Cross-project workflow follows the canonical AI Product Development Playbook v1.1 in `Naiyi-Chia/naiyi-product-playbook`.
+- Cross-project workflow follows the canonical AI Product Development Playbook v1.2 in `Naiyi-Chia/naiyi-product-playbook`.
 
 ## Source of Truth
 The GitHub Issue is the Source of Truth for each development task.
@@ -30,13 +30,14 @@ Do not keep requirement changes only in chat, commit messages, PR comments, or h
 4. Confirm the working tree is clean.
 5. Read the relevant GitHub Issue.
 6. Read this `AGENTS.md`.
-7. Create a scoped branch from the latest `dev`, for example:
+7. Read `PROJECT_CONTEXT.md` for stable project context.
+8. Create a scoped branch from the latest `dev`, for example:
    - `feat/issue-N-short-name`
    - `fix/issue-N-short-name`
    - `ux/issue-N-short-name`
    - `question/issue-N-short-name`
    - `maint/issue-N-short-name`
-8. Inspect the existing implementation before editing; do not duplicate existing behavior.
+9. Inspect the existing implementation before editing; do not duplicate existing behavior.
 
 ## Editing rules
 - Keep changes scoped to the Issue. Avoid unrelated refactors.
@@ -86,10 +87,19 @@ When implementation is complete:
 3. Run `git diff --check`.
 4. Commit the scoped change.
 5. Push the feature branch.
+6. If GitHub Issue-comment permission is available, post the completion report to the task Issue using the marker `<!-- engineering-ready-for-review -->`. If Issue commenting is unavailable, report the same information in the current handoff channel.
 
-By default, stop after push and report back. Do not open a PR unless the human explicitly authorizes it.
+By default, stop after the completion report. Do not open a PR unless the human explicitly authorizes it.
 
 ## Completion report
+Preferred location: the task GitHub Issue, when write permission is available.
+
+Use this marker:
+
+```html
+<!-- engineering-ready-for-review -->
+```
+
 Report:
 - Issue number.
 - Branch name.
@@ -100,6 +110,15 @@ Report:
 - Tests / browser QA performed and results.
 - Known limitations or follow-up work.
 - Final `git status` / working-tree state.
+- Remote-sync state.
+
+The completion report is implementation evidence / handoff status only. It does not change requirements or Acceptance Criteria. If Scope, Expected Behavior, or Acceptance Criteria changed, update the Issue first.
+
+Posting the completion report does not authorize opening a PR, merging, closing the Issue, declaring Product Verify complete, or releasing.
+
+A GitHub Issue comment does not automatically send a message into an existing ChatGPT conversation. It creates a shared handoff that ChatGPT can retrieve later, so the human can use a short request such as `review #N` instead of copying the full report.
+
+If the agent cannot comment on the GitHub Issue, use the same completion-report content in the current handoff channel.
 
 ## Human gates
 Unless explicitly authorized by the human, an Engineering Agent must not independently:
@@ -138,13 +157,14 @@ Default lifecycle:
 
 Quick reference:
 
-`Feature → Technical Review → Integration Approval → dev → Dev Preview → Product Verify → Release PR → Release Approval → main → Production Smoke`
+`Feature → Engineering Ready for Review → Technical Review → Integration Approval → dev → Dev Preview → Product Verify → Release PR → Release Approval → main → Production Smoke`
 
 ```text
 Issue
 → scoped branch from latest dev
 → implementation + local/browser QA
 → commit + push
+→ Engineering Ready for Review Issue comment (or handoff fallback)
 → ChatGPT Technical Review
 → Feature PR: scoped branch → dev
 → Human Integration Approval

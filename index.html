@@ -648,7 +648,8 @@ function renderExamReview(filter='all'){
 }
 
 function getPastCache(){
-  try{return JSON.parse(localStorage.getItem("ipasOfficialPastCacheV2")||"{}")}catch(e){return {}}
+  // Rebuild derived content from older parsers; user attempts/bookmarks are stored separately.
+  try{return Object.fromEntries(Object.entries(JSON.parse(localStorage.getItem("ipasOfficialPastCacheV2")||"{}")).filter(([,p])=>p?.meta?.contentVersion===1))}catch(e){return {}}
 }
 function savePastCache(cache){
   try{localStorage.setItem("ipasOfficialPastCacheV2",JSON.stringify(cache))}catch(e){console.warn("考古題快取寫入失敗",e)}
@@ -788,7 +789,7 @@ async function prewarmOfficialCache(){
 }
 
 function cleanMirrorQuestion(text,n){
-  let s=String(text||'').normalize('NFKC').replace(/[\u00ad\u200b\ufeff]/g,'').replace(/\s+/g,' ').trim();
+  let s=cleanOfficialPageFurniture(text).replace(/\s+/g,' ').trim();
   // 公開轉檔的 PDF 文字層偶爾把原題號插進中文字中，例如「主要用5.來」。只移除「中文 + 本題號 + . + 中文/括號」型態，避免誤傷 0.5 等小數。
   try{
     const re=new RegExp(`(?<=[\\u4e00-\\u9fff）)])${n}\\.(?=[\\u4e00-\\u9fff（(]|$)`,'g');
@@ -804,7 +805,7 @@ async function loadPaperFromStructuredMirror(paper){
   if(rows.length<45)throw new Error(`結構化題庫只找到 ${rows.length} 題，未達完整考卷門檻`);
   const questions=rows.slice(0,50).map((r,i)=>{
     const n=i+1; const letters=['A','B','C','D'];
-    const options=letters.map(k=>String(r.options?.[k]??'').normalize('NFKC').replace(/\s+/g,' ').trim());
+    const options=letters.map(k=>cleanOfficialPageFurniture(r.options?.[k]).replace(/\s+/g,' ').trim());
     return {
       id:`PAST-${paper.id}-${n}`,number:n,level:paper.level,subject:paper.subject,
       topic:`PAST-${paper.year}-${paper.session}`,topicName:`${paper.year} 年 ${paper.session} ${paper.name}`,
@@ -815,7 +816,7 @@ async function loadPaperFromStructuredMirror(paper){
       sourceType:'iPAS 官方公告試題（結構化轉檔；答案以官方公告核對）'
     };
   }).filter(q=>q.answer>=0 && q.options.length===4);
-  return {meta:{paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf,source:'structured-mirror'},questions};
+  return {meta:{paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf,source:'structured-mirror',contentVersion:1},questions};
 }
 
 async function fetchPaperText(paper){
@@ -883,20 +884,21 @@ function allCachedOfficialQuestions(){
   return Object.values(cache).flatMap(x=>x?.questions||[]);
 }
 
-function parseOfficialPastPaper(rawText,fileName){
+function cleanOfficialPageFurniture(rawText){
   let text=String(rawText||'').normalize('NFKC').replace(/\r/g,'\n').replace(/[\u00ad\u200b\ufeff]/g,'');
-  text=text.replace(/<br\s*\/?\s*>/gi,'\n').replace(/\|/g,' ').replace(/^#{1,6}\s*/gm,'');
-  const meta={title:fileName.replace(/\.pdf$/i,''), fileName};
+  // Match complete publication headers, not subject names or dates inside a question.
+  // NFKC converts ：／， to ASCII; PDF glyph runs can split words and digits with spaces.
+  text=text.replace(/1\s*\d\s*\d\s*年\s*第\s*[一二三四]\s*次\s*AI\s*應用規劃師\s*-\s*[初中]級\s*能力鑑定\s*【\s*公\s*告\s*試\s*題\s*】\s*第\s*[一二三]\s*科\s*:\s*[^\n]*?\s*考試日期\s*:\s*[\d\s]+年\s*[\d\s]+月\s*[\d\s]+日(?:\s*試\s*題\s*公告\s*日期\s*:\s*[\d\s]+年\s*[\d\s]+月\s*[\d\s]+日)?/g,'\n');
+  text=text.replace(/第\s*\d+\s*頁\s*,?\s*共\s*\d+\s*頁/g,'\n');
+  text=text.replace(/答\s*案\s*題\s*目|答\s*題\s*目\s*案/g,'');
+  text=text.replace(/^[ \t]*一、\s*選擇題[ \t]*$/gm,'');
+  return text;
+}
 
-  // remove common headers / footers repeatedly seen in official PDFs
-  text=text.replace(/\s*第\s*\d+\s*頁\s*，?共\s*\d+\s*頁\s*/g,' ');
-  text=text.replace(/考試日期：[^\n]+/g,' ');
-  text=text.replace(/答案\s*題目/g,' ');
-  text=text.replace(/一、\s*選擇題/g,' ');
-  text=text.replace(/115\s*年[^\n]*?公告試題/g,' ');
-  text=text.replace(/114\s*年[^\n]*?公告試題/g,' ');
-  text=text.replace(/第[一二三]科：[^\n]+/g,' ');
-  text=text.replace(/AI\s*應用規劃師[^\n]*/g, m => (/\([初中]級\)/.test(m) ? m : ' '));
+function parseOfficialPastPaper(rawText,fileName){
+  let text=String(rawText||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/\|/g,' ').replace(/^#{1,6}\s*/gm,'');
+  text=cleanOfficialPageFurniture(text);
+  const meta={title:fileName.replace(/\.pdf$/i,''),fileName,contentVersion:1};
   text=text.replace(/\n{2,}/g,'\n');
   text=text.replace(/[ \t]{2,}/g,' ');
 

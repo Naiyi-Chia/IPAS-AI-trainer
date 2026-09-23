@@ -1,6 +1,6 @@
 # GitHub Project Workflow — IPAS AI Trainer
 
-This document defines the target GitHub Project configuration for IPAS AI Trainer according to AI Product Development Playbook v1.1.
+This document defines the target GitHub Project configuration for IPAS AI Trainer according to AI Product Development Playbook v1.2.
 
 > Note: GitHub Project (Projects v2) fields are account-level project metadata and are not currently exposed by the connected GitHub actions available in ChatGPT. The configuration below is therefore the verification target and manual setup checklist.
 
@@ -173,7 +173,7 @@ State meanings across the release flow:
 
 Quick reference:
 
-`Feature → Technical Review → Integration Approval → dev → Dev Preview → Product Verify → Ready for Release → Release PR → Release Approval → main → Production Smoke`
+`Feature → Engineering Ready for Review → Technical Review → Integration Approval → dev → Dev Preview → Product Verify → Ready for Release → Release PR → Release Approval → main → Production Smoke`
 
 Full lifecycle:
 
@@ -182,6 +182,7 @@ Issue
 → scoped branch from latest dev
 → implementation + local/browser QA
 → commit + push
+→ Engineering Ready for Review Issue comment (or handoff fallback)
 → ChatGPT Technical Review
 → Feature PR: scoped branch → dev
 → Human Integration Approval
@@ -204,7 +205,7 @@ After a release, sync `dev` to the latest `main` with a fast-forward when safe. 
 ## Manual verification checklist
 
 - [ ] Project contains Status field with all seven states.
-- [ ] Status descriptions match the v1.1 semantics above.
+- [ ] Status descriptions match the v1.2 semantics above.
 - [ ] Deployment is a separate field with Dev / Production (if useful for the board).
 - [ ] Priority contains P0 / P1 / P2 / P3.
 - [ ] Type contains Bug / Feature / UX / Question / Maintenance / Docs.

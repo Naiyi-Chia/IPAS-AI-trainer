@@ -23,7 +23,7 @@ The product supports practice, mock exam, official past-paper, wrong-question, w
 
 Use the following hierarchy when deciding what to trust:
 
-1. **Canonical cross-project workflow** — `Naiyi-Chia/naiyi-product-playbook`, AI Product Development Playbook v1.2.
+1. **Canonical cross-project workflow** — `Naiyi-Chia/naiyi-product-playbook`, AI Product Development Playbook v1.4.
 2. **GitHub Issue** — task-level Source of Truth for Goal, Scope, Expected Behavior, Constraints, and Acceptance Criteria.
 3. **AGENTS.md** — repository execution rules and agent guardrails.
 4. **docs/GITHUB_PROJECT_WORKFLOW.md** — IPAS-specific mapping of the workflow to GitHub Project states / fields.
@@ -35,12 +35,16 @@ If a task requirement changes, update the GitHub Issue first. Do not treat chat,
 
 - `main` = production / deploy boundary.
 - `dev` = integration + staging / fixed Dev Preview environment.
-- Scoped implementation branches are created from the latest `dev`.
+- Normal scoped implementation branches are created from the latest `dev`.
+- When a Parent Issue has a Human-approved Optional Epic Integration Branch, its Sub-issue branches may instead start from the latest named Epic Integration Branch and target that branch for accumulation before final integration to `dev`.
+- An Epic Integration Branch is not staging or production and cannot receive canonical Product Verify.
 - Feature / fix / UX / question / maintenance work should not be implemented directly on `main`.
 
 The fixed Dev Preview loads the current public `dev/index.html`, allowing integrated Human Product Verify before release to `main`.
 
 ## Standard Lifecycle
+
+The default lifecycle remains:
 
 ```text
 Feedback / Requirement
@@ -64,6 +68,34 @@ Feedback / Requirement
 → Done / Close Issue
 ```
 
+For a Human-enabled Optional Epic Integration Branch initiative:
+
+```text
+Parent Issue enables Epic Integration Branch
+→ Sub-issue scoped branch from latest Epic Integration Branch
+→ implementation + QA
+→ Engineering Ready for Review
+→ ChatGPT Technical Review
+→ Sub-issue PR → Epic Integration Branch
+→ Human Epic Integration Approval
+→ merge / aggregate checkpoints
+→ sync current dev + aggregate QA
+→ Epic Integration Branch PR → dev
+→ Human Integration Approval
+→ merge to dev
+→ Dev Preview / staging
+→ Human Product Verify
+→ Ready for Release
+→ Release PR: dev → main
+→ ChatGPT Release Review
+→ Human Release Approval
+→ merge to main
+→ Production Smoke
+→ Done / Close Issue
+```
+
+Epic Integration Branch is an optional exception, not a replacement for `dev`. The Human decision and initiative-specific branch identity / sequencing belong in the Parent Issue; each Sub-issue retains its own Scope / Acceptance Criteria and explicit base / target branch.
+
 Key rule:
 
 `merge to dev` ≠ Product Verify passed ≠ Ready for Release.
@@ -79,6 +111,8 @@ Ready for Release requires both:
 3. **Release Approval** — approves promoting the verified `dev` state to `main`.
 
 Engineering Agent testing, ChatGPT review, and Human Product Verify are separate responsibilities.
+
+For an enabled Epic Integration Branch, **Human Epic Integration Approval** is an additional lightweight authorization before a reviewed Sub-issue PR merges into the epic branch. It is not one of the three canonical Human Gates and does not replace final Integration Approval into `dev`, Product Verify, or Release Approval.
 
 ## IPAS-Specific Content Guardrails
 

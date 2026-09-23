@@ -131,3 +131,46 @@ After edits:
 
 ## Current conclusion
 The Q424 feedback is valid and points to a broad question-quality issue. The next step should be a staged question rewrite, not a one-question patch and not an automatic bulk rewrite.
+
+
+## Batch 1A implementation — first human-reviewed rewrite set
+
+Reviewed and rewritten:
+- Q046-Q048 — Prompt Injection
+- Q142-Q144 — Hyperparameter Tuning
+- Q163-Q165 — Standard Deviation
+- Q424 — L1 / L2 regularization (original user-reported example)
+
+Review principles applied:
+- keep the original level / subject / topic / concept / difficulty / answer index;
+- replace obviously mismatched distractors with plausible alternatives at the same semantic level;
+- avoid making the correct option consistently more detailed than distractors;
+- reduce repeated option-pattern memorization inside each reviewed concept group;
+- update wording/explanation only where needed for a single unambiguous answer.
+
+### Batch 1A cue metrics
+
+| Metric | Before | After |
+| --- | ---: | ---: |
+| Correct uniquely longest | 444 | 437 |
+| Correct / distractor avg >= 1.5x | 450 | 440 |
+| >= 2.0x | 291 | 281 |
+| >= 2.5x | 132 | 123 |
+| >= 3.0x | 66 | 57 |
+| Unique longest margin >= 10 chars | 336 | 326 |
+| Unique longest margin >= 20 chars | 84 | 81 |
+
+All 10 rewritten questions are now below the 2.0x high-risk threshold.
+
+Notable examples:
+- Q163: 8.25x -> 1.13x
+- Q424: 2.47x -> 0.87x
+
+### Batch 1A integrity checks
+- Total self-authored questions: 483 -> 483.
+- Unique question IDs: 483.
+- No IDs removed or added.
+- Only Q046-Q048, Q142-Q144, Q163-Q165, and Q424 changed.
+- No changes to level / subject / topic / concept / difficulty / answer / sourceType.
+- JavaScript syntax check passed.
+- Browser-level Practice / Mock smoke remains for integrated Dev Preview.

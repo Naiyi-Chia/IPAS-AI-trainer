@@ -11,7 +11,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 BATCH = ['Q046', 'Q047', 'Q048', 'Q142', 'Q143', 'Q144', 'Q163', 'Q164', 'Q165', 'Q424']
 BATCHES = {'batch1a': BATCH,
            'batch2a': [f'Q{n:03d}' for start in (85, 112, 127, 133, 139, 154, 169)
-                       for n in range(start, start + 3)]}
+                       for n in range(start, start + 3)],
+           'batch2b': [f'Q{n:03d}' for start in (334, 340, 346, 388)
+                       for n in range(start, start + 6)]}
 
 
 def extract(text):

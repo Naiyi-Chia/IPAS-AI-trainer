@@ -1,5 +1,51 @@
 # Issue #42 — official past-paper answer feedback
 
+## Product Verify revision — 2026-09-25
+
+Baseline: `dev@7db745736036d104fcb6babc9826a5971f25d479`.
+This section supersedes the first implementation's result-panel expectations below.
+
+Before: option labels and a second result panel repeated the selected/correct answers,
+followed by a no-explanation placeholder and a duplicate PDF link.
+After: the option labels alone communicate the result. `#pastExplain`, its rendering
+and its unused CSS are removed. The existing metadata PDF link remains unchanged.
+Focus now moves to the named, programmatically focusable option group, preserving
+keyboard orientation without introducing another result or explanation panel.
+
+Revision checks:
+
+- PASS: `PAST-115-3-L11-1`, correct A / wrong B at 375×812 and 1280×900;
+  visual inspection confirms readable options, explicit labels and no lower result box.
+- PASS: all answered options remain disabled, text `rgb(23,32,51)`, opacity 1;
+  no horizontal overflow (375/360 and 1280/1265 viewport/scroll widths).
+- PASS: Previous / Next / restart remove old labels and preserve saved attempt status.
+- PASS: Enter / Space answer activation; focus lands on `pastOpts` with visible
+  keyboard focus outline. No focus call targets the deleted panel.
+- PASS: wrong-to-correct progression retains `PAST-115-3-L11-1`, updates the existing
+  attempt and clears its wrong record; reload shows 1 official answer / 100% accuracy.
+- PASS: existing metadata PDF link remains available and clickable; its unchanged
+  official URL returns HTTP 200, `application/pdf`, `%PDF-` signature.
+- PASS: Practice start / correct answer / original explanation / next;
+  Mock start 50 / answer / submit (1 correct, 49 blank, score 2) / review.
+- PASS: home, wrong-question, weak-area and official-scope views at 375px;
+  browser JavaScript error log empty.
+- PASS: updated regression script covers all 16 answer/selection combinations,
+  repeat guard, unchanged state writes, absent duplicate/placeholder, retained PDF
+  entry, render escaping, navigation/reset and final score.
+- PASS: inline application JS and regression script syntax; `git diff --check`.
+- PASS: baseline comparison confirms DB, parser/cache, Practice/Mock, scoring/storage
+  statements, navigation functions and retained CSS are unchanged.
+
+Browser setup: local Chromium with actual app/PDF.js and retained official PDFs
+served on localhost; fixture auto-accepts Mock confirmation. No production storage
+was touched. The in-app browser did not expose a new PDF tab after clicking the
+link, so PDF availability was verified separately via the official HTTP response.
+Actual iPhone Safari, VoiceOver and native confirmation-dialog interaction remain
+untested. This is Engineering QA for Product Verify rework, not Human Product Verify.
+No #44, #72, #78 or #79 work is included.
+
+## First implementation — historical QA
+
 Baseline: `dev@75aeb6e60e15b6e8f6b9329e9495ac43053b35b9`.
 Scope: official past-paper answer UI only; no question content, answer keys,
 localStorage schema, scoring/progress, parser/cache or Practice/Mock changes.

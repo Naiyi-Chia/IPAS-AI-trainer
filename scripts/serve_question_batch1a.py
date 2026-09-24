@@ -8,6 +8,9 @@ This fixture checks content/rendering/scoring, not sampling or native dialogs.
 
 For Issue #46: python scripts/serve_question_batch1a.py --batch batch2a
 Open http://127.0.0.1:8766/batch2a for the 21 reviewed Batch 2A questions.
+
+For Issue #47: python scripts/serve_question_batch1a.py --batch batch2b
+Open http://127.0.0.1:8766/batch2b for the 24 reviewed Batch 2B questions.
 """
 import json
 import argparse

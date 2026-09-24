@@ -5,21 +5,27 @@ Open http://127.0.0.1:8766/batch1a. Uses the actual app with only the 10
 reviewed questions in memory. Browser storage is replaced with memory storage,
 exam confirmation auto-accepts, and unrelated background PDF prewarming is off.
 This fixture checks content/rendering/scoring, not sampling or native dialogs.
+
+For Issue #46: python scripts/serve_question_batch1a.py --batch batch2a
+Open http://127.0.0.1:8766/batch2a for the 21 reviewed Batch 2A questions.
 """
 import json
+import argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from audit_question_cues import ROOT, BATCH, extract
+from audit_question_cues import ROOT, BATCHES, extract
 
 
 class Handler(BaseHTTPRequestHandler):
+    batch_name = 'batch1a'
+
     def do_GET(self):
-        if self.path != '/batch1a':
+        if self.path != '/' + self.batch_name:
             self.send_error(404)
             return
         source = (ROOT / 'index.html').read_text(encoding='utf-8')
         db, _ = extract(source)
         original = json.dumps(db, ensure_ascii=False, separators=(',', ':'))
-        db['questions'] = [q for q in db['questions'] if q['id'] in BATCH]
+        db['questions'] = [q for q in db['questions'] if q['id'] in BATCHES[self.batch_name]]
         assert source.count(original) == 1
         source = source.replace(original, json.dumps(db, ensure_ascii=False, separators=(',', ':')), 1)
         setup = '''<script>
@@ -42,5 +48,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    print('Batch 1A fixture: http://127.0.0.1:8766/batch1a', flush=True)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--batch', choices=BATCHES, default='batch1a')
+    Handler.batch_name = parser.parse_args().batch
+    print(f'Fixture: http://127.0.0.1:8766/{Handler.batch_name}', flush=True)
     HTTPServer(('127.0.0.1', 8766), Handler).serve_forever()

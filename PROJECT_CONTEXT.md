@@ -23,11 +23,20 @@ The product supports practice, mock exam, official past-paper, wrong-question, w
 
 Use the following hierarchy when deciding what to trust:
 
-1. **Canonical cross-project workflow** — `Naiyi-Chia/naiyi-product-playbook`, AI Product Development Playbook v1.4.
+1. **Canonical cross-project workflow** — `Naiyi-Chia/naiyi-product-playbook`, AI Product Development Playbook v1.6.
 2. **GitHub Issue** — task-level Source of Truth for Goal, Scope, Expected Behavior, Constraints, and Acceptance Criteria.
 3. **AGENTS.md** — repository execution rules and agent guardrails.
-4. **docs/GITHUB_PROJECT_WORKFLOW.md** — IPAS-specific mapping of the workflow to GitHub Project states / fields.
+4. **docs/GITHUB_PROJECT_WORKFLOW.md** — IPAS-specific mapping of workflow states / fields.
 5. **PROJECT_CONTEXT.md** — stable product and repository context only.
+
+This hierarchy does **not** mean every source must be loaded for every task.
+
+Routine context loading:
+- Task Issue: required.
+- Applicable repo instructions: required / use already-loaded context when available.
+- Parent Issue: conditional; use when the Sub-issue contract is insufficient or for epic orchestration / checkpoints / final integration.
+- `PROJECT_CONTEXT.md`: conditional; use when stable project context materially affects the task.
+- Full canonical Playbook: conditional; use for workflow ambiguity, governance change, or rule interpretation.
 
 If a task requirement changes, update the GitHub Issue first. Do not treat chat, commit messages, or PR comments as a replacement for the Issue contract.
 
@@ -44,7 +53,7 @@ The fixed Dev Preview loads the current public `dev/index.html`, allowing integr
 
 ## Standard Lifecycle
 
-The default lifecycle remains:
+The default lifecycle is:
 
 ```text
 Feedback / Requirement
@@ -52,18 +61,18 @@ Feedback / Requirement
 → scoped branch from latest dev
 → implementation + local/browser QA
 → commit + push
-→ Engineering Ready for Review Issue comment (or handoff fallback)
+→ concise Engineering Ready evidence
 → ChatGPT Technical Review
-→ Feature PR: scoped branch → dev
+→ Feature PR automatically created / updated
 → Human Integration Approval
 → merge to dev
 → Dev Preview / staging
 → Human Product Verify
 → Ready for Release
-→ Release PR: dev → main
-→ ChatGPT Release Review
-→ Human Release Approval
-→ merge to main
+→ Human Release Approval / release intent
+→ Release PR automatically created / updated
+→ ChatGPT Final Release Review
+→ clean: merge to main / blocker: stop
 → Production Smoke
 → Done / Close Issue
 ```
@@ -74,11 +83,11 @@ For a Human-enabled Optional Epic Integration Branch initiative:
 Parent Issue enables Epic Integration Branch
 → Sub-issue scoped branch from latest Epic Integration Branch
 → implementation + QA
-→ Engineering Ready for Review
+→ concise Engineering Ready
 → ChatGPT Technical Review
-→ Sub-issue PR → Epic Integration Branch
-→ Human Epic Integration Approval
-→ merge / aggregate checkpoints
+→ Sub-issue PR automatically created / updated
+→ clean checks: merge to Epic Integration Branch
+→ aggregate checkpoints / dev sync as defined by Parent Issue
 → sync current dev + aggregate QA
 → Epic Integration Branch PR → dev
 → Human Integration Approval
@@ -86,10 +95,9 @@ Parent Issue enables Epic Integration Branch
 → Dev Preview / staging
 → Human Product Verify
 → Ready for Release
-→ Release PR: dev → main
-→ ChatGPT Release Review
-→ Human Release Approval
-→ merge to main
+→ Human Release Approval / release intent
+→ Release PR + Final Release Review
+→ clean: merge to main / blocker: stop
 → Production Smoke
 → Done / Close Issue
 ```
@@ -100,19 +108,24 @@ Key rule:
 
 `merge to dev` ≠ Product Verify passed ≠ Ready for Release.
 
-Ready for Release requires both:
-- integration into `dev`; and
-- Human Product Verify passed.
-
 ## Human Gates
 
-1. **Integration Approval** — approves entry into `dev` for integrated testing.
+Human owns three decision semantics:
+
+1. **Integration Approval** — approves a reviewed change crossing into `dev`.
 2. **Product Verify** — human verification on the integrated Dev Preview.
-3. **Release Approval** — approves promoting the verified `dev` state to `main`.
+3. **Release Approval / release intent** — approves promoting the verified `dev` state to `main`.
 
-Engineering Agent testing, ChatGPT review, and Human Product Verify are separate responsibilities.
+GitHub mechanics around those decisions may be automated:
+- Technical Review PASS may create / update the correct PR.
+- `可以 merge 到 dev` is the Integration Approval; a missing PR may be created and validated under that authorization.
+- `Product Verify 通過` means Ready for Release only.
+- `Product Verify 通過，可以發布` may also provide Release Approval / release intent.
+- Final Release Review remains mandatory. Any blocker / conflict / unexpected scope stops automation before `main`.
 
-For an enabled Epic Integration Branch, **Human Epic Integration Approval** is an additional lightweight authorization before a reviewed Sub-issue PR merges into the epic branch. It is not one of the three canonical Human Gates and does not replace final Integration Approval into `dev`, Product Verify, or Release Approval.
+Engineering Agent testing, ChatGPT independent review, and Human Product Verify remain separate responsibilities.
+
+For an enabled Epic Integration Branch, per-Sub-issue Human Epic Integration Approval is not required after QA + independent Technical Review; clean reviewed Sub-issue PRs may accumulate automatically. Human aggregate checkpoints remain available, and final Epic Integration Branch → `dev` still requires Human Integration Approval.
 
 ## IPAS-Specific Content Guardrails
 
@@ -168,6 +181,8 @@ For question-bank changes, also verify:
 
 Keep this file focused on durable project facts.
 
+This file is **conditional context**, not a mandatory read for every routine task. Load it only when stable product / repository context materially affects the current decision.
+
 Do not add:
 - transient task or review state;
 - latest commit SHA;
@@ -175,4 +190,6 @@ Do not add:
 - one-off implementation notes;
 - short-lived release status.
 
-Put that information in the relevant GitHub Issue or PR instead.
+Put task requirements in the relevant GitHub Issue and execution evidence in concise Issue / PR records or durable repository artifacts.
+
+Long-running ChatGPT / Engineering Agent conversations are disposable working context. Current state should be reconstructable from GitHub Sources of Truth without copying old chat history.

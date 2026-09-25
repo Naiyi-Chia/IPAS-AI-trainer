@@ -13,6 +13,8 @@ BATCHES = {'batch1a': BATCH,
            'batch2a': [f'Q{n:03d}' for start in (85, 112, 127, 133, 139, 154, 169)
                        for n in range(start, start + 3)],
            'batch2b': [f'Q{n:03d}' for start in (334, 340, 346, 388)
+                       for n in range(start, start + 6)],
+           'batch2c': [f'Q{n:03d}' for start in (430, 466)
                        for n in range(start, start + 6)]}
 
 

@@ -1,6 +1,6 @@
 # GitHub Project Workflow — IPAS AI Trainer
 
-This document defines the target GitHub Project configuration for IPAS AI Trainer according to AI Product Development Playbook v1.2.
+This document defines the target GitHub Project configuration for IPAS AI Trainer according to AI Product Development Playbook v1.6.
 
 > Note: GitHub Project (Projects v2) fields are account-level project metadata and are not currently exposed by the connected GitHub actions available in ChatGPT. The configuration below is therefore the verification target and manual setup checklist.
 
@@ -54,22 +54,28 @@ Definitions:
 
 ## Human Gates
 
-There are three separate Human Gates:
+Human decisions are tied to state transitions, not PR creation.
 
 1. **Integration Approval**
-   - Before Feature PR merge to `dev`.
-   - Approves the reviewed change entering the integration / staging environment.
-   - Does not mean Product Acceptance.
+   - Required before a reviewed change enters `dev`.
+   - Technical Review PASS may create / update the Feature PR automatically.
+   - Human can simply say `可以 merge 到 dev`; if needed, orchestration creates the PR, verifies head / base / review / mergeability, and merges when clean.
+   - This is not Product Acceptance.
 
 2. **Product Verify**
    - After merge to `dev`.
    - Performed on the fixed Dev Preview.
    - Covers UX, functionality, mobile / target-browser behavior, Acceptance Criteria, and integration behavior.
+   - `Product Verify 通過` moves the Issue to Ready for Release but does not release automatically.
    - Failure returns the work to fix → review → integration → verify.
 
-3. **Release Approval**
-   - On the Release PR from `dev` to `main`.
-   - Approves releasing the verified `dev` state to production.
+3. **Release Approval / release intent**
+   - Approves promoting the verified `dev` state to production.
+   - `Product Verify 通過，可以發布` may provide Product Verify and Release Approval in one Human instruction.
+   - After release intent, Release PR creation and Final Release Review may proceed automatically.
+   - A clean Final Release Review may merge `main` without a redundant second approval; any blocker / conflict / unexpected scope stops automation.
+
+PR creation itself is not a Human Gate.
 
 Key rule:
 
@@ -173,7 +179,7 @@ State meanings across the release flow:
 
 Quick reference:
 
-`Feature → Engineering Ready for Review → Technical Review → Integration Approval → dev → Dev Preview → Product Verify → Ready for Release → Release PR → Release Approval → main → Production Smoke`
+`Feature → Engineering Ready → Technical Review → auto Feature PR → Integration Approval → dev → Dev Preview → Product Verify → Ready for Release → release intent → Release PR + Final Release Review → main → Production Smoke`
 
 Full lifecycle:
 
@@ -182,18 +188,18 @@ Issue
 → scoped branch from latest dev
 → implementation + local/browser QA
 → commit + push
-→ Engineering Ready for Review Issue comment (or handoff fallback)
+→ concise Engineering Ready for Review evidence
 → ChatGPT Technical Review
-→ Feature PR: scoped branch → dev
+→ Feature PR automatically created / updated
 → Human Integration Approval
 → merge to dev
 → Dev Preview / staging
 → Human Product Verify
 → Ready for Release
-→ Release PR: dev → main
-→ ChatGPT Release Review
-→ Human Release Approval
-→ merge to main
+→ Human Release Approval / release intent
+→ Release PR automatically created / updated
+→ ChatGPT Final Release Review
+→ clean: merge to main / blocker: stop
 → Production Smoke
 → Done / Close Issue
 ```
@@ -201,6 +207,8 @@ Issue
 Feature PRs may use squash merge. Release PRs should normally use a normal merge so `dev` ancestry is preserved.
 
 After a release, sync `dev` to the latest `main` with a fast-forward when safe. If it cannot fast-forward, inspect branch history first; never force blindly.
+
+For a Human-enabled Epic Integration Branch, Sub-issue PRs may accumulate into that branch after Engineering QA + independent Technical Review without a per-Sub-issue Human Gate. Final Epic Integration Branch → `dev` still requires Human Integration Approval, and Product Verify still occurs only on integrated `dev`.
 
 ## Manual verification checklist
 

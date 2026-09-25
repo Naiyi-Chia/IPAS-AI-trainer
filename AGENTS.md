@@ -9,7 +9,7 @@ IPAS AI Trainer is a single-page, static iPAS AI 應用規劃師 practice tool p
 - UI copy is primarily Traditional Chinese (Taiwan usage).
 - `main` is the production / deploy branch.
 - `dev` is the integration + staging / Dev Preview branch.
-- Cross-project workflow follows the canonical AI Product Development Playbook v1.4 in `Naiyi-Chia/naiyi-product-playbook`.
+- Cross-project workflow follows the canonical AI Product Development Playbook v1.6 in `Naiyi-Chia/naiyi-product-playbook`.
 
 ## Source of Truth
 The GitHub Issue is the Source of Truth for each development task.
@@ -24,20 +24,26 @@ If Scope, Expected Behavior, or Acceptance Criteria changes during implementatio
 Do not keep requirement changes only in chat, commit messages, PR comments, or handoff text.
 
 ## Before making changes
-1. Confirm the repository root.
-2. Fetch origin.
-3. Read the relevant GitHub Issue and determine the explicit integration strategy.
-4. By default, switch to `dev` and update from `origin/dev`. If the Parent Issue has Human-approved the canonical Optional Epic Integration Branch pattern, use the named Epic Integration Branch as the implementation baseline instead.
-5. Confirm the working tree is clean.
-6. Read this `AGENTS.md`.
-7. Read `PROJECT_CONTEXT.md` for stable project context.
-8. Create a scoped branch from the correct baseline, for example:
+1. Confirm the repository root and fetch origin.
+2. Read the relevant GitHub Issue; it is the mandatory task contract.
+3. Use the applicable `AGENTS.md` / repo instructions. If the runtime already loaded them, do not reload or paste them only for formality.
+4. Load additional context only when materially needed:
+   - Parent Issue: when the Sub-issue contract is insufficient, or for epic orchestration / checkpoint / final integration.
+   - `PROJECT_CONTEXT.md`: when stable product / repository context is needed for the task.
+   - Canonical Playbook: for workflow ambiguity, governance changes, or interpreting repo rules; routine implementation should not reread the whole Playbook.
+5. Determine the explicit integration strategy from the Issue:
+   - default: latest `dev`;
+   - Human-enabled Epic pattern: latest named Epic Integration Branch.
+6. Switch / update the correct baseline and confirm the working tree is clean.
+7. Create a scoped branch from that baseline, for example:
    - `feat/issue-N-short-name`
    - `fix/issue-N-short-name`
    - `ux/issue-N-short-name`
    - `question/issue-N-short-name`
    - `maint/issue-N-short-name`
-9. Inspect the existing implementation before editing; do not duplicate existing behavior.
+8. Inspect only the relevant existing implementation / evidence before editing; do not duplicate existing behavior.
+
+Context efficiency must not override correctness: if required evidence is missing, read the authoritative source instead of guessing.
 
 ## Editing rules
 - Keep changes scoped to the Issue. Avoid unrelated refactors.
@@ -86,10 +92,10 @@ When implementation is complete:
 2. Run relevant QA / smoke checks.
 3. Run `git diff --check`.
 4. Commit the scoped change.
-5. Push the feature branch.
-6. If GitHub Issue-comment permission is available, post the completion report to the task Issue using the marker `<!-- engineering-ready-for-review -->`. If Issue commenting is unavailable, report the same information in the current handoff channel.
+5. Push the scoped branch.
+6. If GitHub Issue-comment permission is available, post concise Engineering Ready evidence using `<!-- engineering-ready-for-review -->`; otherwise report the same concise evidence in the current handoff channel.
 
-By default, stop after the completion report. Do not open a PR unless the human explicitly authorizes it.
+Stop implementation after the handoff. Technical Review PASS may cause ChatGPT / orchestration to create or update the correct PR automatically. Engineering implementation itself must not merge into `dev` / `main`, close the Issue, declare Product Verify, or make a release decision.
 
 ## Completion report
 Preferred location: the task GitHub Issue, when write permission is available.
@@ -100,106 +106,102 @@ Use this marker:
 <!-- engineering-ready-for-review -->
 ```
 
-Report:
+Keep the report concise. Record:
 - Issue number.
-- Branch name.
-- Commit SHA.
-- Files changed.
-- Approximate `+/-` lines when available.
-- What changed.
-- Tests / browser QA performed and results.
-- Known limitations or follow-up work.
-- Final `git status` / working-tree state.
-- Remote-sync state.
+- Branch / commit SHA.
+- Changed scope / files.
+- Relevant tests / browser QA and results.
+- Durable evidence / report path when one exists.
+- Known limitations / blockers.
+- Final working-tree / remote-sync state when relevant.
 
-The completion report is implementation evidence / handoff status only. It does not change requirements or Acceptance Criteria. If Scope, Expected Behavior, or Acceptance Criteria changed, update the Issue first.
+Do **not** restate Goal / Scope / Expected Behavior / Acceptance Criteria already owned by the Issue.
 
-Posting the completion report does not authorize opening a PR, merging, closing the Issue, declaring Product Verify complete, or releasing.
+Detailed machine-generated audit output, CSVs, logs, or large reports should live in durable repository artifacts when useful; the completion comment should reference them instead of pasting them.
 
-A GitHub Issue comment does not automatically send a message into an existing ChatGPT conversation. It creates a shared handoff that ChatGPT can retrieve later, so the human can use a short request such as `review #N` instead of copying the full report.
+The completion report is implementation evidence / handoff status only. If Scope, Expected Behavior, or Acceptance Criteria changed, update the Issue first.
 
-If the agent cannot comment on the GitHub Issue, use the same completion-report content in the current handoff channel.
+A GitHub Issue comment creates a retrievable shared handoff, so the Human can use a short request such as `review #N` instead of copying the report into chat.
 
 ## Human gates
-Unless explicitly authorized by the human, an Engineering Agent must not independently:
-- open a Pull Request;
-- merge into `dev`;
-- merge into `main`;
-- close the Issue;
-- declare Product Verify complete;
-- make a release decision;
-- claim the production site is verified.
+Human decisions control state transitions; GitHub mechanics around those decisions may be automated.
 
-There are three canonical Human Gates:
+An Engineering Agent / orchestrator must not independently:
+- merge into `dev` without Human Integration Approval;
+- declare Product Verify complete;
+- release / merge into `main` without Human Release Approval / release intent;
+- close a deployable Issue before Production Smoke passes;
+- claim the production site is verified without evidence.
+
+PR creation itself is **not** a Human Gate. After ChatGPT Technical Review PASS, the correct Feature / Sub-issue PR may be created or updated automatically.
+
+There are three Human-owned decision semantics:
 
 1. **Integration Approval**
-   - Happens before a reviewed change enters `dev`.
-   - In the default flow, this is before Feature PR merge to `dev`.
-   - For an approved Epic Integration Branch, this is the final Human Gate before the Epic Integration Branch PR merges to `dev`.
-   - Means the change has completed the required technical review and may enter the integration / staging environment.
+   - Required before a reviewed change crosses into `dev`.
+   - Human can simply say `可以 merge 到 dev`.
+   - If the PR does not exist yet, orchestration may create it, verify head / base / review / mergeability, then merge when clean.
    - It is not Product Acceptance.
 
 2. **Product Verify**
    - Happens after the change is integrated into `dev`.
-   - Must verify the integrated Dev Preview for UX, functional behavior, mobile / target browser behavior, Acceptance Criteria, and integration behavior.
-   - A failed Product Verify keeps the Issue open and requires another fix → review → integration → verify loop.
+   - Must verify the integrated Dev Preview for UX, function, mobile / target-browser behavior, Acceptance Criteria, and integration behavior.
+   - `Product Verify 通過` means Ready for Release; it does **not** release automatically.
+   - A failed Product Verify keeps the Issue open. If Expected Behavior / Scope / AC changes, update the Issue before rework.
 
-3. **Release Approval**
-   - Happens on the Release PR from `dev` to `main`.
-   - Means the human approves releasing the verified `dev` state to production.
+3. **Release Approval / release intent**
+   - Human decides whether the verified `dev` state should now enter production.
+   - `Product Verify 通過，可以發布` may provide Product Verify and Release Approval in one explicit instruction.
+   - If Product Verify already passed, a later `可以發布` supplies Release Approval.
+   - After release intent, orchestration may create / update the Release PR and run Final Release Review.
+   - If Final Release Review is clean, it may merge `main` without asking for a redundant second approval. Any blocker / conflict / unexpected scope stops automation.
 
 Merge to `dev` does not mean Product Verify passed and does not mean Ready for Release.
 
-Ready for Release requires:
-- the change is integrated into `dev`; and
-- Human Product Verify passed.
-
 ### Optional Epic Integration Branch authorization
 
-The canonical Playbook v1.4 allows an **Optional Epic Integration Branch** for a large initiative made of multiple highly related Sub-issues that need to accumulate into one coherent result before entering shared `dev`.
+The canonical Playbook v1.6 allows an **Optional Epic Integration Branch** for a large initiative made of multiple highly related Sub-issues that should accumulate before entering shared `dev`.
 
 This pattern is an explicit exception, not the default.
 
 - ChatGPT may identify the pattern as a candidate, but must not enable it without a clear Human decision.
 - The Human decision, epic branch identity, sequencing / checkpoint strategy, and final integration plan belong in the **Parent Issue**.
-- Each **Sub-issue** keeps its own Goal / Scope / Acceptance Criteria and must state its explicit base / target branch.
-- A Sub-issue scoped branch starts from the latest named Epic Integration Branch and its PR targets that Epic Integration Branch.
+- Each **Sub-issue** keeps its own Goal / Scope / Acceptance Criteria and explicit base / target branch.
 - Every Sub-issue still requires Engineering QA and independent ChatGPT Technical Review.
-- Before a reviewed Sub-issue PR merges to the Epic Integration Branch, require **Human Epic Integration Approval**.
-- Epic Integration Approval is an additional lightweight authorization. It is **not** canonical Integration Approval and does not replace any of the three Human Gates.
-- Human aggregate checkpoint reviews may be used at meaningful phases or when accumulated risk / conflict exposure warrants them. A checkpoint review is **not Product Verify**.
+- After Technical Review PASS, the Sub-issue PR to the enabled Epic Integration Branch may be created automatically and merged when review / conflict checks are clean.
+- Per-Sub-issue Human Epic Integration Approval is **not required**.
+- Human aggregate checkpoint reviews remain available at meaningful phases or when accumulated risk / conflict exposure warrants them. A checkpoint is **not Product Verify**.
 - The Epic Integration Branch should sync latest `dev` at meaningful checkpoints and **must** sync current `dev` before final integration, followed by aggregate regression / conflict checks.
 - Do not arbitrarily rewrite shared epic-branch history. If branches diverge or conflict, inspect history first; do not blind force or rebase.
 - The Epic Integration Branch is not staging or production. Do not declare canonical Product Verify on it.
-- Final integration must still follow: Epic Integration Branch → PR to `dev` → Human Integration Approval → merge to `dev` → Dev Preview → Human Product Verify → Ready for Release → Release PR `dev → main` → Human Release Approval → Production Smoke.
-- Keep initiative-specific branch names and full initiative contracts out of `AGENTS.md`; store them in the Parent Issue / Sub-issues.
+- Final `Epic Integration Branch → dev` still requires Human Integration Approval.
+- Keep initiative-specific branch names and contracts in the Parent Issue / Sub-issues, not in `AGENTS.md`.
 
 ## Branch and release model
 
 ### Default lifecycle
 
-The default path remains:
-
 Quick reference:
 
-`Feature → Engineering Ready for Review → Technical Review → Integration Approval → dev → Dev Preview → Product Verify → Release PR → Release Approval → main → Production Smoke`
+`Feature → Engineering Ready → Technical Review → auto Feature PR → Integration Approval → dev → Dev Preview → Product Verify → Ready for Release → release intent → Release PR + Final Release Review → main → Production Smoke`
 
 ```text
 Issue
 → scoped branch from latest dev
 → implementation + local/browser QA
 → commit + push
-→ Engineering Ready for Review Issue comment (or handoff fallback)
+→ concise Engineering Ready for Review evidence
 → ChatGPT Technical Review
-→ Feature PR: scoped branch → dev
+→ Feature PR automatically created / updated
 → Human Integration Approval
 → merge to dev
 → Dev Preview / staging (/dev/)
 → Human Product Verify
 → Ready for Release (Issue remains open)
-→ Release PR: dev → main
-→ Human Release Approval
-→ merge to main
+→ Human Release Approval / release intent
+→ Release PR automatically created / updated
+→ ChatGPT Final Release Review
+→ clean: merge to main / blocker: stop
 → Production Smoke
 → Done / Close Issue
 ```
@@ -212,12 +214,11 @@ Use this only when the Parent Issue contains the explicit Human decision enablin
 Parent Issue enables Epic Integration Branch
 → Sub-issue scoped branch from latest Epic Integration Branch
 → implementation + local/browser QA
-→ Engineering Ready for Review
+→ concise Engineering Ready
 → ChatGPT Technical Review
-→ Sub-issue PR: scoped branch → Epic Integration Branch
-→ Human Epic Integration Approval
-→ merge to Epic Integration Branch
-→ aggregate checkpoints / dev sync as needed
+→ Sub-issue PR automatically created / updated
+→ clean checks: merge to Epic Integration Branch
+→ aggregate checkpoints / dev sync as defined by Parent Issue
 → final aggregate QA + sync current dev
 → PR: Epic Integration Branch → dev
 → Human Integration Approval
@@ -225,9 +226,9 @@ Parent Issue enables Epic Integration Branch
 → Dev Preview / staging
 → Human Product Verify
 → Ready for Release
-→ Release PR: dev → main
-→ Human Release Approval
-→ merge to main
+→ Human Release Approval / release intent
+→ Release PR + Final Release Review
+→ clean: merge to main / blocker: stop
 → Production Smoke
 → Done / Close Issue
 ```

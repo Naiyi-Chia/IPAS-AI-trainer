@@ -64,6 +64,14 @@ h3{font-size:18px;line-height:1.35}
 .option.selected{border-color:var(--brand);background:#eef2ff}
 .option.correct{border-color:#6ce9a6;background:#ecfdf3}
 .option.wrong{border-color:#fda29b;background:#fef3f2}
+#pastOpts .option{color:var(--ink);-webkit-text-fill-color:currentColor}
+#pastOpts .option:disabled{opacity:1;cursor:default}
+#pastOpts .option:disabled:not(.correct):not(.wrong){border-color:var(--line)}
+#pastOpts .option.correct{border-color:var(--ok)}
+#pastOpts .option.wrong{border-color:var(--bad)}
+#pastOpts .pastOptionState{display:block;margin-top:6px;font-size:14px;font-weight:700}
+#pastOpts .correct .pastOptionState{color:var(--ok)}
+#pastOpts .wrong .pastOptionState{color:var(--bad)}
 .explain{margin-top:14px;padding:14px 15px;border-radius:10px;background:#f8fafc;border-left:3px solid #c7d2fe;line-height:1.72;font-size:16px}
 .hidden{display:none!important}
 .navrow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px}
@@ -648,7 +656,8 @@ function renderExamReview(filter='all'){
 }
 
 function getPastCache(){
-  try{return JSON.parse(localStorage.getItem("ipasOfficialPastCacheV2")||"{}")}catch(e){return {}}
+  // Rebuild derived content from older parsers; user attempts/bookmarks are stored separately.
+  try{return Object.fromEntries(Object.entries(JSON.parse(localStorage.getItem("ipasOfficialPastCacheV2")||"{}")).filter(([,p])=>p?.meta?.contentVersion===1))}catch(e){return {}}
 }
 function savePastCache(cache){
   try{localStorage.setItem("ipasOfficialPastCacheV2",JSON.stringify(cache))}catch(e){console.warn("考古題快取寫入失敗",e)}
@@ -788,7 +797,7 @@ async function prewarmOfficialCache(){
 }
 
 function cleanMirrorQuestion(text,n){
-  let s=String(text||'').normalize('NFKC').replace(/[\u00ad\u200b\ufeff]/g,'').replace(/\s+/g,' ').trim();
+  let s=cleanOfficialPageFurniture(text).replace(/\s+/g,' ').trim();
   // 公開轉檔的 PDF 文字層偶爾把原題號插進中文字中，例如「主要用5.來」。只移除「中文 + 本題號 + . + 中文/括號」型態，避免誤傷 0.5 等小數。
   try{
     const re=new RegExp(`(?<=[\\u4e00-\\u9fff）)])${n}\\.(?=[\\u4e00-\\u9fff（(]|$)`,'g');
@@ -804,7 +813,7 @@ async function loadPaperFromStructuredMirror(paper){
   if(rows.length<45)throw new Error(`結構化題庫只找到 ${rows.length} 題，未達完整考卷門檻`);
   const questions=rows.slice(0,50).map((r,i)=>{
     const n=i+1; const letters=['A','B','C','D'];
-    const options=letters.map(k=>String(r.options?.[k]??'').normalize('NFKC').replace(/\s+/g,' ').trim());
+    const options=letters.map(k=>cleanOfficialPageFurniture(r.options?.[k]).replace(/\s+/g,' ').trim());
     return {
       id:`PAST-${paper.id}-${n}`,number:n,level:paper.level,subject:paper.subject,
       topic:`PAST-${paper.year}-${paper.session}`,topicName:`${paper.year} 年 ${paper.session} ${paper.name}`,
@@ -815,7 +824,7 @@ async function loadPaperFromStructuredMirror(paper){
       sourceType:'iPAS 官方公告試題（結構化轉檔；答案以官方公告核對）'
     };
   }).filter(q=>q.answer>=0 && q.options.length===4);
-  return {meta:{paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf,source:'structured-mirror'},questions};
+  return {meta:{paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf,source:'structured-mirror',contentVersion:1},questions};
 }
 
 async function fetchPaperText(paper){
@@ -883,20 +892,21 @@ function allCachedOfficialQuestions(){
   return Object.values(cache).flatMap(x=>x?.questions||[]);
 }
 
-function parseOfficialPastPaper(rawText,fileName){
+function cleanOfficialPageFurniture(rawText){
   let text=String(rawText||'').normalize('NFKC').replace(/\r/g,'\n').replace(/[\u00ad\u200b\ufeff]/g,'');
-  text=text.replace(/<br\s*\/?\s*>/gi,'\n').replace(/\|/g,' ').replace(/^#{1,6}\s*/gm,'');
-  const meta={title:fileName.replace(/\.pdf$/i,''), fileName};
+  // Match complete publication headers, not subject names or dates inside a question.
+  // NFKC converts ：／， to ASCII; PDF glyph runs can split words and digits with spaces.
+  text=text.replace(/1\s*\d\s*\d\s*年\s*第\s*[一二三四]\s*次\s*AI\s*應用規劃師\s*-\s*[初中]級\s*能力鑑定\s*【\s*公\s*告\s*試\s*題\s*】\s*第\s*[一二三]\s*科\s*:\s*[^\n]*?\s*考試日期\s*:\s*[\d\s]+年\s*[\d\s]+月\s*[\d\s]+日(?:\s*試\s*題\s*公告\s*日期\s*:\s*[\d\s]+年\s*[\d\s]+月\s*[\d\s]+日)?/g,'\n');
+  text=text.replace(/第\s*\d+\s*頁\s*,?\s*共\s*\d+\s*頁/g,'\n');
+  text=text.replace(/答\s*案\s*題\s*目|答\s*題\s*目\s*案/g,'');
+  text=text.replace(/^[ \t]*一、\s*選擇題[ \t]*$/gm,'');
+  return text;
+}
 
-  // remove common headers / footers repeatedly seen in official PDFs
-  text=text.replace(/\s*第\s*\d+\s*頁\s*，?共\s*\d+\s*頁\s*/g,' ');
-  text=text.replace(/考試日期：[^\n]+/g,' ');
-  text=text.replace(/答案\s*題目/g,' ');
-  text=text.replace(/一、\s*選擇題/g,' ');
-  text=text.replace(/115\s*年[^\n]*?公告試題/g,' ');
-  text=text.replace(/114\s*年[^\n]*?公告試題/g,' ');
-  text=text.replace(/第[一二三]科：[^\n]+/g,' ');
-  text=text.replace(/AI\s*應用規劃師[^\n]*/g, m => (/\([初中]級\)/.test(m) ? m : ' '));
+function parseOfficialPastPaper(rawText,fileName){
+  let text=String(rawText||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/\|/g,' ').replace(/^#{1,6}\s*/gm,'');
+  text=cleanOfficialPageFurniture(text);
+  const meta={title:fileName.replace(/\.pdf$/i,''),fileName,contentVersion:1};
   text=text.replace(/\n{2,}/g,'\n');
   text=text.replace(/[ \t]{2,}/g,' ');
 
@@ -966,8 +976,7 @@ function renderPastQuiz(){
     <div class="progress" role="progressbar" aria-label="考古題進度" aria-valuemin="1" aria-valuemax="${pastPaperSet.length}" aria-valuenow="${pastIndex+1}"><div style="width:${(pastIndex+1)/pastPaperSet.length*100}%"></div></div>
     <div class="qtext" tabindex="-1">${esc(q.question)}</div>
     ${q.hasVisual?`<div class="notice" style="margin:8px 0"><b>此題可能含圖／表格／程式碼版面。</b> 請用「查看官方 PDF」核對原題視覺資訊，避免只看文字層誤判。</div>`:''}
-    <div id="pastOpts">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join('')}</div>
-    <div id="pastExplain" class="explain hidden"></div>
+    <div id="pastOpts" role="group" aria-label="作答選項" tabindex="-1">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join('')}</div>
     <div class="navrow">
       <div><button class="btn secondary" onclick="pastPrev()" ${pastIndex===0?"disabled":""}>上一題</button> <button class="btn secondary" onclick="reportPastQuestion()">回報此題</button></div>
       <div><button class="btn secondary" onclick="restartPastQuiz()">重新作答本份</button> <button class="btn primary" onclick="pastNext()">${pastIndex===pastPaperSet.length-1?"完成這份":"下一題"}</button></div>
@@ -983,10 +992,18 @@ function answerPast(i){
   state.attempts[q.id]={correct:ok,last:Date.now(),subject:'PAST',topic:pastPaperMeta?.title||'官方考古題'};
   if(ok) delete state.wrong[q.id]; else state.wrong[q.id]=true;
   save();
-  qsa('#pastOpts .option').forEach((b,idx)=>{b.disabled=true;if(idx===q.answer)b.classList.add('correct');if(idx===i && !ok)b.classList.add('wrong')});
-  const ex=qs('#pastExplain');
-  ex.classList.remove('hidden');
-  ex.innerHTML=`<b class="${ok?'good':'bad'}">${ok?'答對了':'答錯了'}｜正解 ${String.fromCharCode(65+q.answer)}</b><br>${esc(q.explanation)}<div class="small" style="margin-top:6px">${esc(q.sourceType)}</div>`;
+  qsa('#pastOpts .option').forEach((b,idx)=>{
+    b.disabled=true;
+    if(idx===q.answer)b.classList.add('correct');
+    if(idx===i && !ok)b.classList.add('wrong');
+    if(idx===q.answer || idx===i){
+      const label=document.createElement('span');
+      label.className='pastOptionState';
+      label.textContent=idx===q.answer?(idx===i?'你的答案 · 官方正解':'官方正解'):'你的答案 · 錯誤';
+      b.appendChild(label);
+    }
+  });
+  qs('#pastOpts').focus();
 }
 
 function pastNext(){

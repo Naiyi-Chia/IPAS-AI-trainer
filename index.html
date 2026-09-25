@@ -72,9 +72,6 @@ h3{font-size:18px;line-height:1.35}
 #pastOpts .pastOptionState{display:block;margin-top:6px;font-size:14px;font-weight:700}
 #pastOpts .correct .pastOptionState{color:var(--ok)}
 #pastOpts .wrong .pastOptionState{color:var(--bad)}
-#pastExplain{overflow-wrap:anywhere}
-#pastExplain p{margin:8px 0}
-#pastExplain a{color:var(--brand);text-decoration:underline}
 .explain{margin-top:14px;padding:14px 15px;border-radius:10px;background:#f8fafc;border-left:3px solid #c7d2fe;line-height:1.72;font-size:16px}
 .hidden{display:none!important}
 .navrow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px}
@@ -979,8 +976,7 @@ function renderPastQuiz(){
     <div class="progress" role="progressbar" aria-label="考古題進度" aria-valuemin="1" aria-valuemax="${pastPaperSet.length}" aria-valuenow="${pastIndex+1}"><div style="width:${(pastIndex+1)/pastPaperSet.length*100}%"></div></div>
     <div class="qtext" tabindex="-1">${esc(q.question)}</div>
     ${q.hasVisual?`<div class="notice" style="margin:8px 0"><b>此題可能含圖／表格／程式碼版面。</b> 請用「查看官方 PDF」核對原題視覺資訊，避免只看文字層誤判。</div>`:''}
-    <div id="pastOpts">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join('')}</div>
-    <div id="pastExplain" class="explain hidden" role="region" aria-label="作答結果" tabindex="-1"></div>
+    <div id="pastOpts" role="group" aria-label="作答選項" tabindex="-1">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join('')}</div>
     <div class="navrow">
       <div><button class="btn secondary" onclick="pastPrev()" ${pastIndex===0?"disabled":""}>上一題</button> <button class="btn secondary" onclick="reportPastQuestion()">回報此題</button></div>
       <div><button class="btn secondary" onclick="restartPastQuiz()">重新作答本份</button> <button class="btn primary" onclick="pastNext()">${pastIndex===pastPaperSet.length-1?"完成這份":"下一題"}</button></div>
@@ -1007,15 +1003,7 @@ function answerPast(i){
       b.appendChild(label);
     }
   });
-  const ex=qs('#pastExplain');
-  ex.classList.remove('hidden');
-  ex.innerHTML=`<b class="${ok?'good':'bad'}">${ok?'答對了':'答錯了'}</b>
-    <div><b>你的答案：</b>${String.fromCharCode(65+i)}. ${esc(q.options[i])}</div>
-    <div><b>官方正解：</b>${String.fromCharCode(65+q.answer)}. ${esc(q.options[q.answer])}</div>
-    <p>官方公告未提供逐選項解析。</p>
-    <div class="small">來源：${esc(q.sourceType)}</div>
-    <a href="${esc(pastPaperMeta?.pdf||'#')}" target="_blank" rel="noopener">核對官方原題 PDF（另開分頁）</a>`;
-  ex.focus();
+  qs('#pastOpts').focus();
 }
 
 function pastNext(){

@@ -99,6 +99,10 @@ h3{font-size:18px;line-height:1.35}
 .feedbackbar .btn{white-space:nowrap;min-height:40px;padding-block:8px}
 .questionFeedback{display:flex;justify-content:flex-end;margin-top:10px}
 .questionFeedback .btn{font-size:13px}
+.pastQuizTop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.pastQuizTop .qmeta{flex:1}
+.pastExitBtn{white-space:nowrap}
+.pastQuizStatus{display:flex;align-items:center;gap:10px;min-height:42px;margin:10px 0 8px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#f8fafc;font-size:14px;font-weight:700}
 .notice{background:#fffaeb;border:1px solid #fedf89;border-radius:10px;padding:12px 13px;line-height:1.6}
 .good{color:var(--ok)}.bad{color:var(--bad)}
 a{color:var(--brand)}
@@ -128,6 +132,9 @@ a{color:var(--brand)}
   .controls select{flex:0 0 auto;min-width:0}
   .controls .btn{flex:1 1 auto}
   .navrow{align-items:stretch;flex-direction:column}
+  .pastQuizTop{flex-direction:column}
+  .pastExitBtn{width:100%}
+  .pastQuizStatus{align-items:flex-start;line-height:1.45}
   .navrow>div{display:flex;gap:7px}
   .navrow>div .btn{flex:1}
   .card{padding:15px;border-radius:12px}
@@ -668,6 +675,27 @@ function paperProgress(p){
   const correct=ids.filter(id=>state.attempts[id]?.correct).length;
   return {answered:ids.length,correct};
 }
+function currentPastProgress(){
+  const answered=pastPaperSet.filter(q=>state.attempts[q.id]).length;
+  const correct=pastPaperSet.filter(q=>state.attempts[q.id]?.correct).length;
+  const accuracy=answered?Math.round(correct/answered*100):null;
+  return {answered,correct,accuracy};
+}
+function pastProgressText(){
+  const prog=currentPastProgress();
+  return prog.answered
+    ? `已作答 ${prog.answered} 題 · 答對 ${prog.correct} 題 · 目前正確率 ${prog.accuracy}%`
+    : '尚未作答 · 作答後會自動儲存在此裝置';
+}
+function updatePastProgressStatus(){
+  const el=qs('#pastScoreStatus');
+  if(el)el.textContent=pastProgressText();
+}
+function exitPastQuiz(){
+  pastPaperSet=[];pastIndex=0;pastAnswered=false;pastPaperMeta=null;
+  renderPastPapers();
+  setTimeout(()=>qs('#pastPapersHeading')?.focus(),0);
+}
 function renderPastPapers(){
   const group=(level)=>pastPapers.filter(p=>p.level===level);
   const cache=getPastCache();
@@ -678,7 +706,7 @@ function renderPastPapers(){
       <div class="qmeta"><span class="qmetaPrimary">${p.year} 年 ${p.session} · ${p.subject}</span><span class="qmetaSecondary">${p.level}${cached?" · 已快取":""}</span></div>
       <h3 style="margin:8px 0 5px">${esc(p.name)}</h3>
       <div class="small">考試日期：${p.date}　｜　官方 PDF：約 ${p.size}</div>
-      <div class="small" style="margin-top:7px">${prog.answered?`已作答 ${prog.answered} 題${score!==null?`，目前正確率 ${score}%`:''}`:'尚未作答'}</div>
+      <div class="small" style="margin-top:7px">${prog.answered?`已作答 ${prog.answered} 題 · 答對 ${prog.correct} 題${score!==null?` · 目前正確率 ${score}%`:''}`:'尚未作答 · 作答後會自動記錄進度'}</div>
       <div class="controls" style="margin-top:12px">
         <button class="btn primary" onclick="loadPastPaperById('${p.id}')">${prog.answered?'繼續刷題':'開始刷題'}</button>
         <a class="btn secondary" style="display:inline-block;text-decoration:none" href="${p.pdf}" target="_blank" rel="noopener">查看官方 PDF</a>
@@ -687,7 +715,7 @@ function renderPastPapers(){
   };
   qs("#past").innerHTML=`
     <div class="card" style="margin-bottom:12px">
-      <div class="examtop"><div><h3 style="margin:0">官方考古題</h3><div class="small" style="margin-top:5px">${pastPapers.length} 份官方公告試題，直接點「開始刷題」即可</div></div>
+      <div class="examtop"><div><h3 id="pastPapersHeading" tabindex="-1" style="margin:0">官方考古題</h3><div class="small" style="margin-top:5px">${pastPapers.length} 份官方公告試題，直接點「開始刷題」即可</div></div>
       <a class="btn secondary" style="text-decoration:none" href="${officialLearningResources}" target="_blank" rel="noopener">官方歷屆考題頁</a></div>
       <div class="notice" style="margin-top:12px"><b>免手動匯入：</b>頁面會自動預備可結構化載入的官方考卷並快取在此裝置；最新 115 年第三次初級則以官方 PDF 文字層載入。已加入 Unicode 正規化與含圖／表格／程式碼提醒，降低漏題與版面誤判風險。</div>
       <div id="pastLoadStatus" class="small" style="margin-top:8px"></div>
@@ -971,8 +999,12 @@ function renderPastQuiz(){
   const key=q.id;
   const past=state.attempts[key];
   area.innerHTML=`<div class="card questionCard" style="margin-bottom:12px">
-    <div class="qmeta"><span class="qmetaPrimary">官方考古題 · 第 ${q.number} 題</span><span class="qmetaSecondary">${esc(pastPaperMeta?.title||'')}</span></div>
-    <div class="small">${past?`曾作答：${past.correct?'✓ 正確':'✕ 錯誤'}`:'尚未作答'}　｜　第 ${pastIndex+1}/${pastPaperSet.length} 題　｜　<a href="${pastPaperMeta?.pdf||'#'}" target="_blank" rel="noopener">核對官方原題 PDF</a></div>
+    <div class="pastQuizTop">
+      <div class="qmeta"><span class="qmetaPrimary">官方考古題 · 第 ${q.number} 題</span><span class="qmetaSecondary">${esc(pastPaperMeta?.title||'')}</span></div>
+      <button class="btn secondary pastExitBtn" onclick="exitPastQuiz()">← 返回考卷列表</button>
+    </div>
+    <div id="pastScoreStatus" class="pastQuizStatus" role="status" aria-live="polite">${pastProgressText()}</div>
+    <div class="small">本份考卷會自動記錄作答與計分；返回列表不會清除進度。　｜　${past?`本題曾作答：${past.correct?'✓ 正確':'✕ 錯誤'}`:'本題尚未作答'}　｜　第 ${pastIndex+1}/${pastPaperSet.length} 題　｜　<a href="${pastPaperMeta?.pdf||'#'}" target="_blank" rel="noopener">核對官方原題 PDF</a></div>
     <div class="progress" role="progressbar" aria-label="考古題進度" aria-valuemin="1" aria-valuemax="${pastPaperSet.length}" aria-valuenow="${pastIndex+1}"><div style="width:${(pastIndex+1)/pastPaperSet.length*100}%"></div></div>
     <div class="qtext" tabindex="-1">${esc(q.question)}</div>
     ${q.hasVisual?`<div class="notice" style="margin:8px 0"><b>此題可能含圖／表格／程式碼版面。</b> 請用「查看官方 PDF」核對原題視覺資訊，避免只看文字層誤判。</div>`:''}
@@ -992,6 +1024,7 @@ function answerPast(i){
   state.attempts[q.id]={correct:ok,last:Date.now(),subject:'PAST',topic:pastPaperMeta?.title||'官方考古題'};
   if(ok) delete state.wrong[q.id]; else state.wrong[q.id]=true;
   save();
+  updatePastProgressStatus();
   qsa('#pastOpts .option').forEach((b,idx)=>{
     b.disabled=true;
     if(idx===q.answer)b.classList.add('correct');
@@ -1013,7 +1046,7 @@ function pastNext(){
     const answered=pastPaperSet.filter(q=>state.attempts[q.id]).length;
     const correct=pastPaperSet.filter(q=>state.attempts[q.id] && state.attempts[q.id].correct).length;
     const score=answered ? Math.round(correct/pastPaperSet.length*100) : 0;
-    qs('#pastQuizArea').innerHTML=`<div class="card"><h3>這份官方考古題完成了</h3><div class="kpi ${score>=70?'good':'bad'}">${score} 分</div><p>${correct}/${pastPaperSet.length} 題正確。你可以回到上方直接選另一份官方考卷，或到錯題本加強複習。</p><button class="btn primary" onclick="restartPastQuiz()">重新作答這份</button></div>`;
+    qs('#pastQuizArea').innerHTML=`<div class="card"><h3>這份官方考古題完成了</h3><div class="kpi ${score>=70?'good':'bad'}">${score} 分</div><p>${correct}/${pastPaperSet.length} 題正確。作答紀錄已保留在此裝置，你可以返回考卷列表選其他考卷，或重新作答本份。</p><div class="controls"><button class="btn secondary" onclick="exitPastQuiz()">返回考卷列表</button><button class="btn primary" onclick="restartPastQuiz()">重新作答這份</button></div></div>`;
   }
 }
 function pastPrev(){ if(pastIndex>0){ pastIndex--; pastAnswered=false; renderPastQuiz(); focusQuestion("#pastQuizArea"); } }

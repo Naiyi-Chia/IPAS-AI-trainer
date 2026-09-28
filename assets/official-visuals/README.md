@@ -27,3 +27,7 @@ Human-reviewed screenshots from the official PDFs replace the previous automated
 ## 115-1-L23 manual override
 
 Human-reviewed screenshots from the official PDF replace the previous automated crops. Q45 is represented by two question-specific visuals (`q45_1/2`), and the Q46–48 shared context is represented by two shared visuals (`shared_1/2`).
+
+## 114-2-L22 manual override
+
+Human-reviewed screenshots from the official PDF replace the previous automated crops. Q43–Q47 use one shared-context visual from PDF P13, and Q43 also has one question-specific visual.

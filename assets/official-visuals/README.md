@@ -14,4 +14,8 @@ Provenance:
 - Crop implementation: `falo-chinese/ipas-aiap/verification/fix_images.py`
 - Crop method: PyMuPDF direct PDF render/crop, 3x zoom, 6pt padding.
 
-Current inventory: 47 visual-dependent rows, 50 unique PNG crops.
+Current inventory: 47 visual-dependent rows, 25 unique PNG crops.
+
+## 114-2-L23 manual override
+
+For `114-2-L23`, human-reviewed crops supplied from the official PDF replace the earlier automated grouping where option-level and shared-context boundaries required finer granularity (Q45–Q49). These remain source-faithful screenshots; no redraw or AI reconstruction was used.

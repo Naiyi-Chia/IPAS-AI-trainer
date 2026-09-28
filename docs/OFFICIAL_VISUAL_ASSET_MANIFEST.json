@@ -10,7 +10,7 @@
   },
   "counts": {
     "visual_dependent_rows": 47,
-    "unique_asset_files": 58
+    "unique_asset_files": 61
   },
   "rows": [
     {
@@ -22,7 +22,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L21/115-1-L21_q19.png",
-          "upstream_crop": "figures/fig_B1-069.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -231,7 +232,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q2.png",
-          "upstream_crop": "figures/fig_B2-052.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -244,7 +246,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q8.png",
-          "upstream_crop": "figures/fig_B2-058.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -257,7 +260,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q19.png",
-          "upstream_crop": "figures/fig_B2-069.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -270,7 +274,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q23.png",
-          "upstream_crop": "figures/fig_B2-073.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -283,7 +288,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q39.png",
-          "upstream_crop": "figures/fig_B2-089.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -296,7 +302,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q40.png",
-          "upstream_crop": "figures/fig_B2-090.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -309,7 +316,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q41.png",
-          "upstream_crop": "figures/fig_B2-091.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -322,7 +330,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q43.png",
-          "upstream_crop": "figures/fig_B2-093.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -335,7 +344,8 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
-          "upstream_crop": "figures/fig_G_B2-098.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -344,15 +354,32 @@
       "question_no": 49,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png;assets/official-visuals/115-1-L22/115-1-L22_q49.png",
+      "visual_asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png;assets/official-visuals/115-1-L22/115-1-L22_q49_a.png;assets/official-visuals/115-1-L22/115-1-L22_q49_b.png;assets/official-visuals/115-1-L22/115-1-L22_q49_c.png;assets/official-visuals/115-1-L22/115-1-L22_q49_d.png",
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
-          "upstream_crop": "figures/fig_G_B2-098.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         },
         {
-          "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49.png",
-          "upstream_crop": "figures/fig_B2-099.png"
+          "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_a.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        },
+        {
+          "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_b.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        },
+        {
+          "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_c.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        },
+        {
+          "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_d.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -365,11 +392,13 @@
       "assets": [
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
-          "upstream_crop": "figures/fig_G_B2-098.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         },
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q50.png",
-          "upstream_crop": "figures/fig_B2-100.png"
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
       ]
     },
@@ -813,14 +842,6 @@
   ],
   "assets": [
     {
-      "asset_file": "assets/official-visuals/115-1-L21/115-1-L21_q19.png",
-      "upstream_crop": "figures/fig_B1-069.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第一科_人工智慧技術應用與規劃_公告試題_20260615003359.pdf",
-      "dependent_questions": [
-        "115-1-L21#19"
-      ]
-    },
-    {
       "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q3.png",
       "upstream_crop": "figures/fig_B2-003.png",
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
@@ -910,96 +931,6 @@
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
       "dependent_questions": [
         "114-2-L22#50"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q2.png",
-      "upstream_crop": "figures/fig_B2-052.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#2"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q8.png",
-      "upstream_crop": "figures/fig_B2-058.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#8"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q19.png",
-      "upstream_crop": "figures/fig_B2-069.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#19"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q23.png",
-      "upstream_crop": "figures/fig_B2-073.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#23"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q39.png",
-      "upstream_crop": "figures/fig_B2-089.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#39"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q40.png",
-      "upstream_crop": "figures/fig_B2-090.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#40"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q41.png",
-      "upstream_crop": "figures/fig_B2-091.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#41"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q43.png",
-      "upstream_crop": "figures/fig_B2-093.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#43"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
-      "upstream_crop": "figures/fig_G_B2-098.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#48",
-        "115-1-L22#49",
-        "115-1-L22#50"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49.png",
-      "upstream_crop": "figures/fig_B2-099.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#49"
-      ]
-    },
-    {
-      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q50.png",
-      "upstream_crop": "figures/fig_B2-100.png",
-      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
-      "dependent_questions": [
-        "115-1-L22#50"
       ]
     },
     {
@@ -1327,6 +1258,143 @@
       "dependent_questions": [
         "114-2-L23#50"
       ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L21/115-1-L21_q19.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第一科_人工智慧技術應用與規劃_公告試題_20260615003359.pdf",
+      "dependent_questions": [
+        "115-1-L21#19"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q2.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#2"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q8.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#8"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q19.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#19"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q23.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#23"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q39.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#39"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q40.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#40"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q41.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#41"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q43.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#43"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#48",
+        "115-1-L22#49",
+        "115-1-L22#50"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_a.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#49"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_b.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#49"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_c.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#49"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_d.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#49"
+      ]
+    },
+    {
+      "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q50.png",
+      "upstream_crop": null,
+      "source_capture": "user-provided manual screenshot/crop from official iPAS PDF",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "dependent_questions": [
+        "115-1-L22#50"
+      ]
     }
   ],
   "manual_overrides": [
@@ -1334,6 +1402,18 @@
       "paper_id": "114-2-L23",
       "date": "2026-09-28",
       "reason": "Human visual review found finer-grained option/shared-image boundaries than the automated PDF-coordinate crop mapping.",
+      "source": "User-provided Google Drive screenshots from the official iPAS PDF"
+    },
+    {
+      "paper_id": "115-1-L21",
+      "date": "2026-09-28",
+      "reason": "Human visual review replaced the automated crop with the manually captured official-PDF visual.",
+      "source": "User-provided Google Drive screenshots from the official iPAS PDF"
+    },
+    {
+      "paper_id": "115-1-L22",
+      "date": "2026-09-28",
+      "reason": "Human visual review replaced automated crops; Q49 is four independent A/B/C/D option images.",
       "source": "User-provided Google Drive screenshots from the official iPAS PDF"
     }
   ]

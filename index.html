@@ -33,6 +33,7 @@ h3{font-size:18px;line-height:1.35}
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:none}
 .questionCard{max-width:820px;margin-inline:auto}
+.officialQuestion .qtext,.officialQuestion .option{white-space:pre-wrap;overflow-wrap:anywhere}
 .metricCard{background:#fafbfc;padding:14px;border-radius:12px}
 .c6{grid-column:span 6}.c4{grid-column:span 4}.c8{grid-column:span 8}.c12{grid-column:span 12}
 .kpi{font-size:28px;font-weight:800;letter-spacing:-.02em}
@@ -519,11 +520,13 @@ function renderPracticeQ(){
  const attemptStatus=current
    ? `本輪：${current.ok?"✓ 正確":"✕ 錯誤"}`
    : past?`曾作答：${past.correct?"✓ 正確":"✕ 錯誤"}`:"尚未作答";
- a.innerHTML=`<div class="card questionCard">
+ a.innerHTML=`<div class="card questionCard ${q.id.startsWith('PAST-')?'officialQuestion':''}">
  <div class="qmeta"><span class="qmetaPrimary">${q.subject} · ${q.topic} ${esc(q.topicName)}</span><span class="qmetaSecondary">${q.level} · ${difficultyLabel(q.difficulty)}</span></div>
  <div class="small">第 ${pIndex+1} / ${practiceSet.length} 題　｜　<span id="practiceAnsweredCount">已答 ${answered} / ${practiceSet.length}</span>　｜　<span id="practiceAttemptStatus" aria-live="polite">${attemptStatus}</span></div>
  <div class="progress" role="progressbar" aria-label="本輪作答進度" aria-valuemin="0" aria-valuemax="${practiceSet.length}" aria-valuenow="${answered}"><div id="practiceProgressFill" style="width:${practiceSet.length?answered/practiceSet.length*100:0}%"></div></div>
+ ${renderPastSharedContext(q)}
  <div class="qtext" tabindex="-1">${esc(q.question)}</div>
+ ${renderPastVisuals(q)}
  <div id="opts">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join("")}</div>
  <div id="pexplain" class="explain hidden"></div>
  <div class="navrow">
@@ -706,8 +709,10 @@ function cleanBundledOption(value,letter){
   }
   return raw;
 }
-function bundledQuestionToRuntime(paper,q){
+function bundledQuestionToRuntime(paper,q,sharedContexts={}){
   const letters=["A","B","C","D"];
+  const sharedContext=q.shared_context_id?sharedContexts[q.shared_context_id]:null;
+  if(q.shared_context_id&&(!sharedContext||sharedContext.paper_id!==paper.id))throw new Error(`缺少本題共用情境：${q.shared_context_id}`);
   const sourcePages=q.source_page_start?`PDF P${q.source_page_start}${q.source_page_end&&q.source_page_end!==q.source_page_start?`–${q.source_page_end}`:""}`:"官方 PDF";
   return {
     id:`PAST-${paper.id}-${q.question_no}`,number:q.question_no,level:paper.level,subject:paper.subject,
@@ -716,6 +721,7 @@ function bundledQuestionToRuntime(paper,q){
     options:letters.map(letter=>cleanBundledOption(q.options?.[letter],letter)),
     answer:letters.indexOf(q.answer),hasVisual:!!q.has_visual,
     visualAssets:Array.isArray(q.visual_assets)?q.visual_assets:[],
+    sharedContextId:q.shared_context_id||null,sharedContext,
     sourcePageStart:q.source_page_start,sourcePageEnd:q.source_page_end,sourceNote:q.notes||"",
     explanation:`官方公告試題正解：${q.answer}`,
     sourceType:`iPAS 官方公告試題（verified canonical bundle；${sourcePages}）`
@@ -727,14 +733,14 @@ async function loadOfficialPastBundle(){
     officialPastBundlePromise=fetch(bundledAssetUrl(OFFICIAL_PAST_BUNDLE_PATH),{cache:"force-cache"})
       .then(r=>{if(!r.ok)throw new Error(`內建考古題資料 HTTP ${r.status}`);return r.json()})
       .then(data=>{
-        if(data?.schema_version!==2||data?.source?.row_count!==700||!Array.isArray(data?.papers)||data.papers.length!==14)throw new Error("內建考古題資料版本或筆數不符");
+        if(data?.schema_version!==3||data?.source?.row_count!==700||!Array.isArray(data?.papers)||data.papers.length!==14||!data.shared_contexts)throw new Error("內建考古題資料版本或筆數不符");
         officialPastQuestionIndex.clear();
         data.papers.forEach(bp=>{
           const paper=pastPapers.find(p=>p.id===bp.paper_id);
           if(!paper||!Array.isArray(bp.questions)||bp.questions.length!==50)throw new Error(`內建考卷不完整：${bp.paper_id||"unknown"}`);
           bp.questions.forEach(q=>{
             if(q.verification_status!=="verified")throw new Error(`內建題目尚未 verified：${bp.paper_id} Q${q.question_no}`);
-            const runtime=bundledQuestionToRuntime(paper,q);
+            const runtime=bundledQuestionToRuntime(paper,q,data.shared_contexts);
             if(runtime.answer<0||runtime.options.length!==4)throw new Error(`內建題目格式錯誤：${runtime.id}`);
             officialPastQuestionIndex.set(runtime.id,runtime);
           });
@@ -833,16 +839,26 @@ async function loadPastPaperById(id){
     qs("#pastQuizArea").innerHTML=`<div class="card"><h3>暫時無法開卷</h3><p class="small">產品內建的 canonical 題庫未能載入。你仍可先開官方 PDF 核對原題。</p><a class="btn primary" style="display:inline-block;text-decoration:none" href="${paper.pdf}" target="_blank" rel="noopener">查看官方 PDF</a></div>`;
   }
 }
-function renderPastVisuals(q){
+function renderPastSharedContext(q){
+  const context=q.sharedContext;
+  if(!context)return "";
+  const pages=`PDF 第 ${context.source_page_start}${context.source_page_end!==context.source_page_start?`–${context.source_page_end}`:""} 頁`;
+  return `<details class="pastSharedContext" open style="margin:16px 0;padding:12px;border:1px solid var(--line);border-radius:10px">
+    <summary style="cursor:pointer;font-weight:700;padding:8px 0">本題共用情境 <span class="small">（${esc(pages)}）</span></summary>
+    <pre class="pastSharedContextText" style="white-space:pre-wrap;overflow-wrap:anywhere;min-width:0;font-size:1rem;line-height:1.7;margin:12px 0">${esc(context.text)}</pre>
+    ${renderPastVisuals({number:q.number,visualAssets:context.visual_assets},"題組共用視覺")}
+  </details>`;
+}
+function renderPastVisuals(q,visualLabel="官方原題視覺"){
   const list=Array.isArray(q.visualAssets)?q.visualAssets:[];
   if(list.length){
     return `<div class="pastVisualGrid" style="display:grid;gap:10px;margin:12px 0">${list.map((src,i)=>{
-      const optionMatch=String(src).match(/_([a-d])\\.png$/i);
-      const label=optionMatch?`選項 ${optionMatch[1].toUpperCase()} 官方視覺`:`官方原題視覺 ${i+1}/${list.length}`;
+      const optionMatch=String(src).match(/_([a-d])\.png$/i);
+      const label=optionMatch?`選項 ${optionMatch[1].toUpperCase()} 官方視覺`:`${visualLabel} ${i+1}/${list.length}`;
       return `<figure style="margin:0"><img src="${esc(bundledAssetUrl(src))}" alt="${esc(label)}，第 ${q.number} 題" loading="lazy" style="display:block;max-width:100%;height:auto;margin:0 auto;border:1px solid var(--line);border-radius:10px"><figcaption class="small" style="margin-top:4px;text-align:center">${esc(label)}</figcaption></figure>`;
     }).join("")}</div>`;
   }
-  return q.hasVisual?`<div class="notice" style="margin:8px 0"><b>此題包含官方視覺資訊，但內建資產未能顯示。</b> 請用「核對官方原題 PDF」查看來源。</div>`:"";
+  return q.hasVisual&&!q.sharedContext?.visual_assets?.length?`<div class="notice" style="margin:8px 0"><b>此題包含官方視覺資訊，但內建資產未能顯示。</b> 請用「核對官方原題 PDF」查看來源。</div>`:"";
 }
 
 function renderPastQuiz(){
@@ -854,7 +870,7 @@ function renderPastQuiz(){
   const q=pastPaperSet[pastIndex];
   const key=q.id;
   const past=state.attempts[key];
-  area.innerHTML=`<div class="card questionCard" style="margin-bottom:12px">
+  area.innerHTML=`<div class="card questionCard officialQuestion" style="margin-bottom:12px">
     <div class="pastQuizTop">
       <div class="qmeta"><span class="qmetaPrimary">官方考古題 · 第 ${q.number} 題</span><span class="qmetaSecondary">${esc(pastPaperMeta?.title||'')}</span></div>
       <button class="btn secondary pastExitBtn" onclick="exitPastQuiz()">← 返回考卷列表</button>
@@ -862,6 +878,7 @@ function renderPastQuiz(){
     <div id="pastScoreStatus" class="pastQuizStatus" role="status" aria-live="polite">${pastProgressText()}</div>
     <div class="small">本份考卷會自動記錄作答與計分；返回列表不會清除進度。　｜　${past?`本題曾作答：${past.correct?'✓ 正確':'✕ 錯誤'}`:'本題尚未作答'}　｜　第 ${pastIndex+1}/${pastPaperSet.length} 題　｜　<a href="${pastPaperMeta?.pdf||'#'}" target="_blank" rel="noopener">核對官方原題 PDF</a></div>
     <div class="progress" role="progressbar" aria-label="考古題進度" aria-valuemin="1" aria-valuemax="${pastPaperSet.length}" aria-valuenow="${pastIndex+1}"><div style="width:${(pastIndex+1)/pastPaperSet.length*100}%"></div></div>
+    ${renderPastSharedContext(q)}
     <div class="qtext" tabindex="-1">${esc(q.question)}</div>
     ${renderPastVisuals(q)}
     <div id="pastOpts" role="group" aria-label="作答選項" tabindex="-1">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join('')}</div>

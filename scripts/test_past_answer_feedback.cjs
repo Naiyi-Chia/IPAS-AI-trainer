@@ -24,7 +24,7 @@ for(let answer=0;answer<4;answer++){
     const context={pastAnswered:false,pastIndex:0,pastPaperSet:[question],
       pastPaperMeta:{title:'Official test paper',pdf:'https://example.test/official.pdf'},
       state:{attempts:{KEEP:{correct:true}},wrong:{'PAST-TEST-1':true},bookmarks:{KEEP:true},examHistory:[{score:80}]},
-      Date:{now:()=>123456789},save:()=>saves++,
+      Date:{now:()=>123456789},save:()=>saves++,updatePastProgressStatus:()=>{},
       qsa:selector=>{assert.equal(selector,'#pastOpts .option');return options},
       qs:selector=>{assert.equal(selector,'#pastOpts');return feedback},
       document:{createElement:tag=>{assert.equal(tag,'span');return {}}}};
@@ -64,7 +64,7 @@ const renderContext={pastIndex:0,pastAnswered:true,
   pastPaperSet:[1,2].map(number=>({id:`PAST-TEST-${number}`,number,question:'<Question>',options:['<A>','B & C'],answer:0})),
   state:{attempts:{'PAST-TEST-1':{correct:true}},wrong:{}},
   qs:selector=>{assert.equal(selector,'#pastQuizArea');return area},
-  qsa:()=>[],focusQuestion:()=>{}};
+  qsa:()=>[],focusQuestion:()=>{},pastProgressText:()=>'',renderPastSharedContext:()=>'',renderPastVisuals:()=>''};
 vm.createContext(renderContext);vm.runInContext(escCode+renderCode+navigationCode,renderContext);
 const savedProgress=JSON.stringify(renderContext.state);
 for(const action of ['renderPastQuiz','pastNext','pastPrev','restartPastQuiz']){

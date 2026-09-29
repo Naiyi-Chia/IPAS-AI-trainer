@@ -20,7 +20,7 @@ async function extract(pdfjs,buffer){
   const text=pages.join('\n');
   // Official PDFs include fullwidth answers and split digits such as "4 2.".
   const matches=[...text.matchAll(/(?:^|\n)\s*([ABCD])\s*((?:\d\s*){1,3})\.\s*/g)];
-  return matches.map((m,i)=>{
+  const questions=matches.map((m,i)=>{
     const block=text.slice(m.index+m[0].length,matches[i+1]?.index??text.length);
     const opts=[];
     for(const candidate of block.matchAll(/(?:^|[\s;])\(\s*([ABCD])\s*\)/g)){
@@ -30,17 +30,23 @@ async function extract(pdfjs,buffer){
       fields:[block.slice(0,opts[0]?.index??block.length),...opts.slice(0,4).map((o,j)=>block.slice(o.index+o[0].length,opts[j+1]?.index??block.length))],
       sourcePage:pages.findIndex((_,pn)=>pages.slice(0,pn+1).join('\n').length>=m.index+m[0].length)+1};
   });
+  questions.pages=pages;
+  return questions;
 }
 async function audit(dir,bundlePath=path.join(root,'data/official-past-papers.json')){
   const baseline=read(path.join(root,'docs/OFFICIAL_BUNDLE_SOURCE_BASELINE.json'));
   const bundle=read(bundlePath),manifest=read(path.join(root,'docs/OFFICIAL_VISUAL_ASSET_MANIFEST.json'));
+  const sourceCSV=fs.readFileSync(path.join(root,'data/official-past-papers-source.csv'),'utf8').replace(/\r\n?/g,'\n');
+  assert.equal(sha(sourceCSV),baseline.masterSnapshot.csvSha256,'canonical master snapshot drift');
   const pdfjs=require(path.join(dir,'pdf.js'));assert.equal(pdfjs.version,'3.11.174');
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),ctx=vm.createContext({});
   vm.runInContext(html.slice(html.indexOf('const OFFICIAL_PDF_BASE'),html.indexOf('const OFFICIAL_PAST_BUNDLE_PATH'))+
     html.slice(html.indexOf('const pastPapers'),html.indexOf('const state'))+
     html.slice(html.indexOf('function cleanBundledOption'),html.indexOf('async function loadOfficialPastBundle'))+'\nthis.papers=pastPapers;',ctx);
+  assert.equal(bundle.schema_version,3);
   assert.equal(bundle.papers.length,14);assert.equal(ctx.papers.length,14);
-  const ids=[],used=new Set(),summary=[],assets=new Set();let matchedFields=0,visualRows=0;
+  assert.equal(Object.keys(bundle.shared_contexts).length,12);
+  const ids=[],used=new Set(),summary=[],assets=new Set(),groups=new Set();let matchedFields=0,visualRows=0,dependentRows=0;
   for(const p of bundle.papers){
     const paper=ctx.papers.find(x=>x.id===p.paper_id);assert(paper,`unknown paper ${p.paper_id}`);
     assert.equal(p.source_pdf_file,paper.file);assert.equal(p.session,paper.session,`${p.paper_id}: session`);
@@ -51,24 +57,45 @@ async function audit(dir,bundlePath=path.join(root,'data/official-past-papers.js
     const official=await extract(pdfjs,buffer),numbers=Array.from({length:50},(_,i)=>i+1);
     assert.deepEqual(official.map(q=>q.number),numbers,`${p.paper_id}: official numbering`);
     assert.deepEqual(p.questions.map(q=>q.question_no),numbers);
+    for(const [id,context] of Object.entries(bundle.shared_contexts).filter(([,c])=>c.paper_id===p.paper_id)){
+      assert.equal(sha(JSON.stringify(context)),baseline.sharedContexts[id],`${id}: shared context drift`);
+      assert(context.source_page_start>=1&&context.source_page_end>=context.source_page_start&&context.source_page_end<=official.pages.length);
+      const source=normalize(official.pages.slice(context.source_page_start-1,context.source_page_end).join('\n'));
+      assert(source.includes(normalize(context.text)),`${id}: shared text absent from official source pages`);
+      const provenance=manifest.shared_contexts[id];assert(provenance,`${id}: shared provenance missing`);
+      assert.equal(provenance.source_pdf_file,p.source_pdf_file);
+      assert.equal(provenance.source_page_start,context.source_page_start);
+      assert.equal(provenance.source_page_end,context.source_page_end);
+      assert.deepEqual(context.visual_assets,provenance.assets.map(a=>a.asset_file));
+    }
     let exceptions=0;
     for(const [i,q] of p.questions.entries()){
       const source=official[i],id=`PAST-${p.paper_id}-${source.number}`;ids.push(id);
-      assert.equal(ctx.bundledQuestionToRuntime(paper,q).id,id,`${id}: runtime identity`);
+      const runtime=ctx.bundledQuestionToRuntime(paper,q,bundle.shared_contexts);
+      assert.equal(runtime.id,id,`${id}: runtime identity`);
+      const shared=q.shared_context_id?bundle.shared_contexts[q.shared_context_id]:null;
+      if(q.shared_context_id){
+        dependentRows++;groups.add(q.shared_context_id);assert(shared&&shared.paper_id===p.paper_id,`${id}: invalid group`);
+        assert.equal(runtime.sharedContext,shared,`${id}: runtime context resolution`);
+      }
+      const sharedAssets=shared?.visual_assets||[];
+      assert(!q.visual_assets.some(a=>sharedAssets.includes(a)),`${id}: duplicated shared asset`);
       assert.equal(sha(JSON.stringify(q)),baseline.records[id],`${id}: canonical record drift`);
       assert.equal(q.verification_status,'verified');assert.equal(q.answer,source.answer,`${id}: official answer`);
       if(!(q.source_page_start<=source.sourcePage&&q.source_page_end>=source.sourcePage)){
         const provenance=baseline.pageExceptions[id];
         assert(provenance,`${id}: source page ${source.sourcePage} outside provenance`);
         assert.equal(source.sourcePage,provenance.questionPage);
-        assert(q.visual_assets.includes(provenance.manifestAsset),`${id}: missing shared-page provenance`);
+        assert([...q.visual_assets,...sharedAssets].includes(provenance.manifestAsset),`${id}: missing shared-page provenance`);
       }
       if(q.has_visual){
         visualRows++;const row=manifest.rows.find(x=>x.paper_id===p.paper_id&&x.question_no===q.question_no);
         assert(row,`${id}: visual provenance`);assert.equal(row.source_pdf_file,p.source_pdf_file);
         assert.deepEqual(q.visual_assets,row.assets.map(x=>x.asset_file));
+        assert.equal(q.shared_context_id,row.shared_context_id);
       }else assert.deepEqual(q.visual_assets,[]);
-      for(const asset of q.visual_assets){assets.add(asset);assert.equal(sha(fs.readFileSync(path.join(root,asset))),baseline.assets[asset],`${asset}: visual drift`);}
+      assert.equal(q.has_visual,!!(q.visual_assets.length+sharedAssets.length),`${id}: visual flag`);
+      for(const asset of [...q.visual_assets,...sharedAssets]){assets.add(asset);assert.equal(sha(fs.readFileSync(path.join(root,asset))),baseline.assets[asset],`${asset}: visual drift`);}
       fields(q).forEach((target,field)=>{
         const actual=normalize(source.fields[field]||''),expected=normalize(target),key=`${id}/${['stem','A','B','C','D'][field]}`;
         if(actual===expected){matchedFields++;return;}
@@ -81,8 +108,10 @@ async function audit(dir,bundlePath=path.join(root,'data/official-past-papers.js
   }
   assert.equal(new Set(ids).size,700);assert.deepEqual(ids,Object.keys(baseline.records),'canonical identity/order drift');
   assert.equal(visualRows,47);assert.equal(assets.size,63);
+  assert.equal(dependentRows,36);assert.equal(groups.size,12);
+  assert.deepEqual([...groups].sort(),Object.keys(baseline.sharedContexts).sort());
   assert.deepEqual([...used].sort(),Object.keys(baseline.exceptions).sort(),'stale exceptions');
-  const result={status:'PASS (regression; recorded source differences remain)',records:ids.length,matchedFields,exceptionFields:used.size,visualRows,assets:assets.size,summary};
+  const result={status:'PASS (official source regression; visual/typography extraction limits recorded)',records:ids.length,matchedFields,exceptionFields:used.size,sharedContexts:groups.size,dependentRows,visualRows,assets:assets.size,summary};
   fs.writeFileSync(path.join(dir,'bundle-audit.json'),JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify(result,null,2));return result;
 }

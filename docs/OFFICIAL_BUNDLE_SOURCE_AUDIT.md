@@ -1,94 +1,131 @@
 # Official bundled-paper source audit — Issue #78
 
-This replaces the old runtime-parser/mirror audit. It is ingest/regression tooling;
-`index.html` has no PDF.js/parser/mirror dependency. No runtime packages were added.
+The current bundle implements the #72 Human-approved flat-master/shared-context
+contract. Source decisions: [schema](https://github.com/Naiyi-Chia/IPAS-AI-trainer/issues/72),
+[VGG16 full-text preservation](https://github.com/Naiyi-Chia/IPAS-AI-trainer/issues/72#issuecomment-5884191731),
+[master ready for ingest](https://github.com/Naiyi-Chia/IPAS-AI-trainer/issues/72#issuecomment-5885921154).
+This is ingest/regression tooling; production has no PDF.js/parser/mirror dependency.
 
-## Repeatable commands
+## Repeatable checks
 
-Requires Python standard library and Node. Run from the repository root:
+Python standard library and Node, from repository root:
 
 ```powershell
 python scripts/fetch_official_audit.py "$env:TEMP/ipas-78-audit"
 python scripts/build_official_past_bundle.py --check
+python -B scripts/test_official_past_bundle.py
 node scripts/audit_official_pdf.cjs "$env:TEMP/ipas-78-audit"
 node scripts/test_official_bundle_audit.cjs "$env:TEMP/ipas-78-audit"
 node scripts/test_past_progress_migration.cjs
+node scripts/test_past_answer_feedback.cjs
 git diff --check
 ```
 
-Use any writable input directory on other platforms. The fetch step refreshes
-all 14 official PDFs directly from the app's iPAS URLs plus the existing audit
-PDF.js 3.11.174. It no longer fetches a mirror. Reusing downloads is an offline
-regression run; rerun the fetch command to check current upstream sources.
-The audit writes `bundle-audit.json` to that input directory and exits nonzero
-on an unrecorded difference. Its optional second argument is a candidate bundle,
-not the legacy HTML baseline argument.
+Use any writable input directory on other platforms. Fetch refreshes all 14 iPAS
+PDFs and the existing PDF.js 3.11.174 audit dependency. An offline run against saved
+PDFs is a regression run; fresh fetches also detect current upstream changes.
+The audit writes `bundle-audit.json` to the input directory and fails on unrecorded
+differences. Its optional second argument is a candidate JSON bundle.
 
-## Coverage and immutable evidence
+Optional repeatable browser QA uses an existing Playwright installation (available
+through `NODE_PATH`) and installed Edge, with no new application dependency:
 
-`OFFICIAL_BUNDLE_SOURCE_BASELINE.json` pins official filenames/PDF SHA-256 hashes,
-700 canonical record hashes, 63 asset hashes, and exact field-level differences.
-The PDF hashes were independently matched to the existing #43 source fingerprints.
-Record hashes preserve the existing c0a22d5 verified snapshot, not new transcriptions.
-The normal builder cannot rewrite this audit baseline. A baseline update requires
-source review and an Issue decision; never regenerate it just to make a failure pass.
+```powershell
+node scripts/test_official_bundle_browser.cjs "$env:TEMP/ipas-78-browser"
+```
 
-Each run extracts the actual PDF again and verifies:
+`BROWSER_CHANNEL` can select another installed Playwright-supported channel.
+The script creates an isolated localhost server and fresh browser profiles.
+Screenshots are optional; omit the output-directory argument to skip them.
 
-- 14 distinct papers, official source URLs and filenames; app/bundle session agreement.
-- Official question/answer cells 1–50 per paper, including fullwidth answers and split digits.
-- All 700 answers against those cells; all 700 actual runtime canonical IDs and their record identities.
-- All 3,500 stem/option fields using Unicode NFKC, whitespace removal and terminal option-semicolon normalization. Operators, case, digits and other punctuation are preserved.
-- 47 visual rows against the existing verified manifest and source filenames; all 63 asset bytes.
-- Recorded question-page provenance, with one explicit shared-context exception described below.
-- Known differences are exact source/bundle pairs, not blanket visual-question skips; new changes on either side fail. Whole-record hashes also protect fields the text comparator cannot verify.
+## Source snapshot and schema 3
 
-## Results and limitations (2026-09-29)
+Live canonical sheet `AI應用規劃師_歷屆試題總表(700題)`, A1:X701, was read on
+2026-09-29. CSV equality to all 700 live rows was checked after only CRLF/CR-to-LF
+and trailing-line-whitespace normalization. No wording was changed during ingest.
+Rows below the canonical block are blank; `archive_duplicate_rows` is excluded.
+The master already contains the Q43/Q44 wording corrections, removal of Q45/Q49
+summary prefixes, typography fixes and shared-asset deduplication.
 
-PASS **regression**, with 700 official answer/identity checks, 3,446 matching text
-fields and 54 pinned differing fields. This does **not** certify verbatim equivalence
-of all existing content. Full source and bundle strings and reasons are in the
-baseline's `exceptions` section, keyed by canonical ID and field.
+- 700 verified questions, 14 papers × 50; unchanged canonical IDs and answers.
+- 12 shared contexts, 36 dependent questions. `shared_contexts` stores each group
+  once; questions store a nullable `shared_context_id`.
+- Shared context includes its owning paper, complete official text, source pages
+  and shared images. Question-specific images remain on questions.
+- Builder rejects inconsistent repeated group text/pages/assets, missing IDs,
+  invalid page ranges, duplicate shared/question images, invalid paths and
+  unverified rows. CRLF/LF variants generate identical JSON.
+- 47 visual-dependent rows and 63 unique assets remain. The previously replaced
+  115-1-L22 Q48–50 image is preserved byte-for-byte from branch head `63d6ae5`.
+- VGG16 full model-summary text remains in shared context for 114-2-L23 Q42–45.
+  Its supplemental image does not replace or truncate the table.
+- Bundle schema 3 is independent of progress migration version 2. No migration
+  map, storage key, backup semantics, marker or exam-history behavior changed.
 
-Differences include image-only code/formula transcription, shared context following
-an option D, typography, and **real pre-existing wording differences**. For example,
-115-1-L22 Q43 stem/A and Q44 stem omit/rewrite official wording; Q45 prepends a
-summarized shared context. 115-1-L23 Q49 also prepends a context summary. These remain
-unchanged under this rework's content-preservation boundary and require content
-review before anyone claims full wording fidelity. Visual-manifest membership is
-provenance, not proof that an image and text are semantically equivalent. No OCR or
-new human visual verification of all 47 rows is claimed.
+## Official-source audit coverage
 
-114-2-L23 Q46 records page 14 (shared context), while the actual numbered question
-starts on page 15. The existing verified manifest explicitly includes shared-page
-assets for both pages. The audit pins this one exception; it does not silently
-expand every question's page range or alter the canonical snapshot.
+The audit re-extracts each pinned official PDF and checks all 700 official
+question/answer cells and actual runtime IDs. It checks 3,500 stem/option fields
+using NFKC, whitespace removal and terminal option-semicolon normalization;
+operators, case, digits and other punctuation are preserved.
 
-The baseline and comparator intentionally protect against regression, not a
-malicious simultaneous rewrite of both data and evidence. Changed official PDF
-bytes require review even when extracted text would be unchanged. NFKC/whitespace
-comparison does not prove code indentation/layout equivalence; record/asset hashes
-protect existing representations in those cases.
+All **12 shared-context texts match their recorded official page ranges**, including
+the full VGG16 table. Runtime resolution, group ownership, all 36 references,
+shared manifest pages/assets and absence of duplicate images are checked.
 
-Negative controls PASS: altered answers, reordered identities, changed ordinary
-wording, changed known-exception wording, missing visual mapping, wrong session and
-changed source PDF all cause audit failure.
+`OFFICIAL_BUNDLE_SOURCE_BASELINE.json` pins the normalized master CSV, all 700
+records, all 12 contexts, official PDF fingerprints and all 63 image fingerprints.
+`OFFICIAL_VISUAL_ASSET_MANIFEST.json` v2 separates question and group provenance
+while retaining existing per-asset capture records. The builder cannot overwrite
+the baseline. Evidence updates require source review, not automatic re-baselining.
 
-## Other validation
+### Results and remaining extraction limits
 
-- Generator syntax and deterministic `--check`: PASS. CRLF inside CSV quoted cells
-  is normalized to LF so Windows regeneration preserves the committed question strings.
-- All 700 question objects equal the original c0a22d5 bundle. Generated JSON diff
-  contains only the two 115-2 session corrections; 114 metadata stays unchanged.
-- Existing #72 migration regression: PASS; migration/runtime files unchanged.
-- App and Dev loader inline JavaScript syntax: PASS.
-- Local headless Edge, isolated fresh profiles, 1280×900 and 375×900: PASS for
-  practice start/answer/navigation, mock start/answer/submit/review, bundled paper
-  load (50 questions), official wrong-answer scoring/persisted progress, wrong view,
-  stats, visual image loading, every tab and horizontal-overflow checks.
-- Browser page errors: zero; external requests: zero during these runtime flows.
-- Static check confirms no runtime PDF parser, PDF.js or structured mirror symbols.
+PASS: 700 answers/identities; **3,456 matching question text fields**; **44 exact
+remaining extraction/typography pairs**. All 44 pairs are identical to the prior
+reviewed evidence. **10 resolved exceptions were removed; none added or relaxed.**
+In particular, 115-1-L22 Q43 stem/A and Q44 stem now match the official PDF, as do
+the corrected Q45/Q49 per-question stems and the flagged typography fields.
+
+Remaining pairs include image-only code/formula transcriptions, adjoining shared
+context/section/end-of-paper furniture and minor typography. Full source/bundle
+strings remain in `exceptions`; visuals rely on #72 Human verification plus the
+verified asset manifest and immutable source/asset hashes, not an OCR equivalence
+claim. A pinned pair does not authorize a future wording discrepancy.
+
+114-2-L23 Q46 still records question pages 14–14 in the master although its numbered
+cell begins on p15. This existing provenance exception remains explicit: shared
+context covers pp14–15 and the manifest includes both pages. No source-page cells
+were silently rewritten during ingest.
+
+NFKC/whitespace comparison cannot establish visual layout or code indentation
+correctness by itself. Changed PDF bytes require review even if text is unchanged.
+The audit is a regression gate, not protection against simultaneous malicious
+rewrites of both dataset and evidence.
+
+## Engineering validation
+
+- Deterministic build, Python/JavaScript syntax and all commands above: PASS.
+- Negative controls reject answer/identity/text/visual/session/PDF drift, changed
+  shared text/pages/assets, missing groups, wrong group ownership and inconsistent
+  duplicated flat-master metadata. Source/bundle/model counts remain enforced.
+- Local Edge, 1280×900 and 375×900: every one of 36 dependent questions renders
+  its full shared context when opened directly and through wrong-question practice.
+  Shared and question images are separate and never duplicated in the rendered question.
+- All 14 paper loads; progress-driven resume directly at Q44; persisted scoring;
+  wrong-answer/retry integration; stats; ordinary practice; mock submit/review;
+  tabs; image loading; keyboard-native context disclosure; no horizontal overflow.
+- Actual runtime migration seeded with all 50 entries in both affected papers:
+  snapshot backup, cycle-safe remap, correct/last/custom metadata preservation,
+  wrong/bookmarks, unaffected paper, unchanged exam history, cache retirement and
+  reload idempotence: PASS. Existing migration and answer-feedback tests also PASS.
+- Browser errors: zero; normal runtime external requests: zero.
+- The Dev loader had an existing double-escaped script-end tag that produced
+  malformed injected HTML. Corrected the escape; the real loader now passes a
+  local test with raw-dev requests intercepted to this branch's bytes. Schema 3,
+  raw asset URL resolution and `dev:` storage isolation PASS.
+- Source diff confirms migration functions/maps and image bytes unchanged.
 - `git diff --check`: PASS.
 
-Browser QA was local, not the deployed integrated Dev Preview or iPhone Safari.
-This is engineering evidence, not Product Verify, integration, release or production smoke.
+This is local engineering QA. It does not verify the deployed integrated Dev
+Preview, iPhone Safari, Product Verify or production. No integration/release implied.

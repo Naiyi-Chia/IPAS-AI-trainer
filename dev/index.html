@@ -28,9 +28,11 @@
         // Keep preview progress/cache isolated from production on the same github.io origin.
         html=html
           .replaceAll('"ipasAIState"','"dev:ipasAIState"')
-          .replaceAll('"ipasOfficialPastCacheV2"','"dev:ipasOfficialPastCacheV2"');
+          .replaceAll('"ipasOfficialPastCacheV2"','"dev:ipasOfficialPastCacheV2"')
+          .replaceAll('"ipasAIStateBackupBeforePastCanonicalV2"','"dev:ipasAIStateBackupBeforePastCanonicalV2"');
 
         // Make browser/tab context visibly identifiable without changing page layout.
+        html=html.replace(/<head>/i,'<head><script>window.__IPAS_DEV_RAW_BASE__="https://raw.githubusercontent.com/Naiyi-Chia/IPAS-AI-trainer/dev/";<\/script>');
         html=html.replace(/<title>([^<]*)<\/title>/i,"<title>[DEV] $1</title>");
         html=html.replace(/<head>/i,'<head><meta name="robots" content="noindex,nofollow">');
 

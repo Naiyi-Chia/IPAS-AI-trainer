@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "generated_date": "2026-09-28",
+  "schema_version": 2,
+  "generated_date": "2026-09-29",
   "source_of_truth": "Official iPAS PDF",
   "crop_provenance": {
     "source_repository": "falo-chinese/ipas-aiap",
@@ -10,7 +10,9 @@
   },
   "counts": {
     "visual_dependent_rows": 47,
-    "unique_asset_files": 63
+    "unique_asset_files": 63,
+    "shared_context_groups": 12,
+    "shared_context_dependent_rows": 36
   },
   "rows": [
     {
@@ -25,7 +27,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "114-2-L22",
@@ -39,7 +42,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "114-2-L22",
@@ -53,7 +57,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "114-2-L22",
@@ -67,7 +72,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "114-2-L22",
@@ -81,149 +87,98 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "114-2-L22",
       "question_no": 43,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
       "group": "第43~47題",
-      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png;assets/official-visuals/114-2-L22/114-2-L22_q43.png",
+      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43.png",
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "114-2-L22_q43-47_shared"
     },
     {
       "paper_id": "114-2-L22",
       "question_no": 44,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
       "group": "第43~47題",
-      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "114-2-L22_q43-47_shared"
     },
     {
       "paper_id": "114-2-L22",
       "question_no": 45,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
       "group": "第43~47題",
-      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "114-2-L22_q43-47_shared"
     },
     {
       "paper_id": "114-2-L22",
       "question_no": 46,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
       "group": "第43~47題",
-      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "114-2-L22_q43-47_shared"
     },
     {
       "paper_id": "114-2-L22",
       "question_no": 47,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
       "group": "第43~47題",
-      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "114-2-L22_q43-47_shared"
     },
     {
       "paper_id": "114-2-L22",
       "question_no": 48,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p15.png;assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p16.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p15.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p16.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "114-2-L22_q48-50_shared"
     },
     {
       "paper_id": "114-2-L22",
       "question_no": 49,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p15.png;assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p16.png;assets/official-visuals/114-2-L22/114-2-L22_q49.png",
+      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q49.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p15.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p16.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q49.png",
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "114-2-L22_q48-50_shared"
     },
     {
       "paper_id": "114-2-L22",
       "question_no": 50,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p15.png;assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p16.png;assets/official-visuals/114-2-L22/114-2-L22_q50.png",
+      "visual_asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q50.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p15.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p16.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q50.png",
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "114-2-L22_q48-50_shared"
     },
     {
       "paper_id": "115-1-L22",
@@ -237,7 +192,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "115-1-L22",
@@ -251,7 +207,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "115-1-L22",
@@ -265,7 +222,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "115-1-L22",
@@ -279,7 +237,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "115-1-L22",
@@ -293,7 +252,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "115-1-L22",
@@ -307,7 +267,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "115-1-L22",
@@ -321,7 +282,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L22_q41-44_shared"
     },
     {
       "paper_id": "115-1-L22",
@@ -335,34 +297,25 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L22_q41-44_shared"
     },
     {
       "paper_id": "115-1-L22",
       "question_no": 48,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "115-1-L22_q48-50_shared"
     },
     {
       "paper_id": "115-1-L22",
       "question_no": 49,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png;assets/official-visuals/115-1-L22/115-1-L22_q49_a.png;assets/official-visuals/115-1-L22/115-1-L22_q49_b.png;assets/official-visuals/115-1-L22/115-1-L22_q49_c.png;assets/official-visuals/115-1-L22/115-1-L22_q49_d.png",
+      "visual_asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_a.png;assets/official-visuals/115-1-L22/115-1-L22_q49_b.png;assets/official-visuals/115-1-L22/115-1-L22_q49_c.png;assets/official-visuals/115-1-L22/115-1-L22_q49_d.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q49_a.png",
           "upstream_crop": null,
@@ -383,26 +336,23 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L22_q48-50_shared"
     },
     {
       "paper_id": "115-1-L22",
       "question_no": 50,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png;assets/official-visuals/115-1-L22/115-1-L22_q50.png",
+      "visual_asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q50.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q50.png",
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L22_q48-50_shared"
     },
     {
       "paper_id": "114-2-L23",
@@ -416,7 +366,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "114-2-L23",
@@ -430,7 +381,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "114-2-L23",
@@ -444,7 +396,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "114-2-L23",
@@ -458,62 +411,43 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "114-2-L23",
       "question_no": 42,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
       "group": "第42~45題",
-      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q42-45_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q42-45_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "114-2-L23_q42-45_shared"
     },
     {
       "paper_id": "114-2-L23",
       "question_no": 43,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
       "group": "第42~45題",
-      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q42-45_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q42-45_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "114-2-L23_q42-45_shared"
     },
     {
       "paper_id": "114-2-L23",
       "question_no": 44,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
       "group": "第42~45題",
-      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q42-45_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q42-45_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "114-2-L23_q42-45_shared"
     },
     {
       "paper_id": "114-2-L23",
       "question_no": 45,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
       "group": "第42~45題",
-      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q42-45_shared.png;assets/official-visuals/114-2-L23/114-2-L23_q45_a.png;assets/official-visuals/114-2-L23/114-2-L23_q45_b.png;assets/official-visuals/114-2-L23/114-2-L23_q45_c.png;assets/official-visuals/114-2-L23/114-2-L23_q45_d.png",
+      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q45_a.png;assets/official-visuals/114-2-L23/114-2-L23_q45_b.png;assets/official-visuals/114-2-L23/114-2-L23_q45_c.png;assets/official-visuals/114-2-L23/114-2-L23_q45_d.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q42-45_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q45_a.png",
           "upstream_crop": null,
@@ -534,25 +468,16 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "114-2-L23_q42-45_shared"
     },
     {
       "paper_id": "114-2-L23",
       "question_no": 46,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
       "group": "第46~47題",
-      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p14.png;assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p15.png;assets/official-visuals/114-2-L23/114-2-L23_q46_1.png;assets/official-visuals/114-2-L23/114-2-L23_q46_2.png;assets/official-visuals/114-2-L23/114-2-L23_q46_3.png",
+      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46_1.png;assets/official-visuals/114-2-L23/114-2-L23_q46_2.png;assets/official-visuals/114-2-L23/114-2-L23_q46_3.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p14.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p15.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46_1.png",
           "upstream_crop": null,
@@ -568,25 +493,16 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "114-2-L23_q46-47_shared"
     },
     {
       "paper_id": "114-2-L23",
       "question_no": 47,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
       "group": "第46~47題",
-      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p14.png;assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p15.png;assets/official-visuals/114-2-L23/114-2-L23_q47_1.png;assets/official-visuals/114-2-L23/114-2-L23_q47_2.png;assets/official-visuals/114-2-L23/114-2-L23_q47_3.png;assets/official-visuals/114-2-L23/114-2-L23_q47_4.png",
+      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q47_1.png;assets/official-visuals/114-2-L23/114-2-L23_q47_2.png;assets/official-visuals/114-2-L23/114-2-L23_q47_3.png;assets/official-visuals/114-2-L23/114-2-L23_q47_4.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p14.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p15.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q47_1.png",
           "upstream_crop": null,
@@ -607,49 +523,31 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "114-2-L23_q46-47_shared"
     },
     {
       "paper_id": "114-2-L23",
       "question_no": 48,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p16.png;assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p17.png;assets/official-visuals/114-2-L23/114-2-L23_q48.png",
+      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p16.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p17.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48.png",
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "114-2-L23_q48-50_shared"
     },
     {
       "paper_id": "114-2-L23",
       "question_no": 49,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p16.png;assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p17.png;assets/official-visuals/114-2-L23/114-2-L23_q49.png;assets/official-visuals/114-2-L23/114-2-L23_q49_a.png",
+      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q49.png;assets/official-visuals/114-2-L23/114-2-L23_q49_a.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p16.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p17.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q49.png",
           "upstream_crop": null,
@@ -660,25 +558,16 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "114-2-L23_q48-50_shared"
     },
     {
       "paper_id": "114-2-L23",
       "question_no": 50,
       "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
       "group": "第48~50題",
-      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p16.png;assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p17.png;assets/official-visuals/114-2-L23/114-2-L23_q50_p18.png;assets/official-visuals/114-2-L23/114-2-L23_q50_p19.png",
+      "visual_asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q50_p18.png;assets/official-visuals/114-2-L23/114-2-L23_q50_p19.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p16.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p17.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q50_p18.png",
           "upstream_crop": null,
@@ -689,7 +578,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "114-2-L23_q48-50_shared"
     },
     {
       "paper_id": "115-1-L23",
@@ -703,7 +593,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "115-1-L23",
@@ -717,67 +608,49 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": null
     },
     {
       "paper_id": "115-1-L23",
       "question_no": 42,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
       "group": "第42~43題",
-      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q42-43_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q42-43_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "115-1-L23_q42-43_shared"
     },
     {
       "paper_id": "115-1-L23",
       "question_no": 43,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
       "group": "第42~43題",
-      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q42-43_shared.png",
-      "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q42-43_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        }
-      ]
+      "visual_asset_file": "",
+      "assets": [],
+      "shared_context_id": "115-1-L23_q42-43_shared"
     },
     {
       "paper_id": "115-1-L23",
       "question_no": 44,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
       "group": "第44~45題",
-      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q44-45_shared.png;assets/official-visuals/115-1-L23/115-1-L23_q44.png",
+      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q44.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q44-45_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q44.png",
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L23_q44-45_shared"
     },
     {
       "paper_id": "115-1-L23",
       "question_no": 45,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
       "group": "第44~45題",
-      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q44-45_shared.png;assets/official-visuals/115-1-L23/115-1-L23_q45_1.png;assets/official-visuals/115-1-L23/115-1-L23_q45_2.png",
+      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q45_1.png;assets/official-visuals/115-1-L23/115-1-L23_q45_2.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q44-45_shared.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q45_1.png",
           "upstream_crop": null,
@@ -788,79 +661,53 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L23_q44-45_shared"
     },
     {
       "paper_id": "115-1-L23",
       "question_no": 46,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
       "group": "第46~48題",
-      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_1.png;assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_2.png;assets/official-visuals/115-1-L23/115-1-L23_q46.png",
+      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_1.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_2.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46.png",
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L23_q46-48_shared"
     },
     {
       "paper_id": "115-1-L23",
       "question_no": 47,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
       "group": "第46~48題",
-      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_1.png;assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_2.png;assets/official-visuals/115-1-L23/115-1-L23_q47.png",
+      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q47.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_1.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_2.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q47.png",
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L23_q46-48_shared"
     },
     {
       "paper_id": "115-1-L23",
       "question_no": 48,
       "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
       "group": "第46~48題",
-      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_1.png;assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_2.png;assets/official-visuals/115-1-L23/115-1-L23_q48.png",
+      "visual_asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q48.png",
       "assets": [
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_1.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
-        {
-          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_2.png",
-          "upstream_crop": null,
-          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
-        },
         {
           "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q48.png",
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L23_q46-48_shared"
     },
     {
       "paper_id": "115-1-L23",
@@ -874,7 +721,8 @@
           "upstream_crop": null,
           "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
         }
-      ]
+      ],
+      "shared_context_id": "115-1-L23_q49-50_shared"
     }
   ],
   "assets": [
@@ -1502,5 +1350,165 @@
       "reason": "Human visual review confirmed Q43–Q47 has one shared-context visual on PDF P13, with one additional Q43-specific visual; all other visual boundaries matched the prior assessment.",
       "source": "User-provided Google Drive screenshots from the official iPAS PDF"
     }
-  ]
+  ],
+  "shared_contexts": {
+    "114-2-L22_q43-47_shared": {
+      "paper_id": "114-2-L22",
+      "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
+      "source_page_start": 13,
+      "source_page_end": 13,
+      "assets": [
+        {
+          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q43-47_shared.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        }
+      ]
+    },
+    "114-2-L22_q48-50_shared": {
+      "paper_id": "114-2-L22",
+      "source_pdf_file": "114年第二梯次中級AI應用規劃師第二科大數據處理分析與應用(當次試題公告114_20251226000634.pdf",
+      "source_page_start": 15,
+      "source_page_end": 16,
+      "assets": [
+        {
+          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p15.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        },
+        {
+          "asset_file": "assets/official-visuals/114-2-L22/114-2-L22_q48-50_shared_p16.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        }
+      ]
+    },
+    "114-2-L23_q42-45_shared": {
+      "paper_id": "114-2-L23",
+      "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
+      "source_page_start": 11,
+      "source_page_end": 13,
+      "assets": [
+        {
+          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q42-45_shared.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        }
+      ]
+    },
+    "114-2-L23_q46-47_shared": {
+      "paper_id": "114-2-L23",
+      "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
+      "source_page_start": 14,
+      "source_page_end": 15,
+      "assets": [
+        {
+          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p14.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        },
+        {
+          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q46-47_shared_p15.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        }
+      ]
+    },
+    "114-2-L23_q48-50_shared": {
+      "paper_id": "114-2-L23",
+      "source_pdf_file": "114年第二梯次中級AI應用規劃師第三科機器學習技術與應用(當次試題公告114_20251226000650.pdf",
+      "source_page_start": 16,
+      "source_page_end": 17,
+      "assets": [
+        {
+          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p16.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        },
+        {
+          "asset_file": "assets/official-visuals/114-2-L23/114-2-L23_q48-50_shared_p17.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        }
+      ]
+    },
+    "115-1-L22_q41-44_shared": {
+      "paper_id": "115-1-L22",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "source_page_start": 13,
+      "source_page_end": 13,
+      "assets": []
+    },
+    "115-1-L22_q45-47_shared": {
+      "paper_id": "115-1-L22",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "source_page_start": 15,
+      "source_page_end": 15,
+      "assets": []
+    },
+    "115-1-L22_q48-50_shared": {
+      "paper_id": "115-1-L22",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第二科_大數據處理分析與應用_公告試題_20260615003417.pdf",
+      "source_page_start": 16,
+      "source_page_end": 16,
+      "assets": [
+        {
+          "asset_file": "assets/official-visuals/115-1-L22/115-1-L22_q48-50_shared.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        }
+      ]
+    },
+    "115-1-L23_q42-43_shared": {
+      "paper_id": "115-1-L23",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
+      "source_page_start": 12,
+      "source_page_end": 12,
+      "assets": [
+        {
+          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q42-43_shared.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        }
+      ]
+    },
+    "115-1-L23_q44-45_shared": {
+      "paper_id": "115-1-L23",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
+      "source_page_start": 13,
+      "source_page_end": 13,
+      "assets": [
+        {
+          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q44-45_shared.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        }
+      ]
+    },
+    "115-1-L23_q46-48_shared": {
+      "paper_id": "115-1-L23",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
+      "source_page_start": 15,
+      "source_page_end": 15,
+      "assets": [
+        {
+          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_1.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        },
+        {
+          "asset_file": "assets/official-visuals/115-1-L23/115-1-L23_q46-48_shared_2.png",
+          "upstream_crop": null,
+          "source_capture": "user-provided manual screenshot/crop from official iPAS PDF"
+        }
+      ]
+    },
+    "115-1-L23_q49-50_shared": {
+      "paper_id": "115-1-L23",
+      "source_pdf_file": "115年第一次中級AI應用規劃師_第三科_機器學習技術與應用_公告試題_20260615003428.pdf",
+      "source_page_start": 17,
+      "source_page_end": 17,
+      "assets": []
+    }
+  }
 }

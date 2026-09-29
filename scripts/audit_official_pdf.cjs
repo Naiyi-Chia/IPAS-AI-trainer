@@ -1,101 +1,90 @@
-// Runs the shipped extraction/cleanup/parser, not a second implementation.
-// node scripts/audit_official_pdf.cjs INPUT_DIR [BASELINE_HTML]
+// Ingest/regression tooling only; no runtime PDF parser or mirror dependency.
+// node scripts/audit_official_pdf.cjs INPUT_DIR [BUNDLE_JSON]
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const assert=require('node:assert/strict'),crypto=require('node:crypto');
-const root=path.resolve(__dirname,'..'),dir=path.resolve(process.argv[2]||'tmp/official-audit');
-const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-const mirror=JSON.parse(fs.readFileSync(path.join(dir,'mirror.html'),'utf8').match(/window\.APP_DATA\s*=\s*([\s\S]*?)\s*;\s*<\/script>/)[1]);
-const pdfjs=require(path.join(dir,'pdf.js'));
-const sha=s=>crypto.createHash('sha256').update(s).digest('hex');
-function between(s,a,b){assert(s.includes(a)&&s.includes(b));return s.slice(s.indexOf(a),s.indexOf(b));}
-function app(source){
-  const context={console,window:{pdfjsLib:pdfjs},officialMirrorData:mirror,
-    localStorage:{getItem:()=>null,setItem:()=>{}},state:{attempts:{}}};
-  vm.createContext(context);
-  const snippets=[between(source,'const OFFICIAL_PDF_BASE','const officialPdf')+'const officialPdf = filename => OFFICIAL_PDF_BASE + encodeURIComponent(filename);',
-    between(source,'const pastPapers','const state'),
-    between(source,'function getPastCache','function renderPastPapers'),
-    between(source,'async function extractPdfTextFromBuffer','async function fetchArrayBufferWithFallback').replace('await ensurePdfJs();',''),
-    between(source,'function mirrorExamName','async function prewarmOfficialCache'),
-    between(source,'function cleanMirrorQuestion','async function fetchPaperText'),
-    between(source,source.includes('function cleanOfficialPageFurniture')?'function cleanOfficialPageFurniture':'function parseOfficialPastPaper','function renderPastQuiz')];
-  vm.runInContext(snippets.join('\n')+'\nthis.papers=pastPapers;',context);
-  return context;
-}
-const current=app(html),baseline=process.argv[3]?app(fs.readFileSync(process.argv[3],'utf8')):null;
-const compact=s=>s.normalize('NFKC').replace(/[^\p{L}\p{N}]/gu,'');
-const fields=q=>[q.question,...q.options];
-const suspicious=/公告\s*試\s*題|考試日期\s*[:：]|第\s*[一二三]\s*科\s*[:：]|第\s*\d+\s*頁\s*[,，]?\s*共|答\s*案\s*題\s*目|答\s*題\s*目\s*案/;
-const rows=[],summary=[];
-function compare(paper,route,oldResult,result,pdfQuestions){
-  const seen=new Set();
-  for(const q of result.questions){
-    assert(!seen.has(q.number),`${paper.id}: duplicate number`);seen.add(q.number);
-    assert.equal(q.options.length,4);assert(q.answer>=0&&q.answer<4);
-    fields(q).forEach(v=>assert(!suspicious.test(v),`${paper.id}/${q.number}: residual furniture`));
-    const previous=oldResult?.questions.find(x=>x.number===q.number);
-    if(!previous)continue;
-    assert.equal(q.id,previous.id,`${paper.id}/${q.number}: ID changed`);
-    assert.equal(q.answer,previous.answer,`${paper.id}/${q.number}: key changed`);
-    fields(q).forEach((v,i)=>{
-      if(v===fields(previous)[i])return;
-      // Match by stem rather than mirror row index: legacy mirror numbering may differ.
-      const candidates=pdfQuestions.filter(x=>route==='pdf'?x.number===q.number:compact(x.question).startsWith(compact(q.question).slice(0,60)));
-      assert.equal(candidates.length,1,`${paper.id}/${q.number}: ambiguous source question`);
-      const official=candidates[0];
-      assert.equal(q.answer,official.answer,`${paper.id}/${q.number}: official key mismatch`);
-      rows.push({paper:paper.id,route,appNumber:q.number,officialNumber:official.number,
-        field:['question','A','B','C','D'][i],answer:'ABCD'[q.answer],
-        before:fields(previous)[i],after:v});
-    });
+const clean=require('./official_pdf_text.cjs');
+const root=path.resolve(__dirname,'..');
+const read=file=>JSON.parse(fs.readFileSync(file,'utf8'));
+const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
+// Preserve punctuation/operators/case/digits; normalize glyph spacing and option separators.
+const normalize=s=>s.normalize('NFKC').replace(/\s/g,'').replace(/[;；]+$/,'');
+const fields=q=>[q.question_text,...Object.entries(q.options).map(([l,s])=>s.replace(new RegExp('^[（(]'+l+'[）)]\\s*'),''))];
+async function extract(pdfjs,buffer){
+  const pdf=await pdfjs.getDocument({data:new Uint8Array(buffer),verbosity:0}).promise,pages=[];
+  for(let n=1;n<=pdf.numPages;n++){
+    const tc=await(await pdf.getPage(n)).getTextContent();let text='',y=null;
+    for(const item of tc.items){text+=(y!==null&&Math.abs(item.transform[5]-y)>3?'\n':' ')+item.str;y=item.transform[5];}
+    pages.push(clean(text));
   }
-  if(oldResult)assert.deepEqual(Array.from(result.questions,q=>q.number),Array.from(oldResult.questions,q=>q.number));
-}
-async function run(){
-  assert.equal(current.papers.length,14);
-  // Positive and negative controls: no broad deletion of subject/date/page mentions.
-  const keep=['某 AI 應用規劃師處理公告與試題。','第 20 頁的責任條款','考試日期: 115 年 08 月 15 日','第一科:人工智慧基礎概論','答案與題目','【公告】','0.5','資料表中的頁碼'];
-  for(const s of keep)assert.equal(current.cleanOfficialPageFurniture(s),s);
-  assert.equal(current.cleanOfficialPageFurniture('非結答題目案構化'),'非結構化');
-  assert.equal(current.cleanOfficialPageFurniture('功答案題目能'),'功能');
-  assert.equal(current.cleanOfficialPageFurniture('第 2 頁，共 15 頁').trim(),'');
-  const valid={meta:{contentVersion:1},questions:[]};
-  current.localStorage.getItem=()=>JSON.stringify({old:{meta:{},questions:[]},valid});
-  assert.deepEqual(Object.keys(current.getPastCache()),['valid']);
-  current.state.attempts={'PAST-115-3-L11-4':{correct:true}};
-  assert.equal(current.paperProgress({id:'115-3-L11'}).correct,1);
-  for(const paper of current.papers){
-    const buffer=fs.readFileSync(path.join(dir,paper.id+'.pdf'));
-    const raw=await current.extractPdfTextFromBuffer(new Uint8Array(buffer));
-    // Read answer/number cells directly, including rows the option parser cannot parse.
-    const sourceText=current.cleanOfficialPageFurniture(raw);
-    const cells=[...sourceText.matchAll(/(?:^|\n)\s*([ABCD])\s*(\d{1,3})\.\s*/g)];
-    const officialQuestions=cells.map((m,i)=>({number:Number(m[2]),answer:'ABCD'.indexOf(m[1]),
-      question:sourceText.slice(m.index+m[0].length,cells[i+1]?.index??sourceText.length).split(/\(A\)/)[0]}));
-    const result=current.parseOfficialPastPaper(raw,paper.file);
-    const oldResult=baseline?.parseOfficialPastPaper(raw,paper.file);
-    compare(paper,'pdf',oldResult,result,officialQuestions);
-    const structured=await current.loadPaperFromStructuredMirror(paper);
-    const oldStructured=baseline?await baseline.loadPaperFromStructuredMirror(paper):null;
-    if(structured)compare(paper,'mirror',oldStructured,structured,officialQuestions);
-    const active=structured||result;
-    assert.equal(active.questions.length,50,`${paper.id}: active route count`);
-    summary.push({paper:paper.id,pdfQuestions:result.questions.length,activeQuestions:active.questions.length,
-      pdfSha256:sha(buffer),changes:rows.filter(r=>r.paper===paper.id).length});
-    if(paper.id==='115-3-L11'){
-      const q=result.questions.find(q=>q.number===4);
-      assert.equal(q.answer,2);
-      assert.equal(q.question.replace(/\s+/g,' '),'某銀行導入 AI 信用貸款評分系統上線半年後,風險稽核部門發現,即使模型訓練 資料中已不包含「職業別」欄位,仍可能透過「居住地區」與「消費類別」等高度 相關特徵,對特定職業族群產生不合理差異待遇。依據 AI 治理精神,銀行應優先 採取下列何種行動?');
-      assert.equal(q.options[1],'提高「居住地區」與「消費類別」兩項特徵的資料準確度,以強化該模型整體的 預測效度 ;');
-      assert.equal(q.options[3],'於核貸結果中另行加註該職業別標籤,以作為日後申 請人提出申訴時的佐證依 據');
-      assert.equal(q.options[0],'增設人工複核關卡,由授信人員針對系統所有的核貸結果重新逐案審查 ;');
-      assert.equal(q.options[2],'引入公平性評估指標,檢視間接關聯特徵是否造成偏誤並對模型進行調整優化 ;');
+  await pdf.destroy();
+  const text=pages.join('\n');
+  // Official PDFs include fullwidth answers and split digits such as "4 2.".
+  const matches=[...text.matchAll(/(?:^|\n)\s*([ABCD])\s*((?:\d\s*){1,3})\.\s*/g)];
+  return matches.map((m,i)=>{
+    const block=text.slice(m.index+m[0].length,matches[i+1]?.index??text.length);
+    const opts=[];
+    for(const candidate of block.matchAll(/(?:^|[\s;])\(\s*([ABCD])\s*\)/g)){
+      if(candidate[1]==='ABCD'[opts.length])opts.push(candidate);
     }
-    fs.writeFileSync(path.join(dir,paper.id+'.clean.json'),JSON.stringify(active,null,2));
-  }
-  fs.writeFileSync(path.join(dir,'audit.json'),JSON.stringify({summary,rows,mirrorSha256:sha(fs.readFileSync(path.join(dir,'mirror.html')))},null,2));
-  console.log(JSON.stringify(summary,null,2));
-  console.log(`PASS: 14 papers / 700 active records; furniture, Q4 and cache checks.`);
-  if(baseline)console.log(`PASS: ${rows.length} changed fields; IDs/counts/keys unchanged; affected keys checked against PDF rows.`);
+    return {number:Number(m[2].replace(/\s/g,'')),answer:m[1],
+      fields:[block.slice(0,opts[0]?.index??block.length),...opts.slice(0,4).map((o,j)=>block.slice(o.index+o[0].length,opts[j+1]?.index??block.length))],
+      sourcePage:pages.findIndex((_,pn)=>pages.slice(0,pn+1).join('\n').length>=m.index+m[0].length)+1};
+  });
 }
-run().catch(e=>{console.error(e);process.exitCode=1});
+async function audit(dir,bundlePath=path.join(root,'data/official-past-papers.json')){
+  const baseline=read(path.join(root,'docs/OFFICIAL_BUNDLE_SOURCE_BASELINE.json'));
+  const bundle=read(bundlePath),manifest=read(path.join(root,'docs/OFFICIAL_VISUAL_ASSET_MANIFEST.json'));
+  const pdfjs=require(path.join(dir,'pdf.js'));assert.equal(pdfjs.version,'3.11.174');
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),ctx=vm.createContext({});
+  vm.runInContext(html.slice(html.indexOf('const OFFICIAL_PDF_BASE'),html.indexOf('const OFFICIAL_PAST_BUNDLE_PATH'))+
+    html.slice(html.indexOf('const pastPapers'),html.indexOf('const state'))+
+    html.slice(html.indexOf('function cleanBundledOption'),html.indexOf('async function loadOfficialPastBundle'))+'\nthis.papers=pastPapers;',ctx);
+  assert.equal(bundle.papers.length,14);assert.equal(ctx.papers.length,14);
+  const ids=[],used=new Set(),summary=[],assets=new Set();let matchedFields=0,visualRows=0;
+  for(const p of bundle.papers){
+    const paper=ctx.papers.find(x=>x.id===p.paper_id);assert(paper,`unknown paper ${p.paper_id}`);
+    assert.equal(p.source_pdf_file,paper.file);assert.equal(p.session,paper.session,`${p.paper_id}: session`);
+    assert.equal(p.source_pdf_file,baseline.papers[p.paper_id].source_pdf_file);
+    assert.equal(String(p.year),paper.year);assert.equal(new URL(paper.pdf).hostname,'www.ipas.org.tw');
+    const buffer=fs.readFileSync(path.join(dir,p.paper_id+'.pdf'));
+    assert.equal(sha(buffer),baseline.papers[p.paper_id].pdfSha256,`${p.paper_id}: PDF changed; review required`);
+    const official=await extract(pdfjs,buffer),numbers=Array.from({length:50},(_,i)=>i+1);
+    assert.deepEqual(official.map(q=>q.number),numbers,`${p.paper_id}: official numbering`);
+    assert.deepEqual(p.questions.map(q=>q.question_no),numbers);
+    let exceptions=0;
+    for(const [i,q] of p.questions.entries()){
+      const source=official[i],id=`PAST-${p.paper_id}-${source.number}`;ids.push(id);
+      assert.equal(ctx.bundledQuestionToRuntime(paper,q).id,id,`${id}: runtime identity`);
+      assert.equal(sha(JSON.stringify(q)),baseline.records[id],`${id}: canonical record drift`);
+      assert.equal(q.verification_status,'verified');assert.equal(q.answer,source.answer,`${id}: official answer`);
+      if(!(q.source_page_start<=source.sourcePage&&q.source_page_end>=source.sourcePage)){
+        const provenance=baseline.pageExceptions[id];
+        assert(provenance,`${id}: source page ${source.sourcePage} outside provenance`);
+        assert.equal(source.sourcePage,provenance.questionPage);
+        assert(q.visual_assets.includes(provenance.manifestAsset),`${id}: missing shared-page provenance`);
+      }
+      if(q.has_visual){
+        visualRows++;const row=manifest.rows.find(x=>x.paper_id===p.paper_id&&x.question_no===q.question_no);
+        assert(row,`${id}: visual provenance`);assert.equal(row.source_pdf_file,p.source_pdf_file);
+        assert.deepEqual(q.visual_assets,row.assets.map(x=>x.asset_file));
+      }else assert.deepEqual(q.visual_assets,[]);
+      for(const asset of q.visual_assets){assets.add(asset);assert.equal(sha(fs.readFileSync(path.join(root,asset))),baseline.assets[asset],`${asset}: visual drift`);}
+      fields(q).forEach((target,field)=>{
+        const actual=normalize(source.fields[field]||''),expected=normalize(target),key=`${id}/${['stem','A','B','C','D'][field]}`;
+        if(actual===expected){matchedFields++;return;}
+        const exception=baseline.exceptions[key];assert(exception,`${key}: unrecorded source mismatch`);
+        assert.equal(actual,exception.source,`${key}: source drift`);assert.equal(expected,exception.bundle,`${key}: text drift`);
+        assert(exception.reason);used.add(key);exceptions++;
+      });
+    }
+    summary.push({paper:p.paper_id,officialUrl:paper.pdf,pdfSha256:sha(buffer),questions:50,answersChecked:50,exceptionFields:exceptions});
+  }
+  assert.equal(new Set(ids).size,700);assert.deepEqual(ids,Object.keys(baseline.records),'canonical identity/order drift');
+  assert.equal(visualRows,47);assert.equal(assets.size,63);
+  assert.deepEqual([...used].sort(),Object.keys(baseline.exceptions).sort(),'stale exceptions');
+  const result={status:'PASS (regression; recorded source differences remain)',records:ids.length,matchedFields,exceptionFields:used.size,visualRows,assets:assets.size,summary};
+  fs.writeFileSync(path.join(dir,'bundle-audit.json'),JSON.stringify(result,null,2)+'\n');
+  console.log(JSON.stringify(result,null,2));return result;
+}
+module.exports={extract,normalize,fields,sha,audit};
+if(require.main===module)audit(path.resolve(process.argv[2]||'tmp/official-audit'),process.argv[3]).catch(e=>{console.error(e);process.exitCode=1;});

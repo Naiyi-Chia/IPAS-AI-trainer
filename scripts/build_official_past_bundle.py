@@ -14,9 +14,9 @@ SOURCE_SHEET="AI應用規劃師_歷屆試題總表(700題)"
 SOURCE_URL=f"https://docs.google.com/spreadsheets/d/{SOURCE_ID}/edit"
 HEADERS=["paper_id","year","session","level","subject","question_no","question_text","option_a","option_b","option_c","option_d","answer","source_page_start","source_page_end","has_visual","visual_asset_file","source_pdf_file","notes","verification_status"]
 
-def norm_session(v):
+def norm_session(v, year):
     v=(v or "").strip()
-    return {"第二次":"第二梯次","第四次":"第四梯次"}.get(v,v)
+    return {"第二次":"第二梯次","第四次":"第四梯次"}.get(v,v) if int(year)==114 else v
 
 def to_int(v):
     v=(v or "").strip()
@@ -37,15 +37,18 @@ def build(rows,fieldnames,repo_root):
     if len(rows)!=EXPECTED_ROWS: raise ValueError(f"expected {EXPECTED_ROWS} rows, got {len(rows)}")
     papers=OrderedDict(); visual_rows=0; unique_assets=set()
     for line,row in enumerate(rows,2):
+        # Git may check CSV out with CRLF, including quoted multiline cells.
+        # Keep canonical strings identical across Windows and LF checkouts.
+        row={key:value.replace("\r\n","\n").replace("\r","\n") if isinstance(value,str) else value for key,value in row.items()}
         for key in ["paper_id","year","session","level","subject","question_no","question_text","option_a","option_b","option_c","option_d","answer","source_pdf_file","verification_status"]:
             if not (row.get(key) or "").strip(): raise ValueError(f"row {line}: empty {key}")
         if row["verification_status"].strip()!="verified": raise ValueError(f"row {line}: not verified")
         if row["answer"].strip() not in "ABCD": raise ValueError(f"row {line}: bad answer")
         pid=row["paper_id"].strip()
         if pid not in papers:
-            papers[pid]={"paper_id":pid,"year":int(row["year"]),"session":norm_session(row["session"]),"level":row["level"].strip(),"subject":row["subject"].strip(),"source_pdf_file":row["source_pdf_file"].strip(),"questions":[]}
+            papers[pid]={"paper_id":pid,"year":int(row["year"]),"session":norm_session(row["session"],row["year"]),"level":row["level"].strip(),"subject":row["subject"].strip(),"source_pdf_file":row["source_pdf_file"].strip(),"questions":[]}
         p=papers[pid]
-        current=(int(row["year"]),norm_session(row["session"]),row["level"].strip(),row["subject"].strip(),row["source_pdf_file"].strip())
+        current=(int(row["year"]),norm_session(row["session"],row["year"]),row["level"].strip(),row["subject"].strip(),row["source_pdf_file"].strip())
         expected=(p["year"],p["session"],p["level"],p["subject"],p["source_pdf_file"])
         if current!=expected: raise ValueError(f"row {line}: paper metadata drift")
         has_visual=to_bool(row["has_visual"]); assets=split_assets(row.get("visual_asset_file",""))
@@ -80,6 +83,6 @@ def main():
     if args.check:
         if not output.exists() or output.read_text(encoding="utf-8")!=rendered: raise SystemExit(f"FAIL: {output} differs from deterministic rebuild")
     else:
-        output.parent.mkdir(parents=True,exist_ok=True); output.write_text(rendered,encoding="utf-8")
+        output.parent.mkdir(parents=True,exist_ok=True); output.write_text(rendered,encoding="utf-8",newline="\n")
     print(f"PASS: {len(rows)} verified rows / {len(bundle['papers'])} papers / {visual_rows} visual rows / {asset_count} unique assets")
 if __name__=="__main__": main()

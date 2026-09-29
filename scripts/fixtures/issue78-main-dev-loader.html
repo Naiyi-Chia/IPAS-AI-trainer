@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>DEV Preview Loader · iPAS AI Trainer</title>
+  <style>
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:24px;background:#f6f7fb;color:#1f2937}
+    .status{max-width:720px;margin:12vh auto;padding:20px;border:1px solid #d8deea;border-radius:14px;background:#fff;line-height:1.6}
+    code{overflow-wrap:anywhere}
+  </style>
+</head>
+<body>
+  <main class="status" id="status">
+    <h1 style="font-size:20px;margin-top:0">DEV Preview</h1>
+    <p>正在載入最新的 <code>dev</code> branch…</p>
+  </main>
+  <script>
+    (async()=>{
+      const raw="https://raw.githubusercontent.com/Naiyi-Chia/IPAS-AI-trainer/dev/index.html";
+      const status=document.getElementById("status");
+      try{
+        const response=await fetch(raw+"?preview="+Date.now(),{cache:"no-store"});
+        if(!response.ok)throw new Error("HTTP "+response.status);
+        let html=await response.text();
+
+        // Keep preview progress/cache isolated from production on the same github.io origin.
+        html=html
+          .replaceAll('"ipasAIState"','"dev:ipasAIState"')
+          .replaceAll('"ipasOfficialPastCacheV2"','"dev:ipasOfficialPastCacheV2"');
+
+        // Make browser/tab context visibly identifiable without changing page layout.
+        html=html.replace(/<title>([^<]*)<\/title>/i,"<title>[DEV] $1</title>");
+        html=html.replace(/<head>/i,'<head><meta name="robots" content="noindex,nofollow">');
+
+        document.open();
+        document.write(html);
+        document.close();
+      }catch(error){
+        status.innerHTML=
+          '<h1 style="font-size:20px;margin-top:0">DEV Preview 載入失敗</h1>'+
+          '<p>目前無法取得 <code>dev</code> branch。請稍後重新整理。</p>'+
+          '<p style="font-size:13px;color:#687386">'+String(error)+'</p>';
+      }
+    })();
+  </script>
+</body>
+</html>

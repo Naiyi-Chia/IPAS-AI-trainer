@@ -263,7 +263,11 @@ const officialPastQuestionIndex=new Map();
 function bundledAssetUrl(path){
   let relative=String(path||"");
   while(relative.startsWith("/"))relative=relative.slice(1);
-  const devBase=String(window.__IPAS_DEV_RAW_BASE__||"");
+  // The deployed main-branch /dev/ loader may not inject a raw base.
+  const isPagesPreview=window.location?.hostname==="naiyi-chia.github.io" &&
+    /^\/IPAS-AI-trainer\/dev(?:\/|$)/.test(window.location.pathname);
+  const devBase=String(window.__IPAS_DEV_RAW_BASE__||(isPagesPreview?
+    "https://raw.githubusercontent.com/Naiyi-Chia/IPAS-AI-trainer/dev/":""));
   return devBase ? devBase + relative : relative;
 }
 const officialLearningGuide={

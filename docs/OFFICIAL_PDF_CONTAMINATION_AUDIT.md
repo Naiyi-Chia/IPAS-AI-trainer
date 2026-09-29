@@ -1,5 +1,9 @@
 # Official PDF contamination audit — Issue #43
 
+Historical #43 evidence below. The runtime-parser audit commands were superseded
+by the [bundle source audit](OFFICIAL_BUNDLE_SOURCE_AUDIT.md) in #78; use that
+document for current repeatable commands and coverage limits.
+
 ## Status and scope
 
 The page-furniture fix and 14-paper scan are complete for the clarified [Issue #43](https://github.com/Naiyi-Chia/IPAS-AI-trainer/issues/43) scope. The Human-confirmed boundary/numbering follow-up is [Issue #72](https://github.com/Naiyi-Chia/IPAS-AI-trainer/issues/72); those defects are intentionally unchanged. No PR, merge, Product Verify, or production verification is implied.

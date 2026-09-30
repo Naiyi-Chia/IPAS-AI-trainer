@@ -33,6 +33,7 @@ h3{font-size:18px;line-height:1.35}
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:none}
 .questionCard{max-width:820px;margin-inline:auto}
+.officialQuestion .qtext,.officialQuestion .option{white-space:pre-wrap;overflow-wrap:anywhere}
 .metricCard{background:#fafbfc;padding:14px;border-radius:12px}
 .c6{grid-column:span 6}.c4{grid-column:span 4}.c8{grid-column:span 8}.c12{grid-column:span 12}
 .kpi{font-size:28px;font-weight:800;letter-spacing:-.02em}
@@ -99,6 +100,10 @@ h3{font-size:18px;line-height:1.35}
 .feedbackbar .btn{white-space:nowrap;min-height:40px;padding-block:8px}
 .questionFeedback{display:flex;justify-content:flex-end;margin-top:10px}
 .questionFeedback .btn{font-size:13px}
+.pastQuizTop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.pastQuizTop .qmeta{flex:1}
+.pastExitBtn{white-space:nowrap}
+.pastQuizStatus{display:flex;align-items:center;gap:10px;min-height:42px;margin:10px 0 8px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#f8fafc;font-size:14px;font-weight:700}
 .notice{background:#fffaeb;border:1px solid #fedf89;border-radius:10px;padding:12px 13px;line-height:1.6}
 .good{color:var(--ok)}.bad{color:var(--bad)}
 a{color:var(--brand)}
@@ -128,6 +133,9 @@ a{color:var(--brand)}
   .controls select{flex:0 0 auto;min-width:0}
   .controls .btn{flex:1 1 auto}
   .navrow{align-items:stretch;flex-direction:column}
+  .pastQuizTop{flex-direction:column}
+  .pastExitBtn{width:100%}
+  .pastQuizStatus{align-items:flex-start;line-height:1.45}
   .navrow>div{display:flex;gap:7px}
   .navrow>div .btn{flex:1}
   .card{padding:15px;border-radius:12px}
@@ -245,10 +253,23 @@ const DB = {"subjects":{"L11":{"level":"初級","name":"人工智慧基礎概論
 const officialBrochure = "https://www.ipas.org.tw/api/proxy/uploads/certification/AIAP/115%E5%B9%B4%E5%BA%A6AI%E6%87%89%E7%94%A8%E8%A6%8F%E5%8A%83%E5%B8%AB%E8%83%BD%E5%8A%9B%E9%91%91%E5%AE%9A%E7%B0%A1%E7%AB%A0%28%E5%88%9D%E3%80%81%E4%B8%AD%E7%B4%9A%29_20251225235744.pdf";
 const officialSite = "https://www.ipas.org.tw/";
 const officialLearningResources = "https://ipd.nat.gov.tw/ipas/certification/AIAP/learning-resources";
-const OFFICIAL_STRUCTURED_MIRROR = "https://raw.githubusercontent.com/ipas-study/ipas-ai-study/refs/heads/main/AI%E6%87%89%E7%94%A8%E8%A6%8F%E5%8A%83%E5%B8%AB_%E5%AD%B8%E7%BF%92%E7%B6%B2%E7%AB%99.html";
-let officialMirrorData=null;
 const OFFICIAL_PDF_BASE = "https://www.ipas.org.tw/api/proxy/uploads/certification_resource/bf93f438f7be48d295c1b40a34d79f3d/";
 const officialPdf = filename => OFFICIAL_PDF_BASE + encodeURIComponent(filename);
+const OFFICIAL_PAST_BUNDLE_PATH = "data/official-past-papers.json";
+const PAST_MIGRATION_BACKUP_KEY = "ipasAIStateBackupBeforePastCanonicalV2";
+const PAST_CANONICAL_MIGRATION_VERSION = 2;
+let officialPastBundle=null, officialPastBundlePromise=null;
+const officialPastQuestionIndex=new Map();
+function bundledAssetUrl(path){
+  let relative=String(path||"");
+  while(relative.startsWith("/"))relative=relative.slice(1);
+  // The deployed main-branch /dev/ loader may not inject a raw base.
+  const isPagesPreview=window.location?.hostname==="naiyi-chia.github.io" &&
+    /^\/IPAS-AI-trainer\/dev(?:\/|$)/.test(window.location.pathname);
+  const devBase=String(window.__IPAS_DEV_RAW_BASE__||(isPagesPreview?
+    "https://raw.githubusercontent.com/Naiyi-Chia/IPAS-AI-trainer/dev/":""));
+  return devBase ? devBase + relative : relative;
+}
 const officialLearningGuide={
   L11:officialPdf("AI應用規劃師(初級)-學習指引-科目1_人工智慧基礎概論1141203_20251222172144.pdf"),
   L12:officialPdf("AI應用規劃師(初級)-學習指引-科目2_生成式AI應用與規劃114123_20251222172159.pdf"),
@@ -327,6 +348,34 @@ let examSet=[], eIndex=0, examAnswers={}, examTimer=null, examSeconds=0, examSub
 let pastPaperSet=[], pastIndex=0, pastAnswered=false, pastPaperMeta=null, pdfJsLoading=null;
 
 function save(){ localStorage.setItem("ipasAIState",JSON.stringify(state)); }
+const PAST_PROGRESS_MIGRATIONS={
+  "114-4-L11":Object.fromEntries([...Array(50)].map((_,i)=>{const n=i+1;return [n,n<=3?n:(n===50?4:n+1)]})),
+  "114-2-L23":{1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:10,11:11,12:12,13:13,14:14,15:15,16:16,17:17,18:18,19:19,20:20,21:21,22:22,23:23,24:24,25:25,26:26,27:27,28:28,29:29,30:30,31:31,32:32,33:33,34:34,35:35,36:36,37:37,38:38,39:39,40:41,41:42,42:43,43:44,44:46,45:47,46:48,47:49,48:50,49:40,50:45}
+};
+function remapPastProgressStore(store,paperId,mapping){
+  const source={...(store||{})}, next={...(store||{})};
+  Object.keys(mapping).forEach(oldNo=>delete next[`PAST-${paperId}-${oldNo}`]);
+  Object.entries(mapping).forEach(([oldNo,newNo])=>{
+    const oldKey=`PAST-${paperId}-${oldNo}`;
+    if(Object.prototype.hasOwnProperty.call(source,oldKey))next[`PAST-${paperId}-${newNo}`]=source[oldKey];
+  });
+  return next;
+}
+function migrateOfficialPastProgressV2(){
+  try{localStorage.removeItem("ipasOfficialPastCacheV2")}catch(e){console.warn("舊考古題快取清除失敗",e)}
+  if(Number(state.migrations?.officialPastCanonical||0)>=PAST_CANONICAL_MIGRATION_VERSION)return;
+  try{
+    if(!localStorage.getItem(PAST_MIGRATION_BACKUP_KEY))localStorage.setItem(PAST_MIGRATION_BACKUP_KEY,JSON.stringify(state));
+  }catch(e){console.warn("考古題進度 migration 備份失敗",e)}
+  Object.entries(PAST_PROGRESS_MIGRATIONS).forEach(([paperId,mapping])=>{
+    state.attempts=remapPastProgressStore(state.attempts,paperId,mapping);
+    state.wrong=remapPastProgressStore(state.wrong,paperId,mapping);
+    state.bookmarks=remapPastProgressStore(state.bookmarks,paperId,mapping);
+  });
+  state.migrations={...(state.migrations||{}),officialPastCanonical:PAST_CANONICAL_MIGRATION_VERSION};
+  save();
+}
+migrateOfficialPastProgressV2();
 function qs(s){return document.querySelector(s)} function qsa(s){return [...document.querySelectorAll(s)]}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -475,11 +524,13 @@ function renderPracticeQ(){
  const attemptStatus=current
    ? `本輪：${current.ok?"✓ 正確":"✕ 錯誤"}`
    : past?`曾作答：${past.correct?"✓ 正確":"✕ 錯誤"}`:"尚未作答";
- a.innerHTML=`<div class="card questionCard">
+ a.innerHTML=`<div class="card questionCard ${q.id.startsWith('PAST-')?'officialQuestion':''}">
  <div class="qmeta"><span class="qmetaPrimary">${q.subject} · ${q.topic} ${esc(q.topicName)}</span><span class="qmetaSecondary">${q.level} · ${difficultyLabel(q.difficulty)}</span></div>
  <div class="small">第 ${pIndex+1} / ${practiceSet.length} 題　｜　<span id="practiceAnsweredCount">已答 ${answered} / ${practiceSet.length}</span>　｜　<span id="practiceAttemptStatus" aria-live="polite">${attemptStatus}</span></div>
  <div class="progress" role="progressbar" aria-label="本輪作答進度" aria-valuemin="0" aria-valuemax="${practiceSet.length}" aria-valuenow="${answered}"><div id="practiceProgressFill" style="width:${practiceSet.length?answered/practiceSet.length*100:0}%"></div></div>
+ ${renderPastSharedContext(q)}
  <div class="qtext" tabindex="-1">${esc(q.question)}</div>
+ ${renderPastVisuals(q)}
  <div id="opts">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join("")}</div>
  <div id="pexplain" class="explain hidden"></div>
  <div class="navrow">
@@ -655,30 +706,100 @@ function renderExamReview(filter='all'){
  </div>`;
 }
 
-function getPastCache(){
-  // Rebuild derived content from older parsers; user attempts/bookmarks are stored separately.
-  try{return Object.fromEntries(Object.entries(JSON.parse(localStorage.getItem("ipasOfficialPastCacheV2")||"{}")).filter(([,p])=>p?.meta?.contentVersion===1))}catch(e){return {}}
+function cleanBundledOption(value,letter){
+  const raw=String(value||"").trim();
+  for(const prefix of [`(${letter})`,`（${letter}）`,`${letter}.`,`${letter}、`]){
+    if(raw.startsWith(prefix))return raw.slice(prefix.length).trim();
+  }
+  return raw;
 }
-function savePastCache(cache){
-  try{localStorage.setItem("ipasOfficialPastCacheV2",JSON.stringify(cache))}catch(e){console.warn("考古題快取寫入失敗",e)}
+function bundledQuestionToRuntime(paper,q,sharedContexts={}){
+  const letters=["A","B","C","D"];
+  const sharedContext=q.shared_context_id?sharedContexts[q.shared_context_id]:null;
+  if(q.shared_context_id&&(!sharedContext||sharedContext.paper_id!==paper.id))throw new Error(`缺少本題共用情境：${q.shared_context_id}`);
+  const sourcePages=q.source_page_start?`PDF P${q.source_page_start}${q.source_page_end&&q.source_page_end!==q.source_page_start?`–${q.source_page_end}`:""}`:"官方 PDF";
+  return {
+    id:`PAST-${paper.id}-${q.question_no}`,number:q.question_no,level:paper.level,subject:paper.subject,
+    topic:`PAST-${paper.year}-${paper.session}`,topicName:`${paper.year} 年 ${paper.session} ${paper.name}`,
+    difficulty:"official",question:q.question_text,
+    options:letters.map(letter=>cleanBundledOption(q.options?.[letter],letter)),
+    answer:letters.indexOf(q.answer),hasVisual:!!q.has_visual,
+    visualAssets:Array.isArray(q.visual_assets)?q.visual_assets:[],
+    sharedContextId:q.shared_context_id||null,sharedContext,
+    sourcePageStart:q.source_page_start,sourcePageEnd:q.source_page_end,sourceNote:q.notes||"",
+    explanation:`官方公告試題正解：${q.answer}`,
+    sourceType:`iPAS 官方公告試題（verified canonical bundle；${sourcePages}）`
+  };
 }
+async function loadOfficialPastBundle(){
+  if(officialPastBundle)return officialPastBundle;
+  if(!officialPastBundlePromise){
+    officialPastBundlePromise=fetch(bundledAssetUrl(OFFICIAL_PAST_BUNDLE_PATH),{cache:"force-cache"})
+      .then(r=>{if(!r.ok)throw new Error(`內建考古題資料 HTTP ${r.status}`);return r.json()})
+      .then(data=>{
+        if(data?.schema_version!==3||data?.source?.row_count!==700||!Array.isArray(data?.papers)||data.papers.length!==14||!data.shared_contexts)throw new Error("內建考古題資料版本或筆數不符");
+        officialPastQuestionIndex.clear();
+        data.papers.forEach(bp=>{
+          const paper=pastPapers.find(p=>p.id===bp.paper_id);
+          if(!paper||!Array.isArray(bp.questions)||bp.questions.length!==50)throw new Error(`內建考卷不完整：${bp.paper_id||"unknown"}`);
+          bp.questions.forEach(q=>{
+            if(q.verification_status!=="verified")throw new Error(`內建題目尚未 verified：${bp.paper_id} Q${q.question_no}`);
+            const runtime=bundledQuestionToRuntime(paper,q,data.shared_contexts);
+            if(runtime.answer<0||runtime.options.length!==4)throw new Error(`內建題目格式錯誤：${runtime.id}`);
+            officialPastQuestionIndex.set(runtime.id,runtime);
+          });
+        });
+        if(officialPastQuestionIndex.size!==700)throw new Error(`內建題目索引筆數錯誤：${officialPastQuestionIndex.size}`);
+        officialPastBundle=data;
+        return data;
+      });
+  }
+  return officialPastBundlePromise;
+}
+async function getBundledPastPaper(paper){
+  const data=await loadOfficialPastBundle();
+  const bp=data.papers.find(p=>p.paper_id===paper.id);
+  if(!bp)throw new Error(`找不到內建考卷：${paper.id}`);
+  const questions=bp.questions.map(q=>officialPastQuestionIndex.get(`PAST-${paper.id}-${q.question_no}`));
+  return {meta:{paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf,source:"canonical-bundle",sourceFile:bp.source_pdf_file,contentVersion:2},questions};
+}
+
 function paperProgress(p){
   const prefix=`PAST-${p.id}-`;
   const ids=Object.keys(state.attempts).filter(id=>id.startsWith(prefix));
   const correct=ids.filter(id=>state.attempts[id]?.correct).length;
   return {answered:ids.length,correct};
 }
+function currentPastProgress(){
+  const answered=pastPaperSet.filter(q=>state.attempts[q.id]).length;
+  const correct=pastPaperSet.filter(q=>state.attempts[q.id]?.correct).length;
+  const accuracy=answered?Math.round(correct/answered*100):null;
+  return {answered,correct,accuracy};
+}
+function pastProgressText(){
+  const prog=currentPastProgress();
+  return prog.answered
+    ? `已作答 ${prog.answered} 題 · 答對 ${prog.correct} 題 · 目前正確率 ${prog.accuracy}%`
+    : '尚未作答 · 作答後會自動儲存在此裝置';
+}
+function updatePastProgressStatus(){
+  const el=qs('#pastScoreStatus');
+  if(el)el.textContent=pastProgressText();
+}
+function exitPastQuiz(){
+  pastPaperSet=[];pastIndex=0;pastAnswered=false;pastPaperMeta=null;
+  renderPastPapers();
+  setTimeout(()=>qs('#pastPapersHeading')?.focus(),0);
+}
 function renderPastPapers(){
   const group=(level)=>pastPapers.filter(p=>p.level===level);
-  const cache=getPastCache();
   const paperCard=(p,i)=>{
-    const prog=paperProgress(p), cached=!!cache[p.id];
-    const score=prog.answered?Math.round(prog.correct/prog.answered*100):null;
+    const prog=paperProgress(p), score=prog.answered?Math.round(prog.correct/prog.answered*100):null;
     return `<div class="card c6">
-      <div class="qmeta"><span class="qmetaPrimary">${p.year} 年 ${p.session} · ${p.subject}</span><span class="qmetaSecondary">${p.level}${cached?" · 已快取":""}</span></div>
+      <div class="qmeta"><span class="qmetaPrimary">${p.year} 年 ${p.session} · ${p.subject}</span><span class="qmetaSecondary">${p.level} · 內建 verified 題庫</span></div>
       <h3 style="margin:8px 0 5px">${esc(p.name)}</h3>
       <div class="small">考試日期：${p.date}　｜　官方 PDF：約 ${p.size}</div>
-      <div class="small" style="margin-top:7px">${prog.answered?`已作答 ${prog.answered} 題${score!==null?`，目前正確率 ${score}%`:''}`:'尚未作答'}</div>
+      <div class="small" style="margin-top:7px">${prog.answered?`已作答 ${prog.answered} 題 · 答對 ${prog.correct} 題${score!==null?` · 目前正確率 ${score}%`:''}`:'尚未作答 · 作答後會自動記錄進度'}</div>
       <div class="controls" style="margin-top:12px">
         <button class="btn primary" onclick="loadPastPaperById('${p.id}')">${prog.answered?'繼續刷題':'開始刷題'}</button>
         <a class="btn secondary" style="display:inline-block;text-decoration:none" href="${p.pdf}" target="_blank" rel="noopener">查看官方 PDF</a>
@@ -687,9 +808,9 @@ function renderPastPapers(){
   };
   qs("#past").innerHTML=`
     <div class="card" style="margin-bottom:12px">
-      <div class="examtop"><div><h3 style="margin:0">官方考古題</h3><div class="small" style="margin-top:5px">${pastPapers.length} 份官方公告試題，直接點「開始刷題」即可</div></div>
+      <div class="examtop"><div><h3 id="pastPapersHeading" tabindex="-1" style="margin:0">官方考古題</h3><div class="small" style="margin-top:5px">${pastPapers.length} 份官方公告試題，直接點「開始刷題」即可</div></div>
       <a class="btn secondary" style="text-decoration:none" href="${officialLearningResources}" target="_blank" rel="noopener">官方歷屆考題頁</a></div>
-      <div class="notice" style="margin-top:12px"><b>免手動匯入：</b>頁面會自動預備可結構化載入的官方考卷並快取在此裝置；最新 115 年第三次初級則以官方 PDF 文字層載入。已加入 Unicode 正規化與含圖／表格／程式碼提醒，降低漏題與版面誤判風險。</div>
+      <div class="notice" style="margin-top:12px"><b>已內建 verified 官方題庫：</b>700 題直接由產品內的 canonical dataset 載入，不再於作答時下載或解析官方 PDF；官方 PDF 連結仍保留供來源核對。</div>
       <div id="pastLoadStatus" class="small" style="margin-top:8px"></div>
     </div>
     <div id="pastQuizArea"></div>
@@ -697,268 +818,51 @@ function renderPastPapers(){
     <h3 style="margin-top:22px">中級 Lv2</h3><div class="grid">${group("中級").map(p=>paperCard(p,pastPapers.indexOf(p))).join("")}</div>`;
 }
 
-async function ensurePdfJs(){
-  if(window.pdfjsLib) return window.pdfjsLib;
-  if(pdfJsLoading) return pdfJsLoading;
-  pdfJsLoading = new Promise((resolve,reject)=>{
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload=()=>{
-      if(window.pdfjsLib){
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        resolve(window.pdfjsLib);
-      }else reject(new Error('PDF.js 載入失敗'));
-    };
-    s.onerror=()=>reject(new Error('無法載入 PDF.js，請確認網路連線'));
-    document.head.appendChild(s);
-  });
-  return pdfJsLoading;
-}
-
-async function extractPdfTextFromBuffer(buf){
-  await ensurePdfJs();
-  const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
-  let fullText='';
-  for(let pn=1;pn<=pdf.numPages;pn++){
-    const page=await pdf.getPage(pn);
-    const tc=await page.getTextContent();
-    let pageText='',lastY=null;
-    for(const item of tc.items){
-      const y=item.transform?item.transform[5]:null;
-      if(lastY!==null && y!==null && Math.abs(y-lastY)>3) pageText+='\n';
-      else if(pageText) pageText+=' ';
-      pageText+=item.str||'';
-      lastY=y;
-    }
-    fullText+='\n'+pageText+'\n';
-  }
-  return fullText;
-}
-
-async function fetchArrayBufferWithFallback(url){
-  const attempts=[
-    url,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    `https://corsproxy.io/?${encodeURIComponent(url)}`
-  ];
-  let lastErr=null;
-  for(const u of attempts){
-    try{
-      const r=await fetch(u,{cache:'no-store'});
-      if(!r.ok) throw new Error(`HTTP ${r.status}`);
-      const b=await r.arrayBuffer();
-      if(b.byteLength<5000) throw new Error('回傳內容過小，可能不是 PDF');
-      return b;
-    }catch(e){lastErr=e;}
-  }
-  throw lastErr||new Error('無法取得官方 PDF');
-}
-
-
-function mirrorExamName(paper){
-  if(paper.year==='115' && paper.session==='第二次') return '115年第二次';
-  if(paper.year==='115' && paper.session==='第一次') return '115年第一次';
-  if(paper.year==='114' && paper.session==='第四梯次') return '114年第四梯次';
-  if(paper.year==='114' && paper.session==='第二梯次') return '114年第二梯次';
-  return null;
-}
-function mirrorSubjectNo(subject){
-  return ({L11:1,L12:2,L21:1,L22:2,L23:3})[subject]||null;
-}
-async function loadOfficialStructuredMirror(){
-  if(officialMirrorData)return officialMirrorData;
-  const r=await fetch(OFFICIAL_STRUCTURED_MIRROR,{cache:'force-cache'});
-  if(!r.ok)throw new Error(`結構化題庫來源 HTTP ${r.status}`);
-  const raw=await r.text();
-  const m=raw.match(/window\.APP_DATA\s*=\s*([\s\S]*?)\s*;\s*<\/script>/);
-  if(!m)throw new Error('無法辨識結構化題庫資料');
-  const data=JSON.parse(m[1]);
-  if(!Array.isArray(data.questions)||data.questions.length<500)throw new Error('結構化題庫內容不完整');
-  officialMirrorData=data;
-  return data;
-}
-async function prewarmOfficialCache(){
+async function prewarmOfficialBundle(){
   try{
-    if(navigator.connection && navigator.connection.saveData) return;
-    const cache=getPastCache();
-    const targets=pastPapers.filter(p=>!p.id.startsWith('115-3-')&&!cache[p.id]);
-    if(!targets.length)return;
-    await loadOfficialStructuredMirror();
-    for(const paper of targets){
-      try{
-        const parsed=await loadPaperFromStructuredMirror(paper);
-        if(parsed&&parsed.questions&&parsed.questions.length>=45){
-          cache[paper.id]=parsed;
-          savePastCache(cache);
-        }
-      }catch(e){console.warn('官方考古題預備快取失敗',paper.id,e)}
-    }
-  }catch(e){console.warn('官方考古題背景預備略過',e)}
+    if(navigator.connection&&navigator.connection.saveData)return;
+    await loadOfficialPastBundle();
+  }catch(e){console.warn("內建官方考古題預載失敗",e)}
 }
-
-function cleanMirrorQuestion(text,n){
-  let s=cleanOfficialPageFurniture(text).replace(/\s+/g,' ').trim();
-  // 公開轉檔的 PDF 文字層偶爾把原題號插進中文字中，例如「主要用5.來」。只移除「中文 + 本題號 + . + 中文/括號」型態，避免誤傷 0.5 等小數。
-  try{
-    const re=new RegExp(`(?<=[\\u4e00-\\u9fff）)])${n}\\.(?=[\\u4e00-\\u9fff（(]|$)`,'g');
-    s=s.replace(re,'');
-  }catch(e){}
-  return s.replace(/\s{2,}/g,' ').trim();
-}
-async function loadPaperFromStructuredMirror(paper){
-  const exam=mirrorExamName(paper), subjectNo=mirrorSubjectNo(paper.subject);
-  if(!exam||!subjectNo||paper.id.startsWith('115-3-'))return null;
-  const data=await loadOfficialStructuredMirror();
-  const rows=data.questions.filter(q=>q.level===paper.level && q.subject===subjectNo && q.exam===exam).sort((a,b)=>(a.id||0)-(b.id||0));
-  if(rows.length<45)throw new Error(`結構化題庫只找到 ${rows.length} 題，未達完整考卷門檻`);
-  const questions=rows.slice(0,50).map((r,i)=>{
-    const n=i+1; const letters=['A','B','C','D'];
-    const options=letters.map(k=>cleanOfficialPageFurniture(r.options?.[k]).replace(/\s+/g,' ').trim());
-    return {
-      id:`PAST-${paper.id}-${n}`,number:n,level:paper.level,subject:paper.subject,
-      topic:`PAST-${paper.year}-${paper.session}`,topicName:`${paper.year} 年 ${paper.session} ${paper.name}`,
-      difficulty:'official',question:cleanMirrorQuestion(r.q,n),options,
-      answer:letters.indexOf(String(r.answer||'').normalize('NFKC').trim()),
-      hasVisual:/下圖|如圖|參考下圖|附圖|圖示|表格|程式碼|執行結果/i.test(String(r.q||'')),
-      explanation:`官方公告試題正解：${String(r.answer||'').normalize('NFKC').trim()}`,
-      sourceType:'iPAS 官方公告試題（結構化轉檔；答案以官方公告核對）'
-    };
-  }).filter(q=>q.answer>=0 && q.options.length===4);
-  return {meta:{paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf,source:'structured-mirror',contentVersion:1},questions};
-}
-
-async function fetchPaperText(paper){
-  try{
-    const buf=await fetchArrayBufferWithFallback(paper.pdf);
-    return await extractPdfTextFromBuffer(buf);
-  }catch(pdfErr){
-    console.warn('PDF 直接載入失敗，改用文字備援',pdfErr);
-    try{
-      const jina=`https://r.jina.ai/${paper.pdf}`;
-      const r=await fetch(jina,{cache:'no-store'});
-      if(!r.ok) throw new Error(`文字備援 HTTP ${r.status}`);
-      const t=await r.text();
-      if(t.length<1000) throw new Error('文字備援內容不足');
-      return t;
-    }catch(textErr){
-      const e=new Error('目前瀏覽器無法自動讀取這份官方考卷。可先點「查看官方 PDF」；換到 GitHub Pages / Safari / Chrome 後再試。');
-      e.cause={pdfErr,textErr};
-      throw e;
-    }
-  }
-}
-
 async function loadPastPaperById(id){
   const paper=pastPapers.find(p=>p.id===id);
   if(!paper)return;
-  const status=qs('#pastLoadStatus');
-  const cache=getPastCache();
+  const status=qs("#pastLoadStatus");
   try{
-    let parsed=cache[id];
-    if(parsed && parsed.questions && parsed.questions.length){
-      status.innerHTML=`<span class="good">已從本機快取載入：</span>${esc(paper.year+' 年 '+paper.session+' '+paper.subject)}，${parsed.questions.length} 題。`;
-    }else{
-      status.textContent=`正在載入 ${paper.year} 年 ${paper.session} ${paper.subject} 官方考古題…`;
-      // 12 份既有公告試題優先使用已逐題核對官方答案的結構化轉檔，避免瀏覽器現場解析 PDF 漏題；最新 115-3 再回退官方 PDF 文字層。
-      try{ parsed=await loadPaperFromStructuredMirror(paper); }catch(mirrorErr){ console.warn('結構化題庫載入失敗，改用官方 PDF',mirrorErr); parsed=null; }
-      if(!parsed){
-        const raw=await fetchPaperText(paper);
-        parsed=parseOfficialPastPaper(raw,paper.file);
-        if(!parsed.questions.length) throw new Error('已取得官方內容，但沒有成功解析出題目。');
-        parsed.meta={...parsed.meta,paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf,source:'official-pdf'};
-        parsed.questions=parsed.questions.map(q=>({...q,
-          id:`PAST-${paper.id}-${q.number}`,level:paper.level,subject:paper.subject,
-          topic:`PAST-${paper.year}-${paper.session}`,topicName:`${paper.year} 年 ${paper.session} ${paper.name}`,
-          sourceType:'iPAS 官方公告試題 PDF'
-        }));
-      }
-      cache[id]=parsed; savePastCache(cache);
-      status.innerHTML=`<span class="good">官方考古題載入成功：</span>${esc(parsed.meta.title)}，共 ${parsed.questions.length} 題。${parsed.meta.source==='structured-mirror'?'（結構化題庫）':'（官方 PDF 文字層）'}`;
-    }
-    pastPaperSet=parsed.questions; pastPaperMeta=parsed.meta; pastAnswered=false;
+    status.textContent=`正在開啟 ${paper.year} 年 ${paper.session} ${paper.subject} 內建官方考古題…`;
+    const parsed=await getBundledPastPaper(paper);
+    status.innerHTML=`<span class="good">內建 verified 題庫載入成功：</span>${esc(parsed.meta.title)}，共 ${parsed.questions.length} 題。`;
+    pastPaperSet=parsed.questions;pastPaperMeta=parsed.meta;pastAnswered=false;
     const firstUnanswered=pastPaperSet.findIndex(q=>!state.attempts[q.id]);
     pastIndex=firstUnanswered>=0?firstUnanswered:0;
     renderPastQuiz();
-    qs('#pastQuizArea')?.scrollIntoView({behavior:'smooth',block:'start'});
+    qs("#pastQuizArea")?.scrollIntoView({behavior:"smooth",block:"start"});
   }catch(err){
     console.error(err);
-    status.innerHTML=`<span class="bad">自動載入失敗：</span>${esc(err.message||String(err))}`;
-    qs('#pastQuizArea').innerHTML=`<div class="card"><h3>暫時無法自動開卷</h3><p class="small">這通常是瀏覽器跨站存取限制，不代表官方檔案不存在。你可以先開官方 PDF 核對；若是部署在 GitHub Pages 後再使用，成功率通常會比直接用 file:// 開啟更高。</p><a class="btn primary" style="display:inline-block;text-decoration:none" href="${paper.pdf}" target="_blank" rel="noopener">查看官方 PDF</a></div>`;
+    status.innerHTML=`<span class="bad">內建考古題載入失敗：</span>${esc(err.message||String(err))}`;
+    qs("#pastQuizArea").innerHTML=`<div class="card"><h3>暫時無法開卷</h3><p class="small">產品內建的 canonical 題庫未能載入。你仍可先開官方 PDF 核對原題。</p><a class="btn primary" style="display:inline-block;text-decoration:none" href="${paper.pdf}" target="_blank" rel="noopener">查看官方 PDF</a></div>`;
   }
 }
-
-function allCachedOfficialQuestions(){
-  const cache=getPastCache();
-  return Object.values(cache).flatMap(x=>x?.questions||[]);
+function renderPastSharedContext(q){
+  const context=q.sharedContext;
+  if(!context)return "";
+  const pages=`PDF 第 ${context.source_page_start}${context.source_page_end!==context.source_page_start?`–${context.source_page_end}`:""} 頁`;
+  return `<details class="pastSharedContext" open style="margin:16px 0;padding:12px;border:1px solid var(--line);border-radius:10px">
+    <summary style="cursor:pointer;font-weight:700;padding:8px 0">本題共用情境 <span class="small">（${esc(pages)}）</span></summary>
+    <pre class="pastSharedContextText" style="white-space:pre-wrap;overflow-wrap:anywhere;min-width:0;font-size:1rem;line-height:1.7;margin:12px 0">${esc(context.text)}</pre>
+    ${renderPastVisuals({number:q.number,visualAssets:context.visual_assets},"題組共用視覺")}
+  </details>`;
 }
-
-function cleanOfficialPageFurniture(rawText){
-  let text=String(rawText||'').normalize('NFKC').replace(/\r/g,'\n').replace(/[\u00ad\u200b\ufeff]/g,'');
-  // Match complete publication headers, not subject names or dates inside a question.
-  // NFKC converts ：／， to ASCII; PDF glyph runs can split words and digits with spaces.
-  text=text.replace(/1\s*\d\s*\d\s*年\s*第\s*[一二三四]\s*次\s*AI\s*應用規劃師\s*-\s*[初中]級\s*能力鑑定\s*【\s*公\s*告\s*試\s*題\s*】\s*第\s*[一二三]\s*科\s*:\s*[^\n]*?\s*考試日期\s*:\s*[\d\s]+年\s*[\d\s]+月\s*[\d\s]+日(?:\s*試\s*題\s*公告\s*日期\s*:\s*[\d\s]+年\s*[\d\s]+月\s*[\d\s]+日)?/g,'\n');
-  text=text.replace(/第\s*\d+\s*頁\s*,?\s*共\s*\d+\s*頁/g,'\n');
-  text=text.replace(/答\s*案\s*題\s*目|答\s*題\s*目\s*案/g,'');
-  text=text.replace(/^[ \t]*一、\s*選擇題[ \t]*$/gm,'');
-  return text;
-}
-
-function parseOfficialPastPaper(rawText,fileName){
-  let text=String(rawText||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/\|/g,' ').replace(/^#{1,6}\s*/gm,'');
-  text=cleanOfficialPageFurniture(text);
-  const meta={title:fileName.replace(/\.pdf$/i,''),fileName,contentVersion:1};
-  text=text.replace(/\n{2,}/g,'\n');
-  text=text.replace(/[ \t]{2,}/g,' ');
-
-  const qRe=/(?:^|\n)\s*([ABCD])\s*(?:\n|\s)*([0-9]{1,3})\.\s*/g;
-  const matches=[...text.matchAll(qRe)];
-  const questions=[];
-  for(let i=0;i<matches.length;i++){
-    const m=matches[i];
-    const start=m.index + m[0].length;
-    const end=i+1<matches.length ? matches[i+1].index : text.length;
-    let block=text.slice(start,end).trim();
-    if(!block) continue;
-    block=block.replace(/\n+/g,'\n').replace(/[ \t]+/g,' ').trim();
-    const optPattern=/\(([ABCD])\)\s*([\s\S]*?)(?=\s*\([ABCD]\)\s*|$)/g;
-    const optMatches=[...block.matchAll(optPattern)];
-    if(optMatches.length<4) continue;
-    const firstOptIndex=block.search(/\(A\)/);
-    if(firstOptIndex<0) continue;
-    let qText=block.slice(0,firstOptIndex).replace(/\n/g,' ').trim();
-    const options=[];
-    optMatches.slice(0,4).forEach(om=> options.push(om[2].replace(/\n/g,' ').replace(/[ \t]{2,}/g,' ').trim()));
-    if(options.length!==4) continue;
-    const answerLetter=m[1];
-    const number=parseInt(m[2],10);
-    questions.push({
-      id:`PAST-${meta.title}-${number}`,
-      number,
-      level:'官方考古題',
-      subject:'官方',
-      topic:'考古題',
-      topicName:meta.title,
-      difficulty:'official',
-      question:qText,
-      hasVisual:/下圖|如圖|參考下圖|附圖|圖示|表格|程式碼|執行結果/i.test(qText),
-      options,
-      answer:'ABCD'.indexOf(answerLetter),
-      explanation:`官方公告試題正解：${answerLetter}`,
-      sourceType:'iPAS 官方公告試題 PDF'
-    });
+function renderPastVisuals(q,visualLabel="官方原題視覺"){
+  const list=Array.isArray(q.visualAssets)?q.visualAssets:[];
+  if(list.length){
+    return `<div class="pastVisualGrid" style="display:grid;gap:10px;margin:12px 0">${list.map((src,i)=>{
+      const optionMatch=String(src).match(/_([a-d])\.png$/i);
+      const label=optionMatch?`選項 ${optionMatch[1].toUpperCase()} 官方視覺`:`${visualLabel} ${i+1}/${list.length}`;
+      return `<figure style="margin:0"><img src="${esc(bundledAssetUrl(src))}" alt="${esc(label)}，第 ${q.number} 題" loading="lazy" style="display:block;max-width:100%;height:auto;margin:0 auto;border:1px solid var(--line);border-radius:10px"><figcaption class="small" style="margin-top:4px;text-align:center">${esc(label)}</figcaption></figure>`;
+    }).join("")}</div>`;
   }
-  questions.sort((a,b)=>a.number-b.number);
-  meta.title = inferPastTitle(text, fileName, questions.length);
-  return {meta, questions};
-}
-
-function inferPastTitle(text,fileName,count){
-  const name=(fileName||'').replace(/\.pdf$/i,'');
-  const m1=name.match(/(1\d{2}年[^\n]{0,80}?第[一二三四]次[^\n]{0,80}?第[一二三四]科[^\n]{0,80})/);
-  if(m1) return m1[1];
-  const m2=name.match(/(1\d{2}年[^\n]{0,80})/);
-  if(m2) return m2[1];
-  return `${name}（${count} 題）`;
+  return q.hasVisual&&!q.sharedContext?.visual_assets?.length?`<div class="notice" style="margin:8px 0"><b>此題包含官方視覺資訊，但內建資產未能顯示。</b> 請用「核對官方原題 PDF」查看來源。</div>`:"";
 }
 
 function renderPastQuiz(){
@@ -970,12 +874,17 @@ function renderPastQuiz(){
   const q=pastPaperSet[pastIndex];
   const key=q.id;
   const past=state.attempts[key];
-  area.innerHTML=`<div class="card questionCard" style="margin-bottom:12px">
-    <div class="qmeta"><span class="qmetaPrimary">官方考古題 · 第 ${q.number} 題</span><span class="qmetaSecondary">${esc(pastPaperMeta?.title||'')}</span></div>
-    <div class="small">${past?`曾作答：${past.correct?'✓ 正確':'✕ 錯誤'}`:'尚未作答'}　｜　第 ${pastIndex+1}/${pastPaperSet.length} 題　｜　<a href="${pastPaperMeta?.pdf||'#'}" target="_blank" rel="noopener">核對官方原題 PDF</a></div>
+  area.innerHTML=`<div class="card questionCard officialQuestion" style="margin-bottom:12px">
+    <div class="pastQuizTop">
+      <div class="qmeta"><span class="qmetaPrimary">官方考古題 · 第 ${q.number} 題</span><span class="qmetaSecondary">${esc(pastPaperMeta?.title||'')}</span></div>
+      <button class="btn secondary pastExitBtn" onclick="exitPastQuiz()">← 返回考卷列表</button>
+    </div>
+    <div id="pastScoreStatus" class="pastQuizStatus" role="status" aria-live="polite">${pastProgressText()}</div>
+    <div class="small">本份考卷會自動記錄作答與計分；返回列表不會清除進度。　｜　${past?`本題曾作答：${past.correct?'✓ 正確':'✕ 錯誤'}`:'本題尚未作答'}　｜　第 ${pastIndex+1}/${pastPaperSet.length} 題　｜　<a href="${pastPaperMeta?.pdf||'#'}" target="_blank" rel="noopener">核對官方原題 PDF</a></div>
     <div class="progress" role="progressbar" aria-label="考古題進度" aria-valuemin="1" aria-valuemax="${pastPaperSet.length}" aria-valuenow="${pastIndex+1}"><div style="width:${(pastIndex+1)/pastPaperSet.length*100}%"></div></div>
+    ${renderPastSharedContext(q)}
     <div class="qtext" tabindex="-1">${esc(q.question)}</div>
-    ${q.hasVisual?`<div class="notice" style="margin:8px 0"><b>此題可能含圖／表格／程式碼版面。</b> 請用「查看官方 PDF」核對原題視覺資訊，避免只看文字層誤判。</div>`:''}
+    ${renderPastVisuals(q)}
     <div id="pastOpts" role="group" aria-label="作答選項" tabindex="-1">${q.options.map((o,i)=>`<button class="option" data-i="${i}"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join('')}</div>
     <div class="navrow">
       <div><button class="btn secondary" onclick="pastPrev()" ${pastIndex===0?"disabled":""}>上一題</button> <button class="btn secondary" onclick="reportPastQuestion()">回報此題</button></div>
@@ -992,6 +901,7 @@ function answerPast(i){
   state.attempts[q.id]={correct:ok,last:Date.now(),subject:'PAST',topic:pastPaperMeta?.title||'官方考古題'};
   if(ok) delete state.wrong[q.id]; else state.wrong[q.id]=true;
   save();
+  updatePastProgressStatus();
   qsa('#pastOpts .option').forEach((b,idx)=>{
     b.disabled=true;
     if(idx===q.answer)b.classList.add('correct');
@@ -1013,28 +923,41 @@ function pastNext(){
     const answered=pastPaperSet.filter(q=>state.attempts[q.id]).length;
     const correct=pastPaperSet.filter(q=>state.attempts[q.id] && state.attempts[q.id].correct).length;
     const score=answered ? Math.round(correct/pastPaperSet.length*100) : 0;
-    qs('#pastQuizArea').innerHTML=`<div class="card"><h3>這份官方考古題完成了</h3><div class="kpi ${score>=70?'good':'bad'}">${score} 分</div><p>${correct}/${pastPaperSet.length} 題正確。你可以回到上方直接選另一份官方考卷，或到錯題本加強複習。</p><button class="btn primary" onclick="restartPastQuiz()">重新作答這份</button></div>`;
+    qs('#pastQuizArea').innerHTML=`<div class="card"><h3>這份官方考古題完成了</h3><div class="kpi ${score>=70?'good':'bad'}">${score} 分</div><p>${correct}/${pastPaperSet.length} 題正確。作答紀錄已保留在此裝置，你可以返回考卷列表選其他考卷，或重新作答本份。</p><div class="controls"><button class="btn secondary" onclick="exitPastQuiz()">返回考卷列表</button><button class="btn primary" onclick="restartPastQuiz()">重新作答這份</button></div></div>`;
   }
 }
 function pastPrev(){ if(pastIndex>0){ pastIndex--; pastAnswered=false; renderPastQuiz(); focusQuestion("#pastQuizArea"); } }
 function restartPastQuiz(){ pastIndex=0; pastAnswered=false; renderPastQuiz(); }
 
 function getQuestionById(id){
-  return DB.questions.find(x=>x.id===id) || allCachedOfficialQuestions().find(x=>x.id===id);
+  return DB.questions.find(x=>x.id===id)||officialPastQuestionIndex.get(id);
 }
 function renderWrong(){
-  const ids=Object.keys(state.wrong), qsx=ids.map(getQuestionById).filter(Boolean);
+  const ids=Object.keys(state.wrong);
+  if(ids.some(id=>id.startsWith("PAST-"))&&!officialPastBundle){
+    qs("#wrong").innerHTML='<div class="card"><h3 style="margin-top:0">錯題本</h3><p class="small">正在載入內建官方錯題資料…</p></div>';
+    loadOfficialPastBundle().then(()=>{if(qs("#wrong")?.classList.contains("active"))renderWrong()}).catch(e=>console.warn("官方錯題資料載入失敗",e));
+    return;
+  }
+  const qsx=ids.map(getQuestionById).filter(Boolean);
   qs("#wrong").innerHTML=`<div class="card"><div class="examtop"><h3 style="margin:0">錯題本（${qsx.length}）</h3><button class="btn secondary" onclick="startWrongPractice()">重刷錯題</button></div>
   ${qsx.length?qsx.slice(0,120).map(q=>`<div class="topicbar"><div><b>${esc(q.id)}</b> ${esc(q.question)}<div class="small">${esc(q.subject||'')}｜${esc(q.topic||'')} ${esc(q.topicName||'')}</div></div></div>`).join(""):"目前沒有錯題。"}</div>`;
 }
-function startWrongPractice(){
-  const ids=Object.keys(state.wrong),arr=shuffle(ids.map(getQuestionById).filter(Boolean));
+async function startWrongPractice(){
+  const ids=Object.keys(state.wrong);
+  if(ids.some(id=>id.startsWith("PAST-"))&&!officialPastBundle){
+    try{await loadOfficialPastBundle()}catch(e){console.warn("官方錯題資料載入失敗",e)}
+  }
+  const arr=shuffle(ids.map(getQuestionById).filter(Boolean));
   if(!arr.length)return;
   switchPanel("practice");renderPractice();
   beginPracticeSession(arr,`錯題本｜${arr.length} 題`);
 }
 
 function renderStats(){
+  if(Object.keys(state.attempts).some(id=>id.startsWith("PAST-"))&&!officialPastBundle){
+    loadOfficialPastBundle().then(()=>{if(qs("#stats")?.classList.contains("active"))renderStats()}).catch(e=>console.warn("官方統計資料載入失敗",e));
+  }
   let by={};
   Object.entries(state.attempts).forEach(([id,a])=>{
     let q=getQuestionById(id);if(!q)return;
@@ -1051,8 +974,14 @@ function renderStats(){
   <h3>最近模擬</h3>${hist.length?hist.slice(0,6).map(h=>`<div class="topicbar"><div><b>${h.subject}</b><div class="small">${new Date(h.date).toLocaleDateString()}</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}</b></div>`).join(""):"尚無模擬紀錄"}
   <button class="btn danger" style="margin-top:12px" onclick="resetAll()">清除全部進度</button></div></div>`;
 }
-function resetAll(){if(confirm("確定清除所有作答、錯題與模擬紀錄？")){localStorage.removeItem("ipasAIState");location.reload()}}
-
+function resetAll(){
+  if(confirm("確定清除所有作答、錯題與模擬紀錄？")){
+    localStorage.removeItem("ipasAIState");
+    localStorage.removeItem(PAST_MIGRATION_BACKUP_KEY);
+    localStorage.removeItem("ipasOfficialPastCacheV2");
+    location.reload();
+  }
+}
 function renderScope(){
  const groups={};
  Object.keys(DB.topics).forEach(t=>{let sub=t.slice(0,3).replace(/^L/,"L"); let candidates=Object.keys(DB.subjects).filter(s=>t.startsWith(s)); let s=candidates.sort((a,b)=>b.length-a.length)[0]; if(!groups[s])groups[s]=[];groups[s].push(t)});
@@ -1066,7 +995,7 @@ function renderScope(){
 }
 
 renderHome();renderPractice();renderExam();renderPastPapers();renderScope();
-setTimeout(()=>prewarmOfficialCache(),1200);
+setTimeout(()=>prewarmOfficialBundle(),0);
 </script>
 </body>
 </html>

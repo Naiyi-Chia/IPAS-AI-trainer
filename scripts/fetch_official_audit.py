@@ -1,4 +1,4 @@
-"""Download public inputs used by the app for the Issue #43 audit (no pip packages).
+"""Download official PDFs and the pinned audit-only PDF.js (no pip packages).
 
 Usage: python scripts/fetch_official_audit.py tmp/official-audit
 Downloads are test inputs only; no production dependency is added.
@@ -20,7 +20,6 @@ urls = [(paper + ".pdf", base + urllib.parse.quote(name)) for paper, name in pap
 urls += [
     ("pdf.js", "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"),
     ("pdf.worker.js", "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"),
-    ("mirror.html", re.search(r'const OFFICIAL_STRUCTURED_MIRROR = "([^"]+)', html)[1]),
 ]
 
 

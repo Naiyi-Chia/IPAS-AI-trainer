@@ -32,7 +32,8 @@ BATCHES = {'batch1a': BATCH,
            'batch3h': [f'Q{n:03d}' for start in (370, 394)
                        for n in range(start, start + 12)],
            'batch3i': [f'Q{n:03d}' for start, stop in ((412, 424), (425, 430), (442, 448))
-                       for n in range(start, stop)]}
+                       for n in range(start, stop)],
+           'batch3j': [f'Q{n:03d}' for n in range(448, 460)]}
 
 
 def extract(text):

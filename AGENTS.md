@@ -9,7 +9,7 @@ IPAS AI Trainer is a single-page, static iPAS AI 應用規劃師 practice tool p
 - UI copy is primarily Traditional Chinese (Taiwan usage).
 - `main` is the production / deploy branch.
 - `dev` is the integration + staging / Dev Preview branch.
-- Cross-project workflow follows the canonical AI Product Development Playbook v1.7 in `Naiyi-Chia/naiyi-product-playbook`.
+- Cross-project workflow follows the canonical AI Product Development Playbook v1.8 in `Naiyi-Chia/naiyi-product-playbook`.
 
 ## Source of Truth
 The GitHub Issue is the Source of Truth for each development task.
@@ -167,7 +167,7 @@ Merge to `dev` does not mean Product Verify passed and does not mean Ready for R
 
 ### Optional Epic Integration Branch authorization
 
-The canonical Playbook v1.7 allows an **Optional Epic Integration Branch** for a large initiative made of multiple highly related Sub-issues that should accumulate before entering shared `dev`.
+The canonical Playbook v1.8 allows an **Optional Epic Integration Branch** for a large initiative made of multiple highly related Sub-issues that should accumulate before entering shared `dev`.
 
 This pattern is an explicit exception, not the default.
 
@@ -175,13 +175,13 @@ This pattern is an explicit exception, not the default.
 - The Human decision, epic branch identity, sequencing / checkpoint strategy, and final integration plan belong in the **Parent Issue**.
 - Each **Sub-issue** keeps its own Goal / Scope / Acceptance Criteria and explicit base / target branch.
 - Every Sub-issue still requires Engineering QA and independent ChatGPT Technical Review.
-- After Technical Review PASS, the Sub-issue PR to the enabled Epic Integration Branch may be created automatically and merged when review / conflict checks are clean.
+- After Technical Review PASS, the Sub-issue PR to the enabled Epic Integration Branch may be created automatically and squash merged when review / conflict checks are clean.
 - Per-Sub-issue Human Epic Integration Approval is **not required**.
 - Human aggregate checkpoint reviews remain available at meaningful phases or when accumulated risk / conflict exposure warrants them. A checkpoint is **not Product Verify**.
 - The Epic Integration Branch should sync latest `dev` at meaningful checkpoints and **must** sync current `dev` before final integration, followed by aggregate regression / conflict checks.
 - Do not arbitrarily rewrite shared epic-branch history. If branches diverge or conflict, inspect history first; do not blind force or rebase.
 - The Epic Integration Branch is not staging or production. Do not declare canonical Product Verify on it.
-- Final `Epic Integration Branch → dev` still requires Human Integration Approval.
+- Final `Epic Integration Branch → dev` still requires Human Integration Approval and uses normal merge by default.
 - Keep initiative-specific branch names and contracts in the Parent Issue / Sub-issues, not in `AGENTS.md`.
 
 ## Branch and release model
@@ -201,14 +201,14 @@ Issue
 → ChatGPT Technical Review
 → Feature PR automatically created / updated
 → Human Integration Approval
-→ merge to dev
+→ squash merge to dev
 → Dev Preview / staging (/dev/)
 → Human Product Verify
 → Ready for Release (Issue remains open)
 → Human Release Approval / release intent
 → Release PR automatically created / updated
 → ChatGPT Final Release Review
-→ clean: merge to main / blocker: stop
+→ clean: normal merge to main / blocker: stop
 → Production Smoke
 → Done / Close Issue
 ```
@@ -224,22 +224,26 @@ Parent Issue enables Epic Integration Branch
 → concise Engineering Ready
 → ChatGPT Technical Review
 → Sub-issue PR automatically created / updated
-→ clean checks: merge to Epic Integration Branch
+→ clean checks: squash merge to Epic Integration Branch
 → aggregate checkpoints / dev sync as defined by Parent Issue
 → final aggregate QA + sync current dev
 → PR: Epic Integration Branch → dev
 → Human Integration Approval
-→ merge to dev
+→ normal merge to dev
 → Dev Preview / staging
 → Human Product Verify
 → Ready for Release
 → Human Release Approval / release intent
 → Release PR + Final Release Review
-→ clean: merge to main / blocker: stop
+→ clean: normal merge to main / blocker: stop
 → Production Smoke
 → Done / Close Issue
 ```
 
-Feature and Sub-issue PRs may use squash merge. Release PRs should normally use a normal merge so `dev` ancestry is preserved.
+Merge defaults follow the canonical Playbook v1.8 boundary rule:
+- scoped Feature PR → `dev`: squash merge by default;
+- Sub-issue PR → Human-enabled Epic Integration Branch: squash merge by default;
+- Epic Integration Branch → `dev`: normal merge by default;
+- Release PR `dev` → `main`: normal merge by default.
 
 After a release, sync `dev` to the latest `main` with a fast-forward when safe. If it cannot fast-forward, inspect branch history first; never force blindly.

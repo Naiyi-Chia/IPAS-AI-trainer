@@ -11,10 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 6
       - name: Apply scoped patch
-        run: python scripts/issue_109_patch.py
-      - name: Validate scoped change
+        run: |
+          python scripts/issue_109_patch.py
+          python scripts/issue_109_adjust.py
+      - name: Static validation
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -31,13 +33,25 @@ jobs:
           print('Issue #109 structural assertions: PASS')
           PY
           node --check /tmp/ipas-inline.js
-          node scripts/test_dev_asset_resolution.cjs
           git diff --check
+      - name: Install browser QA dependency
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Browser QA
+        run: |
+          python -m http.server 4173 >/tmp/ipas-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          node scripts/issue_109_qa.cjs
+          BROWSER_CHANNEL=chromium node scripts/test_dev_asset_resolution.cjs
       - name: Commit implementation and remove temporary runner
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .github/workflows/issue-109-patch.yml scripts/issue_109_patch.py
+          git rm .github/workflows/issue-109-patch.yml scripts/issue_109_patch.py scripts/issue_109_adjust.py scripts/issue_109_qa.cjs
           git add index.html
+          git diff --cached --check
           git commit -m "ux: separate past-paper list and quiz views (#109)"
           git push

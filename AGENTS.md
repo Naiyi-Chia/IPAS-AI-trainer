@@ -9,7 +9,7 @@ IPAS AI Trainer is a single-page, static iPAS AI 應用規劃師 practice tool p
 - UI copy is primarily Traditional Chinese (Taiwan usage).
 - `main` is the production / deploy branch.
 - `dev` is the integration + staging / Dev Preview branch.
-- Cross-project workflow follows the canonical AI Product Development Playbook v1.6 in `Naiyi-Chia/naiyi-product-playbook`.
+- Cross-project workflow follows the canonical AI Product Development Playbook v1.7 in `Naiyi-Chia/naiyi-product-playbook`.
 
 ## Source of Truth
 The GitHub Issue is the Source of Truth for each development task.
@@ -34,14 +34,21 @@ Do not keep requirement changes only in chat, commit messages, PR comments, or h
 5. Determine the explicit integration strategy from the Issue:
    - default: latest `dev`;
    - Human-enabled Epic pattern: latest named Epic Integration Branch.
-6. Switch / update the correct baseline and confirm the working tree is clean.
-7. Create a scoped branch from that baseline, for example:
-   - `feat/issue-N-short-name`
-   - `fix/issue-N-short-name`
-   - `ux/issue-N-short-name`
-   - `question/issue-N-short-name`
-   - `maint/issue-N-short-name`
+6. Check remote scoped branches associated with the Issue before creating a new branch.
+7. Resolve continuation safely:
+   - exactly one compatible, unambiguous branch → continue that branch;
+   - no compatible branch → switch / update the resolved baseline, confirm the working tree is clean, then create a scoped branch, for example:
+     - `feat/issue-N-short-name`
+     - `fix/issue-N-short-name`
+     - `ux/issue-N-short-name`
+     - `question/issue-N-short-name`
+     - `maint/issue-N-short-name`;
+   - multiple candidates, unexpected divergence, incompatible base / target, or conflicting local state → stop automatic continuation and surface the blocker rather than guessing.
 8. Inspect only the relevant existing implementation / evidence before editing; do not duplicate existing behavior.
+
+A branch is compatible only when it can be tied to the current Issue and matches the Issue's expected base / target contract without ambiguous or unsafe divergence.
+
+Engineering Agent execution may run in a local or cloud runtime. If in-progress work must survive a runtime switch, commit and push it to the remote scoped branch first. Uncommitted local state, local chat history, and local-only runtime state are not durable handoff state and must not be required to resume the task.
 
 Context efficiency must not override correctness: if required evidence is missing, read the authoritative source instead of guessing.
 
@@ -160,7 +167,7 @@ Merge to `dev` does not mean Product Verify passed and does not mean Ready for R
 
 ### Optional Epic Integration Branch authorization
 
-The canonical Playbook v1.6 allows an **Optional Epic Integration Branch** for a large initiative made of multiple highly related Sub-issues that should accumulate before entering shared `dev`.
+The canonical Playbook v1.7 allows an **Optional Epic Integration Branch** for a large initiative made of multiple highly related Sub-issues that should accumulate before entering shared `dev`.
 
 This pattern is an explicit exception, not the default.
 
@@ -187,7 +194,7 @@ Quick reference:
 
 ```text
 Issue
-→ scoped branch from latest dev
+→ resume one compatible remote scoped branch OR create scoped branch from latest dev
 → implementation + local/browser QA
 → commit + push
 → concise Engineering Ready for Review evidence
@@ -212,7 +219,7 @@ Use this only when the Parent Issue contains the explicit Human decision enablin
 
 ```text
 Parent Issue enables Epic Integration Branch
-→ Sub-issue scoped branch from latest Epic Integration Branch
+→ resume one compatible remote scoped branch OR create Sub-issue scoped branch from latest Epic Integration Branch
 → implementation + local/browser QA
 → concise Engineering Ready
 → ChatGPT Technical Review

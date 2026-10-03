@@ -8,39 +8,16 @@ from pathlib import Path
 
 EXPECTED_ROWS = 700
 REQUIRED_HEADERS = [
-    "paper_id",
-    "subject",
-    "question_no",
-    "competency_topic",
-    "competency_mapping_status",
-    "competency_mapping_note",
+    "paper_id", "subject", "question_no", "competency_topic",
+    "competency_mapping_status", "competency_mapping_note",
 ]
 ALLOWED_STATUSES = {"unverified", "verified", "needs_review"}
 TOPICS_BY_SUBJECT = {
-    "L11": {
-        "L11101", "L11102", "L11201", "L11202", "L11203",
-        "L11301", "L11302", "L11401", "L11402",
-    },
-    "L12": {
-        "L12101", "L12102", "L12201", "L12202",
-        "L12301", "L12302", "L12303",
-    },
-    "L21": {
-        "L21101", "L21102", "L21103", "L21104",
-        "L21201", "L21202", "L21203", "L21301", "L21302",
-    },
-    "L22": {
-        "L22101", "L22102", "L22103",
-        "L22201", "L22202", "L22203",
-        "L22301", "L22302", "L22303",
-        "L22401", "L22402", "L22403", "L22404",
-    },
-    "L23": {
-        "L23101", "L23102", "L23103",
-        "L23201", "L23202", "L23203",
-        "L23301", "L23302", "L23303", "L23304",
-        "L23401", "L23402",
-    },
+    "L11": {"L11101", "L11102", "L11201", "L11202", "L11203", "L11301", "L11302", "L11401", "L11402"},
+    "L12": {"L12101", "L12102", "L12201", "L12202", "L12301", "L12302", "L12303"},
+    "L21": {"L21101", "L21102", "L21103", "L21104", "L21201", "L21202", "L21203", "L21301", "L21302"},
+    "L22": {"L22101", "L22102", "L22103", "L22201", "L22202", "L22203", "L22301", "L22302", "L22303", "L22401", "L22402", "L22403", "L22404"},
+    "L23": {"L23101", "L23102", "L23103", "L23201", "L23202", "L23203", "L23301", "L23302", "L23303", "L23304", "L23401", "L23402"},
 }
 
 
@@ -62,7 +39,7 @@ def audit(rows: list[dict[str, str]], fieldnames: list[str], require_verified: b
         paper_id = (row.get("paper_id") or "").strip()
         subject = (row.get("subject") or "").strip()
         question_no = (row.get("question_no") or "").strip()
-        topic = (row.get("competency_topic") or "").strip()
+        topic = (row.get("competency_topic") or "").strip().upper()
         status = (row.get("competency_mapping_status") or "").strip()
 
         if subject not in TOPICS_BY_SUBJECT:
@@ -86,9 +63,7 @@ def audit(rows: list[dict[str, str]], fieldnames: list[str], require_verified: b
         if topic not in valid_topics:
             owner = next((s for s, topics in TOPICS_BY_SUBJECT.items() if topic in topics), None)
             if owner:
-                errors.append(
-                    f"row {line}: cross-subject topic {topic} belongs to {owner}, not {subject}"
-                )
+                errors.append(f"row {line}: cross-subject topic {topic} belongs to {owner}, not {subject}")
             else:
                 errors.append(f"row {line}: invalid topic {topic!r}")
             continue
@@ -130,16 +105,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Audit official past-paper -> competency-topic mappings for Issue #103."
     )
-    parser.add_argument(
-        "--source",
-        default="data/official-past-papers-source.csv",
-        help="CSV snapshot of the canonical flat master table",
-    )
-    parser.add_argument(
-        "--require-verified",
-        action="store_true",
-        help="Fail unless all 700 rows have a valid verified mapping",
-    )
+    parser.add_argument("--source", default="data/official-past-papers-source.csv")
+    parser.add_argument("--require-verified", action="store_true")
     args = parser.parse_args()
 
     source = Path(args.source)
@@ -149,16 +116,16 @@ def main() -> None:
         fieldnames = reader.fieldnames or []
 
     result = audit(rows, fieldnames, require_verified=args.require_verified)
-
     print(
         "PASS: "
-        f"{result['rows']} rows / "
-        f"{result['mapped']} mapped / "
-        f"{result['unmapped']} unmapped / "
+        f"{result['rows']} rows / {result['mapped']} mapped / {result['unmapped']} unmapped / "
         f"status={result['status_counts']}"
     )
     for subject, counts in result["subject_topic_counts"].items():
         print(subject + ": " + ", ".join(f"{topic}={count}" for topic, count in counts.items()))
+    print("Per-paper distribution:")
+    for paper, counts in result["paper_topic_counts"].items():
+        print("  " + paper + ": " + ", ".join(f"{topic}={count}" for topic, count in counts.items()))
 
 
 if __name__ == "__main__":

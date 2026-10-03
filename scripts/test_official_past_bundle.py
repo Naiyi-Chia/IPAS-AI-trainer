@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from build_official_past_bundle import BUNDLE_SCHEMA_VERSION, TOPICS_BY_SUBJECT, build
+from audit_official_competency_mapping import audit
 
 ROOT = Path(__file__).resolve().parents[1]
 CANONICAL_AX_SHA256 = "e7476f1d5270822de66ba15e13c27d4e84a57349bc216d195e6bf8814d058118"
@@ -54,7 +55,7 @@ class OfficialPastBundleContract(unittest.TestCase):
         writer = csv.writer(out, lineterminator="\n", quoting=csv.QUOTE_ALL)
         writer.writerow(fields)
         for row in self.rows:
-            writer.writerow([row[field] for field in fields])
+            writer.writerow([row[field].replace("\r\n", "\n").replace("\r", "\n") for field in fields])
         digest = hashlib.sha256(out.getvalue().encode("utf-8")).hexdigest()
         self.assertEqual(digest, CANONICAL_AX_SHA256)
 
@@ -105,6 +106,27 @@ class OfficialPastBundleContract(unittest.TestCase):
         lf = [{k: v.replace("\r\n", "\n").replace("\r", "\n") for k, v in r.items()} for r in self.rows]
         crlf = [{k: v.replace("\n", "\r\n") for k, v in r.items()} for r in lf]
         self.assertEqual(build(lf, self.headers, ROOT), build(crlf, self.headers, ROOT))
+
+    def test_missing_competency_headers_are_rejected(self):
+        for field in ["competency_topic", "competency_mapping_status", "competency_mapping_note"]:
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, "missing headers"):
+                    build(self.rows, [h for h in self.headers if h != field], ROOT)
+
+    def test_strict_audit_and_negative_controls(self):
+        result = audit(self.rows, self.headers, require_verified=True)
+        self.assertEqual((result["mapped"], result["unmapped"], result["status_counts"]),
+                         (700, 0, {"verified": 700}))
+        self.assertEqual(len(result["paper_topic_counts"]), 14)
+        for field, value in [("competency_topic", ""), ("competency_topic", "L99999"),
+                             ("competency_topic", "L22101"),
+                             ("competency_mapping_status", "unverified"),
+                             ("competency_mapping_status", "needs_review")]:
+            with self.subTest(field=field, value=value):
+                rows = copy.deepcopy(self.rows)
+                next(r for r in rows if r["subject"] == "L11")[field] = value
+                with self.assertRaises(ValueError):
+                    audit(rows, self.headers, require_verified=True)
 
 
 if __name__ == "__main__":

@@ -229,7 +229,7 @@ function feedbackSubjectLabel(q){
 function feedbackTopicLabel(q,sourceType){
   if(!q)return '';
   if(sourceType==='官方考古題'){
-    const paper=pastPaperMeta?.title||q.topicName||q.topic||'官方考古題';
+    const paper=q.paperTitle||pastPaperMeta?.title||q.topicName||q.topic||'官方考古題';
     return `${paper}${q.number?`｜第 ${q.number} 題`:''}`;
   }
   return [q.topic,q.topicName].filter(Boolean).join(' ');
@@ -722,13 +722,16 @@ function cleanBundledOption(value,letter){
   return raw;
 }
 function bundledQuestionToRuntime(paper,q,sharedContexts={}){
+  const topic=q.competency_topic;
+  if(typeof topic!=="string"||!Object.prototype.hasOwnProperty.call(DB.topics,topic)||!topic.startsWith(paper.subject)||q.competency_mapping_status!=="verified"||typeof q.competency_mapping_note!=="string")throw new Error(`內建題目能力映射無效：${paper.id} Q${q.question_no}`);
   const letters=["A","B","C","D"];
   const sharedContext=q.shared_context_id?sharedContexts[q.shared_context_id]:null;
   if(q.shared_context_id&&(!sharedContext||sharedContext.paper_id!==paper.id))throw new Error(`缺少本題共用情境：${q.shared_context_id}`);
   const sourcePages=q.source_page_start?`PDF P${q.source_page_start}${q.source_page_end&&q.source_page_end!==q.source_page_start?`–${q.source_page_end}`:""}`:"官方 PDF";
   return {
     id:`PAST-${paper.id}-${q.question_no}`,number:q.question_no,level:paper.level,subject:paper.subject,
-    topic:`PAST-${paper.year}-${paper.session}`,topicName:`${paper.year} 年 ${paper.session} ${paper.name}`,
+    topic,topicName:DB.topics[topic],paperTitle:`${paper.year} 年 ${paper.session} ${paper.name}`,
+    competency_topic:topic,competency_mapping_status:q.competency_mapping_status,competency_mapping_note:q.competency_mapping_note,
     difficulty:"official",question:q.question_text,
     options:letters.map(letter=>cleanBundledOption(q.options?.[letter],letter)),
     answer:letters.indexOf(q.answer),hasVisual:!!q.has_visual,
@@ -745,19 +748,21 @@ async function loadOfficialPastBundle(){
     officialPastBundlePromise=fetch(bundledAssetUrl(OFFICIAL_PAST_BUNDLE_PATH),{cache:"force-cache"})
       .then(r=>{if(!r.ok)throw new Error(`內建考古題資料 HTTP ${r.status}`);return r.json()})
       .then(data=>{
-        if(data?.schema_version!==3||data?.source?.row_count!==700||!Array.isArray(data?.papers)||data.papers.length!==14||!data.shared_contexts)throw new Error("內建考古題資料版本或筆數不符");
-        officialPastQuestionIndex.clear();
+        if(data?.schema_version!==4||data?.source?.competency_mapping_status!=="verified"||data?.source?.row_count!==700||!Array.isArray(data?.papers)||data.papers.length!==14||!data.shared_contexts)throw new Error("內建考古題資料版本或筆數不符");
+        const nextIndex=new Map();
         data.papers.forEach(bp=>{
           const paper=pastPapers.find(p=>p.id===bp.paper_id);
-          if(!paper||!Array.isArray(bp.questions)||bp.questions.length!==50)throw new Error(`內建考卷不完整：${bp.paper_id||"unknown"}`);
+          if(!paper||bp.subject!==paper.subject||!Array.isArray(bp.questions)||bp.questions.length!==50)throw new Error(`內建考卷不完整：${bp.paper_id||"unknown"}`);
           bp.questions.forEach(q=>{
             if(q.verification_status!=="verified")throw new Error(`內建題目尚未 verified：${bp.paper_id} Q${q.question_no}`);
             const runtime=bundledQuestionToRuntime(paper,q,data.shared_contexts);
             if(runtime.answer<0||runtime.options.length!==4)throw new Error(`內建題目格式錯誤：${runtime.id}`);
-            officialPastQuestionIndex.set(runtime.id,runtime);
+            nextIndex.set(runtime.id,runtime);
           });
         });
-        if(officialPastQuestionIndex.size!==700)throw new Error(`內建題目索引筆數錯誤：${officialPastQuestionIndex.size}`);
+        if(nextIndex.size!==700)throw new Error(`內建題目索引筆數錯誤：${nextIndex.size}`);
+        officialPastQuestionIndex.clear();
+        nextIndex.forEach((q,id)=>officialPastQuestionIndex.set(id,q));
         officialPastBundle=data;
         return data;
       });

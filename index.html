@@ -798,6 +798,8 @@ function pastQuestionStateText(){
 function updatePastProgressStatus(){
   const el=qs('#pastScoreStatus');
   if(el)el.textContent=pastProgressText();
+  const count=qs('#pastAnsweredCount');
+  if(count)count.textContent=`已作答：${currentPastProgress().answered}/${pastPaperSet.length} 題`;
 }
 function updatePastQuestionState(){
   const el=qs('#pastQuestionState');
@@ -918,7 +920,7 @@ function renderPastQuiz(){
     <div id="pastScoreStatus" class="pastQuizStatus" role="status" aria-live="polite">${pastProgressText()}</div>
     <div class="pastQuestionFacts">
       <span>題目位置：第 ${pastIndex+1}/${pastPaperSet.length} 題</span>
-      <span>已作答：${prog.answered}/${pastPaperSet.length} 題</span>
+      <span id="pastAnsweredCount">已作答：${prog.answered}/${pastPaperSet.length} 題</span>
       <span id="pastQuestionState" aria-live="polite">${pastQuestionStateText()}</span>
       <span><a href="${pastPaperMeta?.pdf||'#'}" target="_blank" rel="noopener">核對官方原題 PDF</a></span>
     </div>

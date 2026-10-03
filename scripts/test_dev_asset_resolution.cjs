@@ -67,7 +67,7 @@ async function run(){
     }
     return {schema:data.schema_version,papers:data.papers.length,records:officialPastQuestionIndex.size,shared,question,overflow:document.documentElement.scrollWidth>innerWidth};
    });
-   assert.equal(result.schema,3);assert.equal(result.papers,14);assert.equal(result.records,700);
+   assert.equal(result.schema,4);assert.equal(result.papers,14);assert.equal(result.records,700);
    assert(result.shared>0&&result.question>0);assert.equal(result.overflow,false);
    assert.deepEqual(errors,[]);assert.deepEqual(failures,[]);
    const base=scenario.name==='production'?pages:scenario.name==='explicit-override'?override:raw;

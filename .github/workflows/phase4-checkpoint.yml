@@ -1,0 +1,93 @@
+name: Phase 4 Checkpoint Regression
+
+on:
+  push:
+    branches:
+      - checkpoint/issue-14-phase4-ci
+
+permissions:
+  contents: read
+
+jobs:
+  phase4-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Phase 4 aggregate invariants and metrics
+        shell: bash
+        run: |
+          python - <<'PY'
+          import pathlib, subprocess, sys
+          sys.path.insert(0, 'scripts')
+          import audit_question_cues as audit
+
+          baseline = '06d6c739ba5f1a04b1f66fe9b12acb1c4bba1ab2'
+          before_text = subprocess.check_output(['git', 'show', f'{baseline}:index.html']).decode('utf-8')
+          after_text = pathlib.Path('index.html').read_text(encoding='utf-8')
+          before, _ = audit.extract(before_text)
+          after, _ = audit.extract(after_text)
+          b = {q['id']: q for q in before['questions']}
+          a = {q['id']: q for q in after['questions']}
+          expected = []
+          for name in ('batch4a','batch4b','batch4c','batch4d','batch4e','batch4f','batch4g'):
+              expected.extend(audit.BATCHES[name])
+          changed = [qid for qid in a if a[qid] != b[qid]]
+          assert len(after['questions']) == len(a) == len(b) == 483, 'question count / unique IDs'
+          assert list(b) == list(a), 'ID order changed'
+          assert changed == expected, (len(changed), changed)
+          for qid in expected:
+              assert len(a[qid]['options']) == len(set(a[qid]['options'])) == 4, qid
+              for key in set(a[qid]) | set(b[qid]):
+                  if key not in {'question', 'options', 'explanation'}:
+                      assert a[qid][key] == b[qid][key], (qid, key)
+          summary, rows = audit.scan(after)
+          assert summary['total'] == 483 and summary['unique_ids'] == 483, summary
+          assert summary['unique_longest'] == 52, summary
+          assert summary['ratio_ge_2'] == 0, summary
+          assert summary['repeated_groups'] == 12, summary
+          assert summary['repeated_questions'] == 36, summary
+          assert all(r['ratio'] < 2 for r in rows if r['id'] in expected)
+          assert all(',' not in r['repeat_ids'] for r in rows if r['id'] in expected)
+          print('PASS aggregate Phase 4:', len(expected), 'scoped changes; metrics', summary)
+          PY
+          git diff --check 06d6c739ba5f1a04b1f66fe9b12acb1c4bba1ab2..HEAD
+
+      - name: Validate inline JavaScript syntax and non-browser regressions
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const vm = require('node:vm');
+          const html = fs.readFileSync('index.html','utf8');
+          const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(s=>s.trim());
+          if (!scripts.length) throw new Error('no inline scripts found');
+          for (const source of scripts) new vm.Script(source);
+          console.log('PASS inline JS syntax:', scripts.length, 'script block(s)');
+          NODE
+          python scripts/test_official_past_bundle.py
+          node scripts/test_official_bundle_audit.cjs
+          node scripts/test_dev_asset_resolution.cjs
+
+      - name: Install isolated browser test runtime
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/phase4-playwright" --no-save playwright@1.55.0
+          google-chrome --version
+
+      - name: Run Phase 4 browser regressions
+        shell: bash
+        env:
+          NODE_PATH: ${{ runner.temp }}/phase4-playwright/node_modules
+          BROWSER_CHANNEL: chrome
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/phase4-browser"
+          for batch in a b c d e f g; do
+            echo "=== Batch 4${batch} ==="
+            node "scripts/test_question_batch4${batch}.cjs" "$RUNNER_TEMP/phase4-browser/4${batch}"
+          done

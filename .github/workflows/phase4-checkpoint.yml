@@ -57,7 +57,7 @@ jobs:
           PY
           git diff --check 06d6c739ba5f1a04b1f66fe9b12acb1c4bba1ab2..HEAD
 
-      - name: Validate inline JavaScript syntax and non-browser regressions
+      - name: Validate inline JavaScript syntax and repo-contained regressions
         shell: bash
         run: |
           node - <<'NODE'
@@ -70,7 +70,6 @@ jobs:
           console.log('PASS inline JS syntax:', scripts.length, 'script block(s)');
           NODE
           python scripts/test_official_past_bundle.py
-          node scripts/test_official_bundle_audit.cjs
           node scripts/test_dev_asset_resolution.cjs
 
       - name: Install isolated browser test runtime

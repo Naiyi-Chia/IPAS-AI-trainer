@@ -43,6 +43,8 @@ BATCHES = {'batch1a': BATCH,
            'batch4d': [f'Q{n:03d}' for start in (238, 244, 250, 268)
                        for n in range(start, start + 6)],
            'batch4e': [f'Q{n:03d}' for start in (274, 280, 292, 352)
+                       for n in range(start, start + 6)],
+           'batch4f': [f'Q{n:03d}' for start in (382, 406, 436, 460)
                        for n in range(start, start + 6)]}
 
 

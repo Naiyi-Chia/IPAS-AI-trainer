@@ -782,7 +782,7 @@ function bundledQuestionToRuntime(paper,q,sharedContexts={}){
 async function loadOfficialPastBundle(){
   if(officialPastBundle)return officialPastBundle;
   if(!officialPastBundlePromise){
-    officialPastBundlePromise=fetch(bundledAssetUrl(OFFICIAL_PAST_BUNDLE_PATH),{cache:"force-cache"})
+    officialPastBundlePromise=fetch(bundledAssetUrl(OFFICIAL_PAST_BUNDLE_PATH),{cache:"no-cache"})
       .then(r=>{if(!r.ok)throw new Error(`內建考古題資料 HTTP ${r.status}`);return r.json()})
       .then(data=>{
         if(data?.schema_version!==4||data?.source?.competency_mapping_status!=="verified"||data?.source?.row_count!==700||!Array.isArray(data?.papers)||data.papers.length!==14||!data.shared_contexts)throw new Error("內建考古題資料版本或筆數不符");

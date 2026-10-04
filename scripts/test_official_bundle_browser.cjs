@@ -38,10 +38,22 @@ async function run(){
    const result=await page.evaluate(async()=>{
     const check=(value,message)=>{if(!value)throw Error(message);};
     check(officialPastQuestionIndex.size===700,'canonical index');
+    const legacy=JSON.stringify(state);
+    const oldId='PAST-115-2-L11-1',oldQuestion=getQuestionById(oldId);
+    check(oldQuestion.topic===oldQuestion.competency_topic&&oldQuestion.topicName===DB.topics[oldQuestion.topic],'stable-ID reclassification');
+    switchPanel('stats');
+    check(document.querySelector('#stats').textContent.includes(oldQuestion.topicName),'competency stats label');
+    switchPanel('wrong');
+    check(JSON.stringify(state)===legacy,'stats/wrong views preserve stored attempts');
+    const weakBefore=[...weakTopicSet()];
+    state.attempts[oldId].correct=!state.attempts[oldId].correct;
+    check(JSON.stringify([...weakTopicSet()])===JSON.stringify(weakBefore),'official records do not alter self-authored weak practice');
+    state.attempts[oldId].correct=!state.attempts[oldId].correct;
+    for(const q of officialPastQuestionIndex.values())check(q.topic.startsWith(q.subject)&&q.topicName===DB.topics[q.topic],'valid runtime topic '+q.id);
     const dependents=[...officialPastQuestionIndex.values()].filter(q=>q.sharedContext);
     for(const q of dependents){
      // Open every dependent directly, with no first-group-question view prerequisite.
-     switchPanel('past');pastPaperSet=[q];pastIndex=0;pastPaperMeta={title:q.topicName};pastAnswered=false;renderPastQuiz();
+     switchPanel('past');pastPaperSet=[q];pastIndex=0;pastPaperMeta={title:q.paperTitle};pastAnswered=false;showPastQuizView();
      const shared=document.querySelector('#pastQuizArea .pastSharedContext');
      check(shared?.open&&shared.querySelector('pre').textContent===q.sharedContext.text,'direct context '+q.id);
      check(shared.querySelectorAll('img').length===q.sharedContext.visual_assets.length,'shared assets '+q.id);
@@ -50,7 +62,7 @@ async function run(){
      check(document.querySelector('#practiceArea .pastSharedContext pre')?.textContent===q.sharedContext.text,'wrong context '+q.id);
      check(document.documentElement.scrollWidth<=innerWidth,'wrong overflow '+q.id);
     }
-    for(const paper of pastPapers){switchPanel('past');await loadPastPaperById(paper.id);check(pastPaperSet.length===50,'all-paper load');}
+    for(const paper of pastPapers){switchPanel('past');await loadPastPaperById(paper.id);check(pastPaperSet.length===50,'all-paper load');check(document.querySelector('#pastQuizArea').textContent.includes(pastPaperMeta.title),'paper title remains visible');}
     // Resume directly into Q44 after progress/stat entry, without visiting Q41.
     state.attempts={};for(let n=1;n<44;n++)state.attempts[`PAST-115-1-L22-${n}`]={correct:true,last:1};
     switchPanel('stats');switchPanel('past');await loadPastPaperById('115-1-L22');check(pastPaperSet[pastIndex].number===44,'resume target');
@@ -88,7 +100,7 @@ async function run(){
   assert.equal(await page.evaluate(()=>localStorage.getItem('ipasAIState')),'{"untouched":true}');
   assert(await page.evaluate(()=>JSON.parse(localStorage.getItem('dev:ipasAIState')).migrations.officialPastCanonical===2));
   assert.equal(await page.evaluate(()=>bundledAssetUrl('assets/example.png')),raw+'assets/example.png');
-  assert.deepEqual(errors,[]);await ctx.close();console.log('PASS intercepted Dev loader: schema 3, raw assets, isolated storage');
+  assert.deepEqual(errors,[]);await ctx.close();console.log('PASS intercepted Dev loader: schema 4, raw assets, isolated storage');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});

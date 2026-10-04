@@ -45,6 +45,10 @@ const server=http.createServer((req,res)=>{
     });
     return res.end(body);
   }
+  if(url.pathname==='/data/practice-questions.json'){
+    res.writeHead(200,{'Content-Type':'application/json'});
+    return res.end(fs.readFileSync(path.join(root,'data/practice-questions.json')));
+  }
   res.writeHead(404,{'Content-Type':'text/plain'});res.end('not found');
 });
 
@@ -70,7 +74,7 @@ async function run(){
 
       phase='v4';
       await page.goto(base+'/index.html');
-      await page.waitForFunction(()=>typeof loadOfficialPastBundle==='function');
+      await page.waitForFunction(()=>DB!==null);
       const result=await page.evaluate(async()=>{
         const data=await loadOfficialPastBundle();
         switchPanel('past');

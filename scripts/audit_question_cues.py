@@ -53,12 +53,6 @@ BATCHES = {'batch1a': BATCH,
                        for n in range(start, start + 3)]}
 
 
-def extract(text):
-    start = re.search(r'const DB\s*=\s*', text).end()
-    db, end = json.JSONDecoder().raw_decode(text[start:])
-    return db, text[:start] + '<DB>' + text[start + end:]
-
-
 def scan(db):
     rows = []
     groups = collections.defaultdict(list)
@@ -94,7 +88,7 @@ def scan(db):
     return summary, rows
 
 
-def validate(before, after, before_shell, after_shell, rows, batch=BATCH):
+def validate(before, after, rows, batch=BATCH):
     b = {q['id']: q for q in before['questions']}
     a = {q['id']: q for q in after['questions']}
     assert len(after['questions']) == len(a) == len(b) == 483, 'count/IDs'
@@ -113,7 +107,6 @@ def validate(before, after, before_shell, after_shell, rows, batch=BATCH):
                     assert q[key] == b[qid][key], (qid, key)
     assert {k: v for k, v in before.items() if k != 'questions'} == {
         k: v for k, v in after.items() if k != 'questions'}, 'DB metadata'
-    assert before_shell == after_shell, 'HTML/CSS/JS outside DB changed'
     assert all(r['ratio'] < 2 for r in rows if r['id'] in batch), 'batch length ratio'
     assert all(',' not in r['repeat_ids'] for r in rows if r['id'] in batch), 'batch repeats'
     return changed
@@ -121,22 +114,22 @@ def validate(before, after, before_shell, after_shell, rows, batch=BATCH):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--html', type=pathlib.Path, default=ROOT / 'index.html')
-    parser.add_argument('--baseline', help='Git ref containing the pre-batch index.html')
+    parser.add_argument('--source', type=pathlib.Path, default=ROOT / 'data/practice-questions.json')
+    parser.add_argument('--baseline', help='Git ref containing the pre-batch canonical data/practice-questions.json')
     parser.add_argument('--batch', choices=BATCHES, default='batch1a')
     parser.add_argument('--csv', type=pathlib.Path, help='Write all 483 traceable rows, before/after if baseline supplied')
     args = parser.parse_args()
     batch = BATCHES[args.batch]
-    after, shell = extract(args.html.read_text(encoding='utf-8'))
+    after = json.loads(args.source.read_text(encoding='utf-8'))
     summary, rows = scan(after)
     result = {'after': summary}
     csv_rows = [dict(stage='after', **r) for r in rows]
     if args.baseline:
-        text = subprocess.check_output(['git', 'show', f'{args.baseline}:index.html'], cwd=ROOT).decode('utf-8')
-        before, before_shell = extract(text)
+        text = subprocess.check_output(['git', 'show', f'{args.baseline}:data/practice-questions.json'], cwd=ROOT).decode('utf-8')
+        before = json.loads(text)
         old_summary, old_rows = scan(before)
         result['before'] = old_summary
-        result['changed_ids'] = validate(before, after, before_shell, shell, rows, batch)
+        result['changed_ids'] = validate(before, after, rows, batch)
         result['batch_ratios'] = {r['id']: round(r['ratio'], 4) for r in rows if r['id'] in batch}
         result['batch_validation'] = 'PASS'
         csv_rows = [dict(stage='before', **r) for r in old_rows] + csv_rows

@@ -7,17 +7,17 @@ const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..'),out=process.argv[2];
 const expected={Q007:2,Q008:3,Q009:0,Q013:3,Q014:2,Q015:3,Q019:1,Q020:1,Q021:3,Q031:2,Q032:3,Q033:2,Q049:3,Q050:1,Q051:0,Q052:1,Q053:0,Q054:2,Q076:1,Q077:3,Q078:2,Q082:3,Q083:3,Q084:0};
 const source=fs.readFileSync(path.join(root,'index.html'),'utf8');
-const match=source.match(/const DB\s*=\s*(\{[^\r\n]*\});/);assert(match,'one-line question DB');
-const db=JSON.parse(match[1]);assert.equal(db.questions.length,483);
+const db=JSON.parse(fs.readFileSync(path.join(root,'data/practice-questions.json'),'utf8'));assert.equal(db.questions.length,483);
 db.questions=db.questions.filter(q=>Object.hasOwn(expected,q.id));assert.equal(db.questions.length,24);
 for(const q of db.questions)assert.equal(q.answer,expected[q.id],q.id+' protected key');
-const html=source.replace(match[1],JSON.stringify(db));
+const html=source;
 const findQuestion=text=>{const q=db.questions.find(q=>q.question===text);assert(q,'visible question belongs to scope');return q;};
 const evidence=[];
 async function run(){
  const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(url.pathname==='/'){res.setHeader('Content-Type','text/html; charset=utf-8');res.end(html);return;}
+  if(url.pathname==='/data/practice-questions.json'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(db));return;}
   if(url.pathname==='/favicon.ico'){res.writeHead(204);res.end();return;}
   const file=path.resolve(root,'.'+decodeURIComponent(url.pathname)),rel=path.relative(root,file);
   if(rel.startsWith('..')||path.isAbsolute(rel)){res.writeHead(403);res.end();return;}

@@ -25,16 +25,25 @@ async function run(){
    let release;const gate=new Promise(r=>release=r);
    await page.route('**/data/practice-questions.json',async route=>{await gate;await route.continue();});
    await page.goto(url);
-   assert.match(await page.locator('#home').innerText(),/正在載入/);
-   assert.equal(await page.locator('.tab:disabled').count(),7);
+   assert.match(await page.locator('#practice').innerText(),/正在載入/);
+   assert.equal(await page.locator('.tab:disabled').count(),6);
    assert.equal(await page.locator('#practiceStart').count(),0);
    assert.deepEqual(await page.evaluate(()=>state),seed);
    await page.evaluate(()=>switchPanel('stats'));
-   assert.equal(await page.locator('#home').isVisible(),true);
+   assert.equal(await page.locator('#practice').isVisible(),true);
    release();await page.waitForFunction(()=>DB!==null&&document.querySelector('#practiceStart'));
    assert.deepEqual(await page.evaluate(()=>DB),bank);
    assert.equal(await page.locator('.tab:disabled').count(),0);
    assert.deepEqual(await page.evaluate(()=>state),seed);
+   assert.equal(await page.locator('#practice').isVisible(),true);
+   assert.equal(await page.getByRole('tab',{name:'總覽',exact:true}).count(),0);
+   assert.equal(await page.locator('.top .sub').count(),0);
+   assert.deepEqual(await page.locator('#practiceSettings label').allTextContents(),['科目','練習模式','題數']);
+   await page.locator('#tab-practice').focus();await page.keyboard.press('End');
+   assert.equal(await page.locator('#tab-scope').getAttribute('aria-selected'),'true');
+   await page.keyboard.press('Home');
+   assert.equal(await page.locator('#tab-practice').getAttribute('aria-selected'),'true');
+   if(out){fs.mkdirSync(out,{recursive:true});await page.screenshot({path:path.join(out,`practice-entry-${width}.png`)});}
    // Wrong lookup, topic statistics and complete scope metadata use loaded data.
    await page.evaluate(()=>switchPanel('wrong'));
    assert.match(await page.locator('#wrong').innerText(),/Q001/);
@@ -43,8 +52,8 @@ async function run(){
    await page.evaluate(()=>switchPanel('scope'));
    assert.equal(await page.locator('#scope .scopeLink').count(),Object.keys(bank.topics).length);
    for(const subject of Object.keys(bank.subjects)){
-    await page.evaluate(subject=>{switchPanel('practice');renderPractice();qs('#psubject').value=subject;qs('#pdiff').value='medium';qs('#pcount').value='10';startPractice();},subject);
-    assert(await page.evaluate(subject=>practiceSet.length===10&&practiceSet.every(q=>q.subject===subject&&q.difficulty==='medium'),subject));
+    await page.evaluate(subject=>{switchPanel('practice');renderPractice();qs('#psubject').value=subject;qs('#pcount').value='10';startPractice();},subject);
+    assert(await page.evaluate(subject=>practiceSet.length===10&&practiceSet.every(q=>q.subject===subject),subject));
     await page.evaluate(()=>{answerPractice(practiceSet[0].answer);nextP();});
     assert.equal(await page.evaluate(()=>pIndex),1);
     assert(await page.evaluate(()=>state.attempts[practiceSet[0].id].correct));
@@ -62,7 +71,7 @@ async function run(){
    }
    await page.evaluate(()=>switchPanel('past'));await page.evaluate(()=>loadPastPaperById('115-2-L11'));
    assert.equal(await page.evaluate(()=>pastPaperSet.length),50);
-   for(const panel of ['home','practice','exam','past','wrong','stats','scope']){
+   for(const panel of ['practice','exam','past','wrong','stats','scope']){
     await page.evaluate(p=>switchPanel(p),panel);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),panel+' horizontal overflow');
    }
@@ -73,15 +82,15 @@ async function run(){
    await page.reload();await page.waitForFunction(()=>DB!==null);
    assert.equal(await page.evaluate(()=>localStorage.getItem('ipasAIState')),persisted);
    assert.deepEqual(errors,[]);
-   console.log('PASS',width,'delayed startup; 5 subjects practice/filter/navigation + 50-question mocks/timer/100%/review; wrong/stats/scope/official/tabs/overflow; reload preserves progress');
+   console.log('PASS',width,'delayed startup; 5 subjects practice/subject-filter/navigation + 50-question mocks/timer/100%/review; wrong/stats/scope/official/tabs/overflow; reload preserves progress');
    await ctx.close();
   }
   for(const failure of ['http','network','json','shape']){
    const ctx=await browser.newContext(),page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.addInitScript(seed=>localStorage.setItem('ipasAIState',JSON.stringify(seed)),seed);
    await page.route('**/data/practice-questions.json',route=>failure==='network'?route.abort():route.fulfill({status:failure==='http'?503:200,contentType:'application/json',body:failure==='json'?'{':failure==='shape'?'{}':'unavailable'}));
-   await page.goto(url);await page.locator('#home [role="alert"]').waitFor();
-   assert.equal(await page.locator('.tab:disabled').count(),7);
+   await page.goto(url);await page.locator('#practice [role="alert"]').waitFor();
+   assert.equal(await page.locator('.tab:disabled').count(),6);
    assert.deepEqual(await page.evaluate(()=>state),seed);
    assert.equal(await page.evaluate(()=>DB),null);
    await page.unroute('**/data/practice-questions.json');await page.getByRole('button',{name:'重新載入',exact:true}).click();

@@ -109,7 +109,7 @@ async function run(){
    const beforePast=await page.evaluate(()=>paperProgress(pastPapers.find(p=>p.id==='115-3-L12')).answered);
    await page.evaluate(()=>{answerPast(pastPaperSet[pastIndex].answer);pastNext()});
    assert.equal(await page.evaluate(()=>paperProgress(pastPapers.find(p=>p.id==='115-3-L12')).answered),beforePast+1);
-   for(const id of ['home','practice','exam','past','wrong','stats','scope']){
+   for(const id of ['practice','exam','past','wrong','stats','scope']){
     await page.evaluate(id=>switchPanel(id),id);assert(await page.locator(`#${id}`).isVisible());
    }
    assert.deepEqual(errors,[]);await ctx.close();console.log(`PASS ${width}px: cold official metadata, 14 aggregation/selection cases, preservation, sources, no-drill, all scoring/tab smoke; zero JS/HTTP errors`);

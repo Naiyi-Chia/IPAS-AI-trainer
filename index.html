@@ -169,11 +169,10 @@ a{color:var(--brand)}
 <body>
 <div class="app">
   <div class="top">
-    <div class="logo">AI</div><div><h1>iPAS AI 應用規劃師刷題工具</h1><div class="sub">初級 Lv1 ＋ 中級 Lv2｜115 年（2026）官方評鑑範圍版</div></div>
+    <div class="logo">AI</div><div><h1>iPAS AI 應用規劃師刷題工具</h1></div>
   </div>
   <div class="tabs" role="tablist" aria-label="主要功能">
-    <button class="tab active" id="tab-home" role="tab" aria-selected="true" aria-controls="home" data-panel="home">總覽</button>
-    <button class="tab" id="tab-practice" role="tab" aria-selected="false" aria-controls="practice" data-panel="practice">刷題練習</button>
+    <button class="tab active" id="tab-practice" role="tab" aria-selected="true" aria-controls="practice" data-panel="practice">刷題練習</button>
     <button class="tab" id="tab-exam" role="tab" aria-selected="false" aria-controls="exam" data-panel="exam">正式模擬</button>
     <button class="tab" id="tab-past" role="tab" aria-selected="false" aria-controls="past" data-panel="past">考古題</button>
     <button class="tab" id="tab-wrong" role="tab" aria-selected="false" aria-controls="wrong" data-panel="wrong">錯題本</button>
@@ -185,8 +184,7 @@ a{color:var(--brand)}
     <button class="btn secondary" onclick="openOverallFeedback()">提供整體回饋</button>
   </div>
 
-  <section id="home" class="panel active" role="tabpanel" aria-labelledby="tab-home"></section>
-  <section id="practice" class="panel" role="tabpanel" aria-labelledby="tab-practice" hidden></section>
+  <section id="practice" class="panel active" role="tabpanel" aria-labelledby="tab-practice"></section>
   <section id="exam" class="panel" role="tabpanel" aria-labelledby="tab-exam" hidden></section>
   <section id="past" class="panel" role="tabpanel" aria-labelledby="tab-past" hidden></section>
   <section id="wrong" class="panel" role="tabpanel" aria-labelledby="tab-wrong" hidden></section>
@@ -396,10 +394,10 @@ function qs(s){return document.querySelector(s)} function qsa(s){return [...docu
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function switchPanel(id){
- if(!DB)return;
+ if(!DB||!qs(`#tab-${id}`))return;
  qsa(".panel").forEach(x=>{const active=x.id===id;x.classList.toggle("active",active);x.hidden=!active;});
  qsa(".tab").forEach(x=>{const active=x.dataset.panel===id;x.classList.toggle("active",active);x.setAttribute("aria-selected",String(active));});
- if(id==="home")renderHome();if(id==="past")renderPastPapers();if(id==="wrong")renderWrong();if(id==="stats")renderStats();if(id==="scope")renderScope();
+ if(id==="past")renderPastPapers();if(id==="wrong")renderWrong();if(id==="stats")renderStats();if(id==="scope")renderScope();
 }
 const appTabs=qsa(".tab");
 appTabs.forEach((b,index)=>{
@@ -419,36 +417,6 @@ function focusChoice(areaSelector,index){setTimeout(()=>qs(areaSelector+` .optio
 function difficultyLabel(value){return ({easy:"基礎",medium:"中等",hard:"進階"})[value]||value}
 function subjectLabel(code){let s=DB.subjects[code];return `${code} ${s.name}`}
 
-function renderHome(){
-  const total=DB.questions.length, attempted=Object.keys(state.attempts).length;
-  const vals=Object.values(state.attempts), correct=vals.filter(x=>x.correct).length;
-  const acc=vals.length?Math.round(correct/vals.length*100):0;
-  const wrong=Object.keys(state.wrong).length;
-  qs("#home").innerHTML=`
-  <div class="grid">
-    <div class="card c4"><div class="label">自編練習題數</div><div class="kpi">${total}</div><div class="small">涵蓋初級 L11/L12 與中級 L21/L22/L23；中級情境題已大幅加強</div></div>
-    <div class="card c4"><div class="label">已作答題目</div><div class="kpi">${attempted}</div><div class="small">正確率 ${acc}%</div></div>
-    <div class="card c4"><div class="label">目前錯題</div><div class="kpi">${wrong}</div><div class="small">答對後可自動移出錯題本</div></div>
-    <div class="card c6"><h3>初級 Lv1</h3>
-      <div><span class="pill">L11 人工智慧基礎概論</span><span class="pill">75 分鐘</span></div>
-      <div><span class="pill">L12 生成式 AI 應用與規劃</span><span class="pill">75 分鐘</span></div>
-      <p class="small">同次報考全部科目：平均達 70 分且每科不得低於 60 分；非同次報考則每科皆需達 70 分。</p>
-      <button class="btn primary" onclick="goPractice('初級')">開始刷初級</button>
-    </div>
-    <div class="card c6"><h3>中級 Lv2</h3>
-      <div><span class="pill">必考 L21</span><span class="pill">L22 / L23 擇一</span><span class="pill">每科 90 分鐘</span></div>
-      <p class="small">L21 + L22 皆達 70：數據分析證書；L21 + L23 皆達 70：機器學習證書。</p>
-      <button class="btn primary" onclick="goPractice('中級')">開始刷中級</button>
-    </div>
-    <div class="card c12 notice"><b>使用建議：</b>先用「刷題練習」逐主題建立觀念，再看「弱點分析」找低於 70% 的能力指標，最後進「正式模擬」做計時測驗。正式考試依 115 年簡章為電腦化單選題。</div>
-  </div>`;
-}
-
-function practiceFilters(){
-  let level=qs("#plevel")?.value||"全部";
-  let subs=Object.entries(DB.subjects).filter(([k,v])=>level==="全部"||v.level===level);
-  return subs;
-}
 function renderPractice(){
  qs("#practice").innerHTML=`
  <div class="card sessionbar hidden" id="practiceSessionBar">
@@ -458,9 +426,7 @@ function renderPractice(){
  <div class="card" id="practiceSettings">
    <h3 style="margin-top:0">刷題設定</h3>
    <div class="controls settingsControls">
-     <div class="field"><label for="plevel">級別</label><select id="plevel"><option>全部</option><option>初級</option><option>中級</option></select></div>
      <div class="field"><label for="psubject">科目</label><select id="psubject"><option value="全部">全部科目</option>${Object.keys(DB.subjects).map(k=>`<option value="${k}">${subjectLabel(k)}</option>`).join("")}</select></div>
-     <div class="field"><label for="pdiff">難度</label><select id="pdiff"><option value="全部">全部難度</option><option value="easy">基礎</option><option value="medium">中等</option><option value="hard">進階</option></select></div>
      <div class="field"><label for="pmode">練習模式</label><select id="pmode">
        <option value="all">全部題目</option>
        <option value="unanswered">只刷未作答</option>
@@ -472,16 +438,7 @@ function renderPractice(){
    </div>
    <div class="small" style="margin-top:9px">弱項依官方考古題與自編題逐題等權合併：至少 3 題且正確率低於 70% 才判為弱項；1–2 題為資料不足。沒有正式弱項時，選最多 4 個相對較弱章節。「只刷弱項」使用對應的自編題。</div>
  </div><div id="practiceArea" style="margin-top:12px"></div>`;
- qs("#plevel").onchange=()=>{
-   let lv=qs("#plevel").value;
-   [...qs("#psubject").options].forEach(o=>{
-     if(o.value==="全部"){o.hidden=false;return}
-     o.hidden=lv!=="全部" && DB.subjects[o.value].level!==lv;
-   });
-   if(qs("#psubject").selectedOptions[0]?.hidden) qs("#psubject").value="全部";
- };
 }
-function goPractice(level){switchPanel("practice");qs("#plevel").value=level;qs("#plevel").dispatchEvent(new Event("change"));startPractice();}
 function needsCompetencyMetadata(){
   return !officialPastBundle&&Object.keys(state.attempts).some(id=>id.startsWith('PAST-'));
 }
@@ -529,14 +486,14 @@ function formatPracticeDuration(ms){
 let practiceStartRequest=0;
 function startPractice(){
  const request=++practiceStartRequest;
- let lv=qs("#plevel").value, sub=qs("#psubject").value, diff=qs("#pdiff").value, mode=qs("#pmode").value;
+ let sub=qs("#psubject").value, mode=qs("#pmode").value;
  if(mode==="weak"&&needsCompetencyMetadata()){
    const button=qs('#practiceStart'),count=qs('#pcount').value;
    button.disabled=true;
    qs('#practiceArea').innerHTML='<div class="card" role="status">正在載入官方作答的章節資料…</div>';
    return loadOfficialPastBundle().then(()=>{
      if(request!==practiceStartRequest||button!==qs('#practiceStart'))return;
-     if(qs('#practice').classList.contains('active')&&[lv,sub,diff,mode,count].every((v,i)=>v===qs(['#plevel','#psubject','#pdiff','#pmode','#pcount'][i]).value))return startPractice();
+     if(qs('#practice').classList.contains('active')&&[sub,mode,count].every((v,i)=>v===qs(['#psubject','#pmode','#pcount'][i]).value))return startPractice();
      qs('#practiceArea').innerHTML='<div class="card" role="status">章節資料已載入，請依目前設定開始練習。</div>';
    }).catch(()=>{
      if(request!==practiceStartRequest||button!==qs('#practiceStart'))return;
@@ -547,18 +504,16 @@ function startPractice(){
  let arr=(mode==="wrong"
    ? Object.keys(state.wrong).map(id=>getQuestionById(id)).filter(Boolean)
    : DB.questions.slice());
- arr=arr.filter(q=>(lv==="全部"||q.level===lv)&&(sub==="全部"||q.subject===sub)&&(diff==="全部"||q.difficulty===diff));
+ arr=arr.filter(q=>sub==="全部"||q.subject===sub);
  if(mode==="unanswered")arr=arr.filter(q=>!state.attempts[q.id]);
  if(mode==="weak")arr=arr.filter(q=>weak.has(q.topic));
  arr=shuffle(arr); let n=qs("#pcount").value; if(n!=="all")arr=arr.slice(0,+n);
  if(!arr.length){
-   const msg=mode==="weak"?(weak.size?'已保留章節診斷，但目前沒有符合篩選條件的對應自編題。可調整級別、科目或難度，或到「弱點分析」複習章節。':'目前沒有已作答的能力章節資料。官方考古題或自編題的作答都可建立分析，做題順序不限。'):mode==="wrong"?'目前篩選條件下沒有錯題。':'目前沒有符合這組篩選條件的題目。';
+   const msg=mode==="weak"?(weak.size?'已保留章節診斷，但目前沒有符合篩選條件的對應自編題。可調整科目，或到「弱點分析」複習章節。':'目前沒有已作答的能力章節資料。官方考古題或自編題的作答都可建立分析，做題順序不限。'):mode==="wrong"?'目前篩選條件下沒有錯題。':'目前沒有符合這組篩選條件的題目。';
    qs("#practiceArea").innerHTML=`<div class="card"><h3>沒有可刷的題目</h3><p>${msg}</p></div>`;return;
  }
  const summary=[
-   qs("#plevel").selectedOptions[0]?.textContent,
    qs("#psubject").selectedOptions[0]?.textContent,
-   qs("#pdiff").selectedOptions[0]?.textContent,
    qs("#pmode").selectedOptions[0]?.textContent,
    arr.length+" 題"
  ].filter(Boolean).join("｜");
@@ -652,7 +607,7 @@ function retryPracticeMistakes(){
 function resetPracticeRound(){
  practiceSet=[];pIndex=0;practiceSessionResults={};practiceStartedAt=0;practiceSessionSummaryText="";
  renderPractice();
- setTimeout(()=>qs("#plevel")?.focus(),0);
+ setTimeout(()=>qs("#psubject")?.focus(),0);
 }
 function bookmark(id){state.bookmarks[id]=!state.bookmarks[id];if(!state.bookmarks[id])delete state.bookmarks[id];save();renderPracticeQ()}
 
@@ -1107,7 +1062,7 @@ function renderScope(){
 
 async function initializeApp(){
   appTabs.forEach(tab=>tab.disabled=true);
-  qs("#home").innerHTML='<div class="card" role="status">正在載入練習題庫…</div>';
+  qs("#practice").innerHTML='<div class="card" role="status">正在載入練習題庫…</div>';
   try{
     const response=await fetch(bundledAssetUrl(PRACTICE_DB_PATH),{cache:"no-cache"});
     if(!response.ok)throw new Error(`練習題庫 HTTP ${response.status}`);
@@ -1117,13 +1072,13 @@ async function initializeApp(){
        Array.isArray(data.topics)||!Object.keys(data.topics).length||
        !Array.isArray(data.questions)||!data.questions.length)throw new Error("練習題庫格式無效");
     DB=data;
-    renderHome();renderPractice();renderExam();renderPastPapers();renderScope();
+    renderPractice();renderExam();renderPastPapers();renderScope();
     appTabs.forEach(tab=>tab.disabled=false);
     setTimeout(()=>prewarmOfficialBundle(),0);
   }catch(error){
     DB=null;
     console.warn("練習題庫載入失敗",error);
-    qs("#home").innerHTML='<div class="card" role="alert"><p>練習題庫載入失敗，請確認網路連線後重試。作答紀錄已保留。</p><button class="btn secondary" onclick="initializeApp()">重新載入</button></div>';
+    qs("#practice").innerHTML='<div class="card" role="alert"><p>練習題庫載入失敗，請確認網路連線後重試。作答紀錄已保留。</p><button class="btn secondary" onclick="initializeApp()">重新載入</button></div>';
   }
 }
 initializeApp();

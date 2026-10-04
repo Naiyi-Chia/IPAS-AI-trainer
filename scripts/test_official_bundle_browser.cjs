@@ -85,7 +85,7 @@ async function run(){
    await disclosure.press('Enter');
    assert.equal(await page.locator('#pastQuizArea .pastSharedContext').evaluate(el=>el.open),true);
    if(out){fs.mkdirSync(out,{recursive:true});await page.locator('#pastQuizArea').screenshot({path:path.join(out,`shared-${width}.png`)});}
-   for(const panel of ['home','practice','exam','past','wrong','stats','scope']){await page.evaluate(p=>switchPanel(p),panel);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),panel+' overflow');}
+   for(const panel of ['practice','exam','past','wrong','stats','scope']){await page.evaluate(p=>switchPanel(p),panel);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),panel+' overflow');}
    assert.deepEqual(errors,[]);assert.deepEqual(external,[]);console.log('PASS browser',width,result,'migration/scoring/practice/mock/tabs/overflow/no external requests');
    await context.close();
   }

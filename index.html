@@ -86,6 +86,13 @@ h3{font-size:18px;line-height:1.35}
 .pnum.done{background:#e0e7ff;border-color:#a5b4fc}
 .pnum.current{outline:2px solid #111827;outline-offset:1px}
 .topicbar{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:10px 0}
+.competencyRow{display:block;min-width:0}
+.competencyHeading{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.competencyHeading h4{margin:0;flex:1 1 240px;overflow-wrap:anywhere}
+.competencyResult{display:flex;align-items:center;gap:12px;margin:8px 0;font-variant-numeric:tabular-nums}
+.competencyResult .bar{max-width:none}
+.competencySources{display:flex;flex-wrap:wrap;gap:4px 16px}
+.competencyReview{display:inline-flex;align-items:center;min-height:44px;margin-top:4px}
 .reviewItem{border-top:1px solid var(--line);margin:0}
 .reviewItem:first-of-type{border-top:0}
 .reviewItem summary{cursor:pointer;padding:13px 2px;font-weight:700;background:transparent}
@@ -104,6 +111,10 @@ h3{font-size:18px;line-height:1.35}
 .pastQuizTop .qmeta{flex:1}
 .pastExitBtn{white-space:nowrap}
 .pastQuizStatus{display:flex;align-items:center;gap:10px;min-height:42px;margin:10px 0 8px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#f8fafc;font-size:14px;font-weight:700}
+.pastQuestionStart{scroll-margin-top:72px}
+.pastQuestionFacts{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 10px;color:var(--muted);font-size:13px}
+.pastQuestionFacts span{white-space:nowrap}
+.pastMobileNav{display:none}
 .notice{background:#fffaeb;border:1px solid #fedf89;border-radius:10px;padding:12px 13px;line-height:1.6}
 .good{color:var(--ok)}.bad{color:var(--bad)}
 a{color:var(--brand)}
@@ -136,6 +147,10 @@ a{color:var(--brand)}
   .pastQuizTop{flex-direction:column}
   .pastExitBtn{width:100%}
   .pastQuizStatus{align-items:flex-start;line-height:1.45}
+  .pastQuestionFacts{gap:5px 10px}
+  .pastMobileNav{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:2px 0 12px;padding:8px 0 10px;border-bottom:1px solid var(--line)}
+  .pastMobileNav .controls{flex-wrap:nowrap}
+  .pastMobileNav .btn{min-height:42px;padding:8px 10px}
   .navrow>div{display:flex;gap:7px}
   .navrow>div .btn{flex:1}
   .card{padding:15px;border-radius:12px}
@@ -221,7 +236,7 @@ function feedbackSubjectLabel(q){
 function feedbackTopicLabel(q,sourceType){
   if(!q)return '';
   if(sourceType==='官方考古題'){
-    const paper=pastPaperMeta?.title||q.topicName||q.topic||'官方考古題';
+    const paper=q.paperTitle||pastPaperMeta?.title||q.topicName||q.topic||'官方考古題';
     return `${paper}${q.number?`｜第 ${q.number} 題`:''}`;
   }
   return [q.topic,q.topicName].filter(Boolean).join(' ');
@@ -451,9 +466,9 @@ function renderPractice(){
        <option value="weak">只刷弱項</option>
      </select></div>
      <div class="field"><label for="pcount">題數</label><select id="pcount"><option value="10">10 題</option><option value="20" selected>20 題</option><option value="40">40 題</option><option value="50">50 題</option><option value="all">全部</option></select></div>
-     <button class="btn primary" onclick="startPractice()">開始練習</button>
+     <button id="practiceStart" class="btn primary" onclick="startPractice()">開始練習</button>
    </div>
-   <div class="small" style="margin-top:9px">弱項判定：優先找已作答至少 3 題且正確率低於 70% 的能力指標；資料不足時改抓目前正確率最低的主題。</div>
+   <div class="small" style="margin-top:9px">弱項依官方考古題與自編題逐題等權合併：至少 3 題且正確率低於 70% 才判為弱項；1–2 題為資料不足。沒有正式弱項時，選最多 4 個相對較弱章節。「只刷弱項」使用對應的自編題。</div>
  </div><div id="practiceArea" style="margin-top:12px"></div>`;
  qs("#plevel").onchange=()=>{
    let lv=qs("#plevel").value;
@@ -465,19 +480,33 @@ function renderPractice(){
  };
 }
 function goPractice(level){switchPanel("practice");qs("#plevel").value=level;qs("#plevel").dispatchEvent(new Event("change"));startPractice();}
-function weakTopicSet(){
-  const stats={};
-  DB.questions.forEach(q=>{
-    const a=state.attempts[q.id]; if(!a)return;
-    if(!stats[q.topic])stats[q.topic]={n:0,c:0};
-    stats[q.topic].n++; if(a.correct)stats[q.topic].c++;
-  });
-  let weak=Object.entries(stats).filter(([,v])=>v.n>=3 && v.c/v.n<.70).sort((a,b)=>(a[1].c/a[1].n)-(b[1].c/b[1].n)).map(([k])=>k);
-  if(!weak.length){
-    weak=Object.entries(stats).filter(([,v])=>v.n>=1).sort((a,b)=>(a[1].c/a[1].n)-(b[1].c/b[1].n)).slice(0,4).map(([k])=>k);
-  }
-  return new Set(weak);
+function needsCompetencyMetadata(){
+  return !officialPastBundle&&Object.keys(state.attempts).some(id=>id.startsWith('PAST-'));
 }
+function competencyEvidence(){
+  const by=new Map();
+  Object.entries(state.attempts).forEach(([id,a])=>{
+    const q=getQuestionById(id);
+    if(!q||!Object.prototype.hasOwnProperty.call(DB.topics,q.topic))return;
+    if(!by.has(q.topic))by.set(q.topic,{topic:q.topic,name:DB.topics[q.topic],subject:q.subject,
+      combined:{correct:0,answered:0},official:{correct:0,answered:0},selfAuthored:{correct:0,answered:0}});
+    const row=by.get(q.topic),source=id.startsWith('PAST-')?row.official:row.selfAuthored;
+    [row.combined,source].forEach(v=>{v.answered++;if(a.correct)v.correct++});
+  });
+  const rows=[...by.values()];
+  rows.forEach(row=>{
+    [row.combined,row.official,row.selfAuthored].forEach(v=>v.accuracy=v.answered?v.correct/v.answered:null);
+    row.insufficient=row.combined.answered<3;
+    row.weak=!row.insufficient&&row.combined.accuracy<.70;
+    row.drillAvailable=DB.questions.some(q=>q.topic===row.topic);
+  });
+  rows.sort((a,b)=>a.combined.accuracy-b.combined.accuracy||a.topic.localeCompare(b.topic));
+  const formal=rows.filter(row=>row.weak),fallback=!formal.length;
+  const selected=new Set((fallback?rows.slice(0,4):formal).map(row=>row.topic));
+  rows.forEach(row=>row.fallback=fallback&&selected.has(row.topic));
+  return {rows,selected,fallback};
+}
+function weakTopicSet(){return competencyEvidence().selected}
 function showPracticeSettings(){
  qs("#practiceSettings")?.classList.remove("hidden");
  qs("#practiceSessionBar")?.classList.add("hidden");
@@ -495,8 +524,23 @@ function formatPracticeDuration(ms){
  const total=Math.max(0,Math.round(ms/1000)),min=Math.floor(total/60),sec=total%60;
  return min?`${min} 分 ${String(sec).padStart(2,"0")} 秒`:`${sec} 秒`;
 }
+let practiceStartRequest=0;
 function startPractice(){
+ const request=++practiceStartRequest;
  let lv=qs("#plevel").value, sub=qs("#psubject").value, diff=qs("#pdiff").value, mode=qs("#pmode").value;
+ if(mode==="weak"&&needsCompetencyMetadata()){
+   const button=qs('#practiceStart'),count=qs('#pcount').value;
+   button.disabled=true;
+   qs('#practiceArea').innerHTML='<div class="card" role="status">正在載入官方作答的章節資料…</div>';
+   return loadOfficialPastBundle().then(()=>{
+     if(request!==practiceStartRequest||button!==qs('#practiceStart'))return;
+     if(qs('#practice').classList.contains('active')&&[lv,sub,diff,mode,count].every((v,i)=>v===qs(['#plevel','#psubject','#pdiff','#pmode','#pcount'][i]).value))return startPractice();
+     qs('#practiceArea').innerHTML='<div class="card" role="status">章節資料已載入，請依目前設定開始練習。</div>';
+   }).catch(()=>{
+     if(request!==practiceStartRequest||button!==qs('#practiceStart'))return;
+     qs('#practiceArea').innerHTML='<div class="card" role="alert">官方章節資料載入失敗，暫時無法完整判定弱項。請檢查網路後按「開始練習」重試；作答紀錄已保留。</div>';
+   }).finally(()=>button.disabled=false);
+ }
  const weak=mode==="weak"?weakTopicSet():new Set();
  let arr=(mode==="wrong"
    ? Object.keys(state.wrong).map(id=>getQuestionById(id)).filter(Boolean)
@@ -506,7 +550,7 @@ function startPractice(){
  if(mode==="weak")arr=arr.filter(q=>weak.has(q.topic));
  arr=shuffle(arr); let n=qs("#pcount").value; if(n!=="all")arr=arr.slice(0,+n);
  if(!arr.length){
-   const msg=mode==="weak"?'目前還沒有足夠的弱項作答資料。先刷一組「全部題目」，之後再回來使用弱項模式。':mode==="wrong"?'目前篩選條件下沒有錯題。':'目前沒有符合這組篩選條件的題目。';
+   const msg=mode==="weak"?(weak.size?'已保留章節診斷，但目前沒有符合篩選條件的對應自編題。可調整級別、科目或難度，或到「弱點分析」複習章節。':'目前沒有已作答的能力章節資料。官方考古題或自編題的作答都可建立分析，做題順序不限。'):mode==="wrong"?'目前篩選條件下沒有錯題。':'目前沒有符合這組篩選條件的題目。';
    qs("#practiceArea").innerHTML=`<div class="card"><h3>沒有可刷的題目</h3><p>${msg}</p></div>`;return;
  }
  const summary=[
@@ -516,7 +560,8 @@ function startPractice(){
    qs("#pmode").selectedOptions[0]?.textContent,
    arr.length+" 題"
  ].filter(Boolean).join("｜");
- beginPracticeSession(arr,summary);
+ const evidence=mode==='weak'?competencyEvidence():null;
+ beginPracticeSession(arr,summary+(evidence?.fallback?'｜相對較弱章節（備援選題，非確定弱項）':''));
 }
 function renderPracticeQ(){
  let a=qs("#practiceArea"); if(!practiceSet.length){a.innerHTML='<div class="card">沒有符合條件的題目。</div>';return}
@@ -714,13 +759,16 @@ function cleanBundledOption(value,letter){
   return raw;
 }
 function bundledQuestionToRuntime(paper,q,sharedContexts={}){
+  const topic=q.competency_topic;
+  if(typeof topic!=="string"||!Object.prototype.hasOwnProperty.call(DB.topics,topic)||!topic.startsWith(paper.subject)||q.competency_mapping_status!=="verified"||typeof q.competency_mapping_note!=="string")throw new Error(`內建題目能力映射無效：${paper.id} Q${q.question_no}`);
   const letters=["A","B","C","D"];
   const sharedContext=q.shared_context_id?sharedContexts[q.shared_context_id]:null;
   if(q.shared_context_id&&(!sharedContext||sharedContext.paper_id!==paper.id))throw new Error(`缺少本題共用情境：${q.shared_context_id}`);
   const sourcePages=q.source_page_start?`PDF P${q.source_page_start}${q.source_page_end&&q.source_page_end!==q.source_page_start?`–${q.source_page_end}`:""}`:"官方 PDF";
   return {
     id:`PAST-${paper.id}-${q.question_no}`,number:q.question_no,level:paper.level,subject:paper.subject,
-    topic:`PAST-${paper.year}-${paper.session}`,topicName:`${paper.year} 年 ${paper.session} ${paper.name}`,
+    topic,topicName:DB.topics[topic],paperTitle:`${paper.year} 年 ${paper.session} ${paper.name}`,
+    competency_topic:topic,competency_mapping_status:q.competency_mapping_status,competency_mapping_note:q.competency_mapping_note,
     difficulty:"official",question:q.question_text,
     options:letters.map(letter=>cleanBundledOption(q.options?.[letter],letter)),
     answer:letters.indexOf(q.answer),hasVisual:!!q.has_visual,
@@ -737,22 +785,24 @@ async function loadOfficialPastBundle(){
     officialPastBundlePromise=fetch(bundledAssetUrl(OFFICIAL_PAST_BUNDLE_PATH),{cache:"force-cache"})
       .then(r=>{if(!r.ok)throw new Error(`內建考古題資料 HTTP ${r.status}`);return r.json()})
       .then(data=>{
-        if(data?.schema_version!==3||data?.source?.row_count!==700||!Array.isArray(data?.papers)||data.papers.length!==14||!data.shared_contexts)throw new Error("內建考古題資料版本或筆數不符");
-        officialPastQuestionIndex.clear();
+        if(data?.schema_version!==4||data?.source?.competency_mapping_status!=="verified"||data?.source?.row_count!==700||!Array.isArray(data?.papers)||data.papers.length!==14||!data.shared_contexts)throw new Error("內建考古題資料版本或筆數不符");
+        const nextIndex=new Map();
         data.papers.forEach(bp=>{
           const paper=pastPapers.find(p=>p.id===bp.paper_id);
-          if(!paper||!Array.isArray(bp.questions)||bp.questions.length!==50)throw new Error(`內建考卷不完整：${bp.paper_id||"unknown"}`);
+          if(!paper||bp.subject!==paper.subject||!Array.isArray(bp.questions)||bp.questions.length!==50)throw new Error(`內建考卷不完整：${bp.paper_id||"unknown"}`);
           bp.questions.forEach(q=>{
             if(q.verification_status!=="verified")throw new Error(`內建題目尚未 verified：${bp.paper_id} Q${q.question_no}`);
             const runtime=bundledQuestionToRuntime(paper,q,data.shared_contexts);
             if(runtime.answer<0||runtime.options.length!==4)throw new Error(`內建題目格式錯誤：${runtime.id}`);
-            officialPastQuestionIndex.set(runtime.id,runtime);
+            nextIndex.set(runtime.id,runtime);
           });
         });
-        if(officialPastQuestionIndex.size!==700)throw new Error(`內建題目索引筆數錯誤：${officialPastQuestionIndex.size}`);
+        if(nextIndex.size!==700)throw new Error(`內建題目索引筆數錯誤：${nextIndex.size}`);
+        officialPastQuestionIndex.clear();
+        nextIndex.forEach((q,id)=>officialPastQuestionIndex.set(id,q));
         officialPastBundle=data;
         return data;
-      });
+      }).catch(error=>{officialPastBundlePromise=null;throw error});
   }
   return officialPastBundlePromise;
 }
@@ -782,9 +832,43 @@ function pastProgressText(){
     ? `已作答 ${prog.answered} 題 · 答對 ${prog.correct} 題 · 目前正確率 ${prog.accuracy}%`
     : '尚未作答 · 作答後會自動儲存在此裝置';
 }
+function pastQuestionStateText(){
+  const q=pastPaperSet[pastIndex];
+  const prior=q?state.attempts[q.id]:null;
+  return prior?`本題目前紀錄：${prior.correct?'✓ 正確':'✕ 錯誤'}`:'本題尚未作答';
+}
 function updatePastProgressStatus(){
   const el=qs('#pastScoreStatus');
   if(el)el.textContent=pastProgressText();
+  const count=qs('#pastAnsweredCount');
+  if(count)count.textContent=`已作答：${currentPastProgress().answered}/${pastPaperSet.length} 題`;
+}
+function updatePastQuestionState(){
+  const el=qs('#pastQuestionState');
+  if(el)el.textContent=pastQuestionStateText();
+}
+function pastScrollBehavior(){
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
+}
+function focusPastQuestionStart(){
+  setTimeout(()=>{
+    const target=qs('#pastQuestionStart');
+    if(!target)return;
+    target.scrollIntoView({behavior:pastScrollBehavior(),block:'start'});
+    target.focus({preventScroll:true});
+  },0);
+}
+function focusPastCompletion(){
+  setTimeout(()=>{
+    const target=qs('#pastCompletion');
+    if(!target)return;
+    target.scrollIntoView({behavior:pastScrollBehavior(),block:'start'});
+    target.focus({preventScroll:true});
+  },0);
+}
+function showPastQuizView(){
+  qs('#past').innerHTML='<div id="pastQuizArea"></div>';
+  renderPastQuiz();
 }
 function exitPastQuiz(){
   pastPaperSet=[];pastIndex=0;pastAnswered=false;pastPaperMeta=null;
@@ -796,7 +880,7 @@ function renderPastPapers(){
   const paperCard=(p,i)=>{
     const prog=paperProgress(p), score=prog.answered?Math.round(prog.correct/prog.answered*100):null;
     return `<div class="card c6">
-      <div class="qmeta"><span class="qmetaPrimary">${p.year} 年 ${p.session} · ${p.subject}</span><span class="qmetaSecondary">${p.level} · 內建 verified 題庫</span></div>
+      <div class="qmeta"><span class="qmetaPrimary">${p.year} 年 ${p.session} · ${p.subject}</span><span class="qmetaSecondary">${p.level}</span></div>
       <h3 style="margin:8px 0 5px">${esc(p.name)}</h3>
       <div class="small">考試日期：${p.date}　｜　官方 PDF：約 ${p.size}</div>
       <div class="small" style="margin-top:7px">${prog.answered?`已作答 ${prog.answered} 題 · 答對 ${prog.correct} 題${score!==null?` · 目前正確率 ${score}%`:''}`:'尚未作答 · 作答後會自動記錄進度'}</div>
@@ -810,10 +894,8 @@ function renderPastPapers(){
     <div class="card" style="margin-bottom:12px">
       <div class="examtop"><div><h3 id="pastPapersHeading" tabindex="-1" style="margin:0">官方考古題</h3><div class="small" style="margin-top:5px">${pastPapers.length} 份官方公告試題，直接點「開始刷題」即可</div></div>
       <a class="btn secondary" style="text-decoration:none" href="${officialLearningResources}" target="_blank" rel="noopener">官方歷屆考題頁</a></div>
-      <div class="notice" style="margin-top:12px"><b>已內建 verified 官方題庫：</b>700 題直接由產品內的 canonical dataset 載入，不再於作答時下載或解析官方 PDF；官方 PDF 連結仍保留供來源核對。</div>
-      <div id="pastLoadStatus" class="small" style="margin-top:8px"></div>
+      <div id="pastLoadStatus" class="small" role="status" aria-live="polite" style="margin-top:8px"></div>
     </div>
-    <div id="pastQuizArea"></div>
     <h3>初級 Lv1</h3><div class="grid">${group("初級").map(p=>paperCard(p,pastPapers.indexOf(p))).join("")}</div>
     <h3 style="margin-top:22px">中級 Lv2</h3><div class="grid">${group("中級").map(p=>paperCard(p,pastPapers.indexOf(p))).join("")}</div>`;
 }
@@ -829,18 +911,16 @@ async function loadPastPaperById(id){
   if(!paper)return;
   const status=qs("#pastLoadStatus");
   try{
-    status.textContent=`正在開啟 ${paper.year} 年 ${paper.session} ${paper.subject} 內建官方考古題…`;
+    if(status)status.textContent=`正在開啟 ${paper.year} 年 ${paper.session} ${paper.subject}…`;
     const parsed=await getBundledPastPaper(paper);
-    status.innerHTML=`<span class="good">內建 verified 題庫載入成功：</span>${esc(parsed.meta.title)}，共 ${parsed.questions.length} 題。`;
     pastPaperSet=parsed.questions;pastPaperMeta=parsed.meta;pastAnswered=false;
     const firstUnanswered=pastPaperSet.findIndex(q=>!state.attempts[q.id]);
     pastIndex=firstUnanswered>=0?firstUnanswered:0;
-    renderPastQuiz();
-    qs("#pastQuizArea")?.scrollIntoView({behavior:"smooth",block:"start"});
+    showPastQuizView();
+    focusPastQuestionStart();
   }catch(err){
     console.error(err);
-    status.innerHTML=`<span class="bad">內建考古題載入失敗：</span>${esc(err.message||String(err))}`;
-    qs("#pastQuizArea").innerHTML=`<div class="card"><h3>暫時無法開卷</h3><p class="small">產品內建的 canonical 題庫未能載入。你仍可先開官方 PDF 核對原題。</p><a class="btn primary" style="display:inline-block;text-decoration:none" href="${paper.pdf}" target="_blank" rel="noopener">查看官方 PDF</a></div>`;
+    if(status)status.innerHTML=`<span class="bad">暫時無法開卷：</span>${esc(err.message||String(err))}　<a href="${paper.pdf}" target="_blank" rel="noopener">查看官方 PDF</a>`;
   }
 }
 function renderPastSharedContext(q){
@@ -867,21 +947,30 @@ function renderPastVisuals(q,visualLabel="官方原題視覺"){
 
 function renderPastQuiz(){
   const area=qs('#pastQuizArea');
+  if(!area)return;
   if(!pastPaperSet.length){
     area.innerHTML='';
     return;
   }
   const q=pastPaperSet[pastIndex];
-  const key=q.id;
-  const past=state.attempts[key];
+  const prog=currentPastProgress();
   area.innerHTML=`<div class="card questionCard officialQuestion" style="margin-bottom:12px">
-    <div class="pastQuizTop">
+    <div class="pastQuizTop pastQuestionStart" id="pastQuestionStart" tabindex="-1" aria-label="第 ${q.number} 題開始">
       <div class="qmeta"><span class="qmetaPrimary">官方考古題 · 第 ${q.number} 題</span><span class="qmetaSecondary">${esc(pastPaperMeta?.title||'')}</span></div>
       <button class="btn secondary pastExitBtn" onclick="exitPastQuiz()">← 返回考卷列表</button>
     </div>
     <div id="pastScoreStatus" class="pastQuizStatus" role="status" aria-live="polite">${pastProgressText()}</div>
-    <div class="small">本份考卷會自動記錄作答與計分；返回列表不會清除進度。　｜　${past?`本題曾作答：${past.correct?'✓ 正確':'✕ 錯誤'}`:'本題尚未作答'}　｜　第 ${pastIndex+1}/${pastPaperSet.length} 題　｜　<a href="${pastPaperMeta?.pdf||'#'}" target="_blank" rel="noopener">核對官方原題 PDF</a></div>
-    <div class="progress" role="progressbar" aria-label="考古題進度" aria-valuemin="1" aria-valuemax="${pastPaperSet.length}" aria-valuenow="${pastIndex+1}"><div style="width:${(pastIndex+1)/pastPaperSet.length*100}%"></div></div>
+    <div class="pastQuestionFacts">
+      <span>題目位置：第 ${pastIndex+1}/${pastPaperSet.length} 題</span>
+      <span id="pastAnsweredCount">已作答：${prog.answered}/${pastPaperSet.length} 題</span>
+      <span id="pastQuestionState" aria-live="polite">${pastQuestionStateText()}</span>
+      <span><a href="${pastPaperMeta?.pdf||'#'}" target="_blank" rel="noopener">核對官方原題 PDF</a></span>
+    </div>
+    <div class="pastMobileNav" aria-label="考古題快速導覽">
+      <span class="small"><b>第 ${pastIndex+1}/${pastPaperSet.length} 題</b></span>
+      <div class="controls"><button class="btn secondary" onclick="pastPrev()" ${pastIndex===0?"disabled":""}>上一題</button><button class="btn primary" onclick="pastNext()">${pastIndex===pastPaperSet.length-1?"完成":"下一題"}</button></div>
+    </div>
+    <div class="progress" role="progressbar" aria-label="目前題目位置" aria-valuemin="1" aria-valuemax="${pastPaperSet.length}" aria-valuenow="${pastIndex+1}"><div style="width:${(pastIndex+1)/pastPaperSet.length*100}%"></div></div>
     ${renderPastSharedContext(q)}
     <div class="qtext" tabindex="-1">${esc(q.question)}</div>
     ${renderPastVisuals(q)}
@@ -902,6 +991,7 @@ function answerPast(i){
   if(ok) delete state.wrong[q.id]; else state.wrong[q.id]=true;
   save();
   updatePastProgressStatus();
+  updatePastQuestionState();
   qsa('#pastOpts .option').forEach((b,idx)=>{
     b.disabled=true;
     if(idx===q.answer)b.classList.add('correct');
@@ -917,17 +1007,25 @@ function answerPast(i){
 }
 
 function pastNext(){
-  if(!pastPaperSet.length) return;
-  if(pastIndex<pastPaperSet.length-1){ pastIndex++; pastAnswered=false; renderPastQuiz(); focusQuestion("#pastQuizArea"); }
-  else{
+  if(!pastPaperSet.length)return;
+  if(pastIndex<pastPaperSet.length-1){
+    pastIndex++;pastAnswered=false;renderPastQuiz();focusPastQuestionStart();
+  }else{
     const answered=pastPaperSet.filter(q=>state.attempts[q.id]).length;
-    const correct=pastPaperSet.filter(q=>state.attempts[q.id] && state.attempts[q.id].correct).length;
-    const score=answered ? Math.round(correct/pastPaperSet.length*100) : 0;
-    qs('#pastQuizArea').innerHTML=`<div class="card"><h3>這份官方考古題完成了</h3><div class="kpi ${score>=70?'good':'bad'}">${score} 分</div><p>${correct}/${pastPaperSet.length} 題正確。作答紀錄已保留在此裝置，你可以返回考卷列表選其他考卷，或重新作答本份。</p><div class="controls"><button class="btn secondary" onclick="exitPastQuiz()">返回考卷列表</button><button class="btn primary" onclick="restartPastQuiz()">重新作答這份</button></div></div>`;
+    const correct=pastPaperSet.filter(q=>state.attempts[q.id]&&state.attempts[q.id].correct).length;
+    const score=answered?Math.round(correct/pastPaperSet.length*100):0;
+    qs('#pastQuizArea').innerHTML=`<div class="card questionCard" id="pastCompletion" tabindex="-1"><h3>這份官方考古題完成了</h3><div class="kpi ${score>=70?'good':'bad'}">${score} 分</div><p>${correct}/${pastPaperSet.length} 題正確。作答紀錄已保留在此裝置，你可以返回考卷列表選其他考卷，或重新作答本份。</p><div class="controls"><button class="btn secondary" onclick="exitPastQuiz()">返回考卷列表</button><button class="btn primary" onclick="restartPastQuiz()">重新作答這份</button></div></div>`;
+    focusPastCompletion();
   }
 }
-function pastPrev(){ if(pastIndex>0){ pastIndex--; pastAnswered=false; renderPastQuiz(); focusQuestion("#pastQuizArea"); } }
-function restartPastQuiz(){ pastIndex=0; pastAnswered=false; renderPastQuiz(); }
+function pastPrev(){
+  if(pastIndex>0){pastIndex--;pastAnswered=false;renderPastQuiz();focusPastQuestionStart();}
+}
+function restartPastQuiz(){
+  pastIndex=0;pastAnswered=false;
+  if(!qs('#pastQuizArea'))qs('#past').innerHTML='<div id="pastQuizArea"></div>';
+  renderPastQuiz();focusPastQuestionStart();
+}
 
 function getQuestionById(id){
   return DB.questions.find(x=>x.id===id)||officialPastQuestionIndex.get(id);
@@ -954,23 +1052,34 @@ async function startWrongPractice(){
   beginPracticeSession(arr,`錯題本｜${arr.length} 題`);
 }
 
+let statsRenderRequest=0;
 function renderStats(){
-  if(Object.keys(state.attempts).some(id=>id.startsWith("PAST-"))&&!officialPastBundle){
-    loadOfficialPastBundle().then(()=>{if(qs("#stats")?.classList.contains("active"))renderStats()}).catch(e=>console.warn("官方統計資料載入失敗",e));
+  const request=++statsRenderRequest;
+  if(needsCompetencyMetadata()){
+    qs('#stats').innerHTML='<div class="card" role="status">正在載入官方作答的章節資料，準備合併分析…</div>';
+    return loadOfficialPastBundle().then(()=>{if(request===statsRenderRequest&&qs("#stats")?.classList.contains("active"))renderStats()}).catch(()=>{
+      if(request!==statsRenderRequest)return;
+      qs('#stats').innerHTML='<div class="card" role="alert"><p>官方章節資料載入失敗，暫時無法顯示完整分析。作答紀錄已保留。</p><button class="btn secondary" onclick="renderStats()">重新載入</button></div>';
+    });
   }
-  let by={};
-  Object.entries(state.attempts).forEach(([id,a])=>{
-    let q=getQuestionById(id);if(!q)return;
-    let k=q.topic||q.subject||'其他';
-    if(!by[k])by[k]={n:0,c:0,subject:q.subject,name:q.topicName||q.subjectName||k};
-    by[k].n++;if(a.correct)by[k].c++;
-  });
-  let rows=Object.entries(by).sort((a,b)=>(a[1].c/a[1].n)-(b[1].c/b[1].n));
+  const {rows}=competencyEvidence();
   let hist=state.examHistory||[];
   const pastRows=pastPapers.map(p=>{const pr=paperProgress(p);return {...p,...pr,score:pr.answered?Math.round(pr.correct/pr.answered*100):null}}).filter(p=>p.answered);
-  qs("#stats").innerHTML=`<div class="grid"><div class="card c8"><h3 style="margin-top:0">能力指標表現</h3>
-  ${rows.length?rows.map(([k,v])=>{let p=Math.round(v.c/v.n*100);return `<div class="topicbar"><div style="min-width:180px"><b>${esc(k)}</b> ${esc(v.name)}<div class="small">${v.c}/${v.n} 正確</div></div><div class="bar"><i style="width:${p}%"></i></div><b class="${p<70?'bad':'good'}">${p}%</b></div>`}).join(""):"先做一些題目後，這裡會顯示弱點分析。"}</div>
-  <div class="card c4"><h3 style="margin-top:0">官方考古題進度</h3>${pastRows.length?pastRows.slice(0,10).map(h=>`<div class="topicbar"><div><b>${h.year} ${h.session} ${h.subject}</b><div class="small">${h.answered} 題已作答</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}%</b></div>`).join(""):"尚無考古題作答紀錄"}
+  qs("#stats").innerHTML=`<div class="grid"><div class="card c8"><h3 style="margin-top:0">能力小章節弱點分析</h3>
+  <p class="small">官方考古題與自編題逐題等權合併，每題採最近一次結果，做題順序不限。至少 3 題且正確率低於 70% 為弱項；1–2 題僅供初步參考。沒有正式弱項時，最多選 4 個相對較弱章節作為備援練習。</p>
+  ${rows.length?rows.map(v=>{
+    const p=Math.round(v.combined.accuracy*100),m=officialScopeMeta(v.subject,v.topic);
+    const status=v.weak?'弱項':v.insufficient?'資料不足（初步訊號）':'目前未達弱項門檻';
+    return `<div class="topicbar competencyRow" data-topic="${esc(v.topic)}">
+      <div class="competencyHeading"><h4>${esc(v.topic)}｜${esc(v.name)}</h4><span class="${v.weak?'bad':'small'}">${status}</span></div>
+      <div class="competencyResult"><b>合併 ${v.combined.correct}/${v.combined.answered} 正確 · ${p}%</b><div class="bar" aria-hidden="true"><i style="width:${p}%"></i></div></div>
+      <div class="small competencySources"><span>官方考古題 ${v.official.correct}/${v.official.answered} 正確</span><span>自編題 ${v.selfAuthored.correct}/${v.selfAuthored.answered} 正確</span></div>
+      ${v.fallback?'<div class="small">相對較弱／備援選題，非確定弱項。</div>':''}
+      ${!v.drillAvailable?'<div class="small">此章節目前沒有對應自編題，診斷仍保留，可先複習章節。</div>':''}
+      <a class="competencyReview" href="${esc(m.url)}" target="_blank" rel="noopener" aria-label="${esc(`複習 ${v.topic} ${v.name}｜${m.section}`)}">複習此章節 ↗</a>
+    </div>`;
+  }).join(""):"尚無能力章節作答資料。官方考古題或自編題的作答都可建立弱點分析。"}</div>
+  <div class="card c4"><h3 style="margin-top:0">官方考古題進度</h3><p class="small">依考卷顯示的來源進度；章節診斷請看「能力小章節弱點分析」。</p>${pastRows.length?pastRows.slice(0,10).map(h=>`<div class="topicbar"><div><b>${h.year} ${h.session} ${h.subject}</b><div class="small">${h.answered} 題已作答</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}%</b></div>`).join(""):"尚無考古題作答紀錄"}
   <h3>最近模擬</h3>${hist.length?hist.slice(0,6).map(h=>`<div class="topicbar"><div><b>${h.subject}</b><div class="small">${new Date(h.date).toLocaleDateString()}</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}</b></div>`).join(""):"尚無模擬紀錄"}
   <button class="btn danger" style="margin-top:12px" onclick="resetAll()">清除全部進度</button></div></div>`;
 }

@@ -8,6 +8,7 @@ const renderCode=html.slice(html.indexOf('function renderPastQuiz('),html.indexO
 assert(!html.includes('pastExplain'),'no duplicate result/placeholder panel');
 assert(renderCode.includes('核對官方原題 PDF'),'existing PDF entry remains');
 const escCode=html.slice(html.indexOf('function esc('),html.indexOf('function switchPanel('));
+const progressCode=html.slice(html.indexOf('function currentPastProgress('),html.indexOf('function pastScrollBehavior('));
 function element(){
   const classes=new Set();
   return {disabled:false,children:[],innerHTML:'',focused:false,
@@ -17,6 +18,8 @@ function element(){
 for(let answer=0;answer<4;answer++){
   for(let selected=0;selected<4;selected++){
     const options=Array.from({length:4},element),feedback=element();
+    const status=element(),count=element(),questionState=element();
+    const nodes={'#pastOpts':feedback,'#pastScoreStatus':status,'#pastAnsweredCount':count,'#pastQuestionState':questionState};
     const question={id:'PAST-TEST-1',answer,options:['<A>','B & C','"quoted"','第四項'],
       explanation:'UNVERIFIED EXPLANATION MUST NOT BE PRESENTED AS OFFICIAL',sourceType:'iPAS 官方公告試題 PDF'};
     const original=JSON.stringify(question);
@@ -24,13 +27,16 @@ for(let answer=0;answer<4;answer++){
     const context={pastAnswered:false,pastIndex:0,pastPaperSet:[question],
       pastPaperMeta:{title:'Official test paper',pdf:'https://example.test/official.pdf'},
       state:{attempts:{KEEP:{correct:true}},wrong:{'PAST-TEST-1':true},bookmarks:{KEEP:true},examHistory:[{score:80}]},
-      Date:{now:()=>123456789},save:()=>saves++,updatePastProgressStatus:()=>{},
+      Date:{now:()=>123456789},save:()=>saves++,
       qsa:selector=>{assert.equal(selector,'#pastOpts .option');return options},
-      qs:selector=>{assert.equal(selector,'#pastOpts');return feedback},
+      qs:selector=>{assert(selector in nodes,selector);return nodes[selector]},
       document:{createElement:tag=>{assert.equal(tag,'span');return {}}}};
-    vm.createContext(context);vm.runInContext(escCode+answerCode,context);
+    vm.createContext(context);vm.runInContext(escCode+progressCode+answerCode,context);
     context.answerPast(selected);
     assert.equal(saves,1);
+    assert.equal(count.textContent,'已作答：1/1 題');
+    assert.equal(status.textContent,`已作答 1 題 · 答對 ${Number(selected===answer)} 題 · 目前正確率 ${selected===answer?100:0}%`);
+    assert.equal(questionState.textContent,`本題目前紀錄：${selected===answer?'✓ 正確':'✕ 錯誤'}`);
     const result=context.state.attempts[question.id];
     assert.deepEqual(JSON.parse(JSON.stringify(result)),{
       correct:selected===answer,last:123456789,subject:'PAST',topic:'Official test paper'});
@@ -58,14 +64,16 @@ for(let answer=0;answer<4;answer++){
 }
 // Exercise the real render/navigation functions with existing saved attempts.
 const area=element();
+const focusCalls=[];
 const navigationCode=html.slice(html.indexOf('function pastNext('),html.indexOf('function getQuestionById('));
 const renderContext={pastIndex:0,pastAnswered:true,
   pastPaperMeta:{title:'Official test paper',pdf:'https://example.test/official.pdf'},
   pastPaperSet:[1,2].map(number=>({id:`PAST-TEST-${number}`,number,question:'<Question>',options:['<A>','B & C'],answer:0})),
   state:{attempts:{'PAST-TEST-1':{correct:true}},wrong:{}},
   qs:selector=>{assert.equal(selector,'#pastQuizArea');return area},
-  qsa:()=>[],focusQuestion:()=>{},pastProgressText:()=>'',renderPastSharedContext:()=>'',renderPastVisuals:()=>''};
-vm.createContext(renderContext);vm.runInContext(escCode+renderCode+navigationCode,renderContext);
+  qsa:()=>[],focusPastQuestionStart:()=>focusCalls.push('question'),focusPastCompletion:()=>focusCalls.push('completion'),
+  renderPastSharedContext:()=>'',renderPastVisuals:()=>''};
+vm.createContext(renderContext);vm.runInContext(escCode+progressCode+renderCode+navigationCode,renderContext);
 const savedProgress=JSON.stringify(renderContext.state);
 for(const action of ['renderPastQuiz','pastNext','pastPrev','restartPastQuiz']){
   renderContext[action]();
@@ -77,8 +85,12 @@ for(const action of ['renderPastQuiz','pastNext','pastPrev','restartPastQuiz']){
   assert(area.innerHTML.includes('&lt;A&gt;')&&area.innerHTML.includes('B &amp; C'));
   assert(area.innerHTML.includes('role="group" aria-label="作答選項" tabindex="-1"'));
   assert.equal(JSON.stringify(renderContext.state),savedProgress,'navigation preserves progress');
-  if(action!=='renderPastQuiz')assert.equal(renderContext.pastAnswered,false);
+  if(action!=='renderPastQuiz'){
+    assert.equal(renderContext.pastAnswered,false);
+    assert.equal(focusCalls.pop(),'question','navigation requests question-start focus');
+  }
 }
 renderContext.pastNext();renderContext.pastNext();
 assert(area.innerHTML.includes('50 分')&&area.innerHTML.includes('1/2 題正確'),'completion score unchanged');
+assert.equal(focusCalls.pop(),'completion','completion requests result focus');
 console.log('PASS: 16 answer/selection combinations, repeat guard, progress, render escaping, PDF entry, no duplicate/placeholder, navigation/reset and completion score.');

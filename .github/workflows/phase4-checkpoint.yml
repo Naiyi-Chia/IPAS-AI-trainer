@@ -70,7 +70,6 @@ jobs:
           console.log('PASS inline JS syntax:', scripts.length, 'script block(s)');
           NODE
           python scripts/test_official_past_bundle.py
-          node scripts/test_dev_asset_resolution.cjs
 
       - name: Install isolated browser test runtime
         shell: bash
@@ -78,13 +77,14 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/phase4-playwright" --no-save playwright@1.55.0
           google-chrome --version
 
-      - name: Run Phase 4 browser regressions
+      - name: Run browser and Phase 4 question regressions
         shell: bash
         env:
           NODE_PATH: ${{ runner.temp }}/phase4-playwright/node_modules
           BROWSER_CHANNEL: chrome
         run: |
           set -euo pipefail
+          node scripts/test_dev_asset_resolution.cjs
           mkdir -p "$RUNNER_TEMP/phase4-browser"
           for batch in a b c d e f g; do
             echo "=== Batch 4${batch} ==="

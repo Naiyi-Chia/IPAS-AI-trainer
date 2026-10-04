@@ -86,6 +86,13 @@ h3{font-size:18px;line-height:1.35}
 .pnum.done{background:#e0e7ff;border-color:#a5b4fc}
 .pnum.current{outline:2px solid #111827;outline-offset:1px}
 .topicbar{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:10px 0}
+.competencyRow{display:block;min-width:0}
+.competencyHeading{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.competencyHeading h4{margin:0;flex:1 1 240px;overflow-wrap:anywhere}
+.competencyResult{display:flex;align-items:center;gap:12px;margin:8px 0;font-variant-numeric:tabular-nums}
+.competencyResult .bar{max-width:none}
+.competencySources{display:flex;flex-wrap:wrap;gap:4px 16px}
+.competencyReview{display:inline-flex;align-items:center;min-height:44px;margin-top:4px}
 .reviewItem{border-top:1px solid var(--line);margin:0}
 .reviewItem:first-of-type{border-top:0}
 .reviewItem summary{cursor:pointer;padding:13px 2px;font-weight:700;background:transparent}
@@ -459,9 +466,9 @@ function renderPractice(){
        <option value="weak">只刷弱項</option>
      </select></div>
      <div class="field"><label for="pcount">題數</label><select id="pcount"><option value="10">10 題</option><option value="20" selected>20 題</option><option value="40">40 題</option><option value="50">50 題</option><option value="all">全部</option></select></div>
-     <button class="btn primary" onclick="startPractice()">開始練習</button>
+     <button id="practiceStart" class="btn primary" onclick="startPractice()">開始練習</button>
    </div>
-   <div class="small" style="margin-top:9px">弱項判定：優先找已作答至少 3 題且正確率低於 70% 的能力指標；資料不足時改抓目前正確率最低的主題。</div>
+   <div class="small" style="margin-top:9px">弱項依官方考古題與自編題逐題等權合併：至少 3 題且正確率低於 70% 才判為弱項；1–2 題為資料不足。沒有正式弱項時，選最多 4 個相對較弱章節。「只刷弱項」使用對應的自編題。</div>
  </div><div id="practiceArea" style="margin-top:12px"></div>`;
  qs("#plevel").onchange=()=>{
    let lv=qs("#plevel").value;
@@ -473,19 +480,33 @@ function renderPractice(){
  };
 }
 function goPractice(level){switchPanel("practice");qs("#plevel").value=level;qs("#plevel").dispatchEvent(new Event("change"));startPractice();}
-function weakTopicSet(){
-  const stats={};
-  DB.questions.forEach(q=>{
-    const a=state.attempts[q.id]; if(!a)return;
-    if(!stats[q.topic])stats[q.topic]={n:0,c:0};
-    stats[q.topic].n++; if(a.correct)stats[q.topic].c++;
-  });
-  let weak=Object.entries(stats).filter(([,v])=>v.n>=3 && v.c/v.n<.70).sort((a,b)=>(a[1].c/a[1].n)-(b[1].c/b[1].n)).map(([k])=>k);
-  if(!weak.length){
-    weak=Object.entries(stats).filter(([,v])=>v.n>=1).sort((a,b)=>(a[1].c/a[1].n)-(b[1].c/b[1].n)).slice(0,4).map(([k])=>k);
-  }
-  return new Set(weak);
+function needsCompetencyMetadata(){
+  return !officialPastBundle&&Object.keys(state.attempts).some(id=>id.startsWith('PAST-'));
 }
+function competencyEvidence(){
+  const by=new Map();
+  Object.entries(state.attempts).forEach(([id,a])=>{
+    const q=getQuestionById(id);
+    if(!q||!Object.prototype.hasOwnProperty.call(DB.topics,q.topic))return;
+    if(!by.has(q.topic))by.set(q.topic,{topic:q.topic,name:DB.topics[q.topic],subject:q.subject,
+      combined:{correct:0,answered:0},official:{correct:0,answered:0},selfAuthored:{correct:0,answered:0}});
+    const row=by.get(q.topic),source=id.startsWith('PAST-')?row.official:row.selfAuthored;
+    [row.combined,source].forEach(v=>{v.answered++;if(a.correct)v.correct++});
+  });
+  const rows=[...by.values()];
+  rows.forEach(row=>{
+    [row.combined,row.official,row.selfAuthored].forEach(v=>v.accuracy=v.answered?v.correct/v.answered:null);
+    row.insufficient=row.combined.answered<3;
+    row.weak=!row.insufficient&&row.combined.accuracy<.70;
+    row.drillAvailable=DB.questions.some(q=>q.topic===row.topic);
+  });
+  rows.sort((a,b)=>a.combined.accuracy-b.combined.accuracy||a.topic.localeCompare(b.topic));
+  const formal=rows.filter(row=>row.weak),fallback=!formal.length;
+  const selected=new Set((fallback?rows.slice(0,4):formal).map(row=>row.topic));
+  rows.forEach(row=>row.fallback=fallback&&selected.has(row.topic));
+  return {rows,selected,fallback};
+}
+function weakTopicSet(){return competencyEvidence().selected}
 function showPracticeSettings(){
  qs("#practiceSettings")?.classList.remove("hidden");
  qs("#practiceSessionBar")?.classList.add("hidden");
@@ -503,8 +524,23 @@ function formatPracticeDuration(ms){
  const total=Math.max(0,Math.round(ms/1000)),min=Math.floor(total/60),sec=total%60;
  return min?`${min} 分 ${String(sec).padStart(2,"0")} 秒`:`${sec} 秒`;
 }
+let practiceStartRequest=0;
 function startPractice(){
+ const request=++practiceStartRequest;
  let lv=qs("#plevel").value, sub=qs("#psubject").value, diff=qs("#pdiff").value, mode=qs("#pmode").value;
+ if(mode==="weak"&&needsCompetencyMetadata()){
+   const button=qs('#practiceStart'),count=qs('#pcount').value;
+   button.disabled=true;
+   qs('#practiceArea').innerHTML='<div class="card" role="status">正在載入官方作答的章節資料…</div>';
+   return loadOfficialPastBundle().then(()=>{
+     if(request!==practiceStartRequest||button!==qs('#practiceStart'))return;
+     if(qs('#practice').classList.contains('active')&&[lv,sub,diff,mode,count].every((v,i)=>v===qs(['#plevel','#psubject','#pdiff','#pmode','#pcount'][i]).value))return startPractice();
+     qs('#practiceArea').innerHTML='<div class="card" role="status">章節資料已載入，請依目前設定開始練習。</div>';
+   }).catch(()=>{
+     if(request!==practiceStartRequest||button!==qs('#practiceStart'))return;
+     qs('#practiceArea').innerHTML='<div class="card" role="alert">官方章節資料載入失敗，暫時無法完整判定弱項。請檢查網路後按「開始練習」重試；作答紀錄已保留。</div>';
+   }).finally(()=>button.disabled=false);
+ }
  const weak=mode==="weak"?weakTopicSet():new Set();
  let arr=(mode==="wrong"
    ? Object.keys(state.wrong).map(id=>getQuestionById(id)).filter(Boolean)
@@ -514,7 +550,7 @@ function startPractice(){
  if(mode==="weak")arr=arr.filter(q=>weak.has(q.topic));
  arr=shuffle(arr); let n=qs("#pcount").value; if(n!=="all")arr=arr.slice(0,+n);
  if(!arr.length){
-   const msg=mode==="weak"?'目前還沒有足夠的弱項作答資料。先刷一組「全部題目」，之後再回來使用弱項模式。':mode==="wrong"?'目前篩選條件下沒有錯題。':'目前沒有符合這組篩選條件的題目。';
+   const msg=mode==="weak"?(weak.size?'已保留章節診斷，但目前沒有符合篩選條件的對應自編題。可調整級別、科目或難度，或到「弱點分析」複習章節。':'目前沒有已作答的能力章節資料。官方考古題或自編題的作答都可建立分析，做題順序不限。'):mode==="wrong"?'目前篩選條件下沒有錯題。':'目前沒有符合這組篩選條件的題目。';
    qs("#practiceArea").innerHTML=`<div class="card"><h3>沒有可刷的題目</h3><p>${msg}</p></div>`;return;
  }
  const summary=[
@@ -524,7 +560,8 @@ function startPractice(){
    qs("#pmode").selectedOptions[0]?.textContent,
    arr.length+" 題"
  ].filter(Boolean).join("｜");
- beginPracticeSession(arr,summary);
+ const evidence=mode==='weak'?competencyEvidence():null;
+ beginPracticeSession(arr,summary+(evidence?.fallback?'｜相對較弱章節（備援選題，非確定弱項）':''));
 }
 function renderPracticeQ(){
  let a=qs("#practiceArea"); if(!practiceSet.length){a.innerHTML='<div class="card">沒有符合條件的題目。</div>';return}
@@ -765,7 +802,7 @@ async function loadOfficialPastBundle(){
         nextIndex.forEach((q,id)=>officialPastQuestionIndex.set(id,q));
         officialPastBundle=data;
         return data;
-      });
+      }).catch(error=>{officialPastBundlePromise=null;throw error});
   }
   return officialPastBundlePromise;
 }
@@ -1015,23 +1052,34 @@ async function startWrongPractice(){
   beginPracticeSession(arr,`錯題本｜${arr.length} 題`);
 }
 
+let statsRenderRequest=0;
 function renderStats(){
-  if(Object.keys(state.attempts).some(id=>id.startsWith("PAST-"))&&!officialPastBundle){
-    loadOfficialPastBundle().then(()=>{if(qs("#stats")?.classList.contains("active"))renderStats()}).catch(e=>console.warn("官方統計資料載入失敗",e));
+  const request=++statsRenderRequest;
+  if(needsCompetencyMetadata()){
+    qs('#stats').innerHTML='<div class="card" role="status">正在載入官方作答的章節資料，準備合併分析…</div>';
+    return loadOfficialPastBundle().then(()=>{if(request===statsRenderRequest&&qs("#stats")?.classList.contains("active"))renderStats()}).catch(()=>{
+      if(request!==statsRenderRequest)return;
+      qs('#stats').innerHTML='<div class="card" role="alert"><p>官方章節資料載入失敗，暫時無法顯示完整分析。作答紀錄已保留。</p><button class="btn secondary" onclick="renderStats()">重新載入</button></div>';
+    });
   }
-  let by={};
-  Object.entries(state.attempts).forEach(([id,a])=>{
-    let q=getQuestionById(id);if(!q)return;
-    let k=q.topic||q.subject||'其他';
-    if(!by[k])by[k]={n:0,c:0,subject:q.subject,name:q.topicName||q.subjectName||k};
-    by[k].n++;if(a.correct)by[k].c++;
-  });
-  let rows=Object.entries(by).sort((a,b)=>(a[1].c/a[1].n)-(b[1].c/b[1].n));
+  const {rows}=competencyEvidence();
   let hist=state.examHistory||[];
   const pastRows=pastPapers.map(p=>{const pr=paperProgress(p);return {...p,...pr,score:pr.answered?Math.round(pr.correct/pr.answered*100):null}}).filter(p=>p.answered);
-  qs("#stats").innerHTML=`<div class="grid"><div class="card c8"><h3 style="margin-top:0">能力指標表現</h3>
-  ${rows.length?rows.map(([k,v])=>{let p=Math.round(v.c/v.n*100);return `<div class="topicbar"><div style="min-width:180px"><b>${esc(k)}</b> ${esc(v.name)}<div class="small">${v.c}/${v.n} 正確</div></div><div class="bar"><i style="width:${p}%"></i></div><b class="${p<70?'bad':'good'}">${p}%</b></div>`}).join(""):"先做一些題目後，這裡會顯示弱點分析。"}</div>
-  <div class="card c4"><h3 style="margin-top:0">官方考古題進度</h3>${pastRows.length?pastRows.slice(0,10).map(h=>`<div class="topicbar"><div><b>${h.year} ${h.session} ${h.subject}</b><div class="small">${h.answered} 題已作答</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}%</b></div>`).join(""):"尚無考古題作答紀錄"}
+  qs("#stats").innerHTML=`<div class="grid"><div class="card c8"><h3 style="margin-top:0">能力小章節弱點分析</h3>
+  <p class="small">官方考古題與自編題逐題等權合併，每題採最近一次結果，做題順序不限。至少 3 題且正確率低於 70% 為弱項；1–2 題僅供初步參考。沒有正式弱項時，最多選 4 個相對較弱章節作為備援練習。</p>
+  ${rows.length?rows.map(v=>{
+    const p=Math.round(v.combined.accuracy*100),m=officialScopeMeta(v.subject,v.topic);
+    const status=v.weak?'弱項':v.insufficient?'資料不足（初步訊號）':'目前未達弱項門檻';
+    return `<div class="topicbar competencyRow" data-topic="${esc(v.topic)}">
+      <div class="competencyHeading"><h4>${esc(v.topic)}｜${esc(v.name)}</h4><span class="${v.weak?'bad':'small'}">${status}</span></div>
+      <div class="competencyResult"><b>合併 ${v.combined.correct}/${v.combined.answered} 正確 · ${p}%</b><div class="bar" aria-hidden="true"><i style="width:${p}%"></i></div></div>
+      <div class="small competencySources"><span>官方考古題 ${v.official.correct}/${v.official.answered} 正確</span><span>自編題 ${v.selfAuthored.correct}/${v.selfAuthored.answered} 正確</span></div>
+      ${v.fallback?'<div class="small">相對較弱／備援選題，非確定弱項。</div>':''}
+      ${!v.drillAvailable?'<div class="small">此章節目前沒有對應自編題，診斷仍保留，可先複習章節。</div>':''}
+      <a class="competencyReview" href="${esc(m.url)}" target="_blank" rel="noopener" aria-label="${esc(`複習 ${v.topic} ${v.name}｜${m.section}`)}">複習此章節 ↗</a>
+    </div>`;
+  }).join(""):"尚無能力章節作答資料。官方考古題或自編題的作答都可建立弱點分析。"}</div>
+  <div class="card c4"><h3 style="margin-top:0">官方考古題進度</h3><p class="small">依考卷顯示的來源進度；章節診斷請看「能力小章節弱點分析」。</p>${pastRows.length?pastRows.slice(0,10).map(h=>`<div class="topicbar"><div><b>${h.year} ${h.session} ${h.subject}</b><div class="small">${h.answered} 題已作答</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}%</b></div>`).join(""):"尚無考古題作答紀錄"}
   <h3>最近模擬</h3>${hist.length?hist.slice(0,6).map(h=>`<div class="topicbar"><div><b>${h.subject}</b><div class="small">${new Date(h.date).toLocaleDateString()}</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}</b></div>`).join(""):"尚無模擬紀錄"}
   <button class="btn danger" style="margin-top:12px" onclick="resetAll()">清除全部進度</button></div></div>`;
 }

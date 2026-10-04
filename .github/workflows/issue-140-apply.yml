@@ -1,0 +1,61 @@
+name: Issue 140 scoped apply
+
+on:
+  push:
+    branches:
+      - fix/issue-140-past-bundle-cache
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/issue-140-past-bundle-cache
+          fetch-depth: 0
+
+      - name: Apply exact cache-policy fix
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          old = 'fetch(bundledAssetUrl(OFFICIAL_PAST_BUNDLE_PATH),{cache:"force-cache"})'
+          new = 'fetch(bundledAssetUrl(OFFICIAL_PAST_BUNDLE_PATH),{cache:"no-cache"})'
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'expected exactly one target, found {count}')
+          path.write_text(text.replace(old, new), encoding='utf-8', newline='')
+
+      - name: Install browser test runtime
+        run: |
+          npm install --global playwright
+          playwright install --with-deps chromium
+          echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
+          echo "BROWSER_CHANNEL=chromium" >> "$GITHUB_ENV"
+
+      - name: Run issue 140 regression and related checks
+        run: |
+          node scripts/test_past_bundle_cache_upgrade.cjs
+          node scripts/test_official_competency_runtime.cjs
+          node scripts/test_past_answer_count.cjs
+          node scripts/test_past_progress_migration.cjs
+          node scripts/test_past_answer_feedback.cjs
+          node scripts/test_dev_asset_resolution.cjs
+          node scripts/test_official_bundle_browser.cjs
+          node scripts/test_source_aware_weakness.cjs
+          git diff --check
+
+      - name: Commit scoped fix and remove temporary runner
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/issue-140-apply.yml
+          git add index.html
+          git diff --cached --check
+          git commit -m "fix: revalidate official past-paper bundle cache (#140)"
+          git push origin HEAD:fix/issue-140-past-bundle-cache

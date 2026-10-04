@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const bundle=JSON.parse(fs.readFileSync(path.join(root,'data/official-past-papers.json'),'utf8'));
-const DB=JSON.parse(html.match(/^const DB = (.+);$/m)[1]);
+const DB=JSON.parse(fs.readFileSync(path.join(root,'data/practice-questions.json'),'utf8'));
 function section(start,end){return html.slice(html.indexOf(start),html.indexOf(end));}
 // Compile the entire inline application, in addition to executing the loader below.
 for(const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);

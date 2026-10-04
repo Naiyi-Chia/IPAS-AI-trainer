@@ -26,6 +26,7 @@ async function run(){
     if(!sessionStorage.getItem('seeded')){localStorage.setItem('ipasAIState',JSON.stringify(seed));localStorage.setItem('ipasOfficialPastCacheV2','{"old":{"meta":{"contentVersion":1}}}');sessionStorage.setItem('seeded','1');}
    },seed);
    await page.goto(`http://127.0.0.1:${server.address().port}/`);
+   await page.waitForFunction(()=>DB!==null);
    await page.evaluate(()=>loadOfficialPastBundle());
    const migrated=await page.evaluate(()=>({state,backup:JSON.parse(localStorage.getItem(PAST_MIGRATION_BACKUP_KEY)),cache:localStorage.getItem('ipasOfficialPastCacheV2')}));
    assert.deepEqual(migrated.backup,seed);assert.equal(migrated.cache,null);assert.deepEqual(migrated.state.examHistory,seed.examHistory);
@@ -94,7 +95,7 @@ async function run(){
   await page.route(raw+'**',route=>{const file=path.join(root,new URL(route.request().url()).pathname.split('/dev/')[1]);return route.fulfill({body:fs.readFileSync(file),contentType:mime(file)});});
   await page.addInitScript(()=>localStorage.setItem('ipasAIState','{"untouched":true}'));
   await page.goto(`http://127.0.0.1:${server.address().port}/dev/index.html`);
-  await page.waitForFunction(()=>typeof loadOfficialPastBundle==='function',null,{timeout:10000});
+  await page.waitForFunction(()=>DB!==null,null,{timeout:10000});
   await page.evaluate(()=>loadOfficialPastBundle());
   assert.equal(await page.evaluate(()=>officialPastQuestionIndex.size),700);
   assert.equal(await page.evaluate(()=>localStorage.getItem('ipasAIState')),'{"untouched":true}');

@@ -1,0 +1,222 @@
+[
+  {
+    "width": 1280,
+    "height": 900,
+    "practice": [
+      "Q009",
+      "Q078",
+      "Q076",
+      "Q032",
+      "Q051",
+      "Q019",
+      "Q031",
+      "Q083",
+      "Q049",
+      "Q054",
+      "Q021",
+      "Q007",
+      "Q053",
+      "Q015",
+      "Q050",
+      "Q033",
+      "Q013",
+      "Q008",
+      "Q014",
+      "Q084",
+      "Q077",
+      "Q052",
+      "Q082",
+      "Q020"
+    ],
+    "mocks": [
+      {
+        "subject": "L11",
+        "ids": [
+          "Q021",
+          "Q007",
+          "Q013",
+          "Q009",
+          "Q008",
+          "Q014",
+          "Q020",
+          "Q019",
+          "Q015"
+        ],
+        "wrongId": "Q007",
+        "correct": 8,
+        "wrong": 1,
+        "blank": 0,
+        "score": 89
+      },
+      {
+        "subject": "L12",
+        "ids": [
+          "Q031",
+          "Q032",
+          "Q033"
+        ],
+        "wrongId": "Q031",
+        "correct": 2,
+        "wrong": 1,
+        "blank": 0,
+        "score": 67
+      },
+      {
+        "subject": "L21",
+        "ids": [
+          "Q052",
+          "Q050",
+          "Q054",
+          "Q053",
+          "Q049",
+          "Q051"
+        ],
+        "wrongId": "Q049",
+        "correct": 5,
+        "wrong": 1,
+        "blank": 0,
+        "score": 83
+      },
+      {
+        "subject": "L22",
+        "ids": [
+          "Q083",
+          "Q076",
+          "Q077",
+          "Q082",
+          "Q078",
+          "Q084"
+        ],
+        "wrongId": "Q076",
+        "correct": 5,
+        "wrong": 1,
+        "blank": 0,
+        "score": 83
+      }
+    ],
+    "wrongRetry": "Q007 removed after correct retry",
+    "weakArea": "L11201 2/3 67%",
+    "nativeConfirmations": 4,
+    "tabs": [
+      "總覽",
+      "刷題練習",
+      "正式模擬",
+      "考古題",
+      "錯題本",
+      "弱點分析",
+      "官方範圍"
+    ],
+    "pageErrors": [],
+    "httpErrors": []
+  },
+  {
+    "width": 375,
+    "height": 900,
+    "practice": [
+      "Q014",
+      "Q051",
+      "Q019",
+      "Q013",
+      "Q008",
+      "Q083",
+      "Q007",
+      "Q082",
+      "Q054",
+      "Q077",
+      "Q020",
+      "Q031",
+      "Q053",
+      "Q009",
+      "Q076",
+      "Q015",
+      "Q032",
+      "Q052",
+      "Q033",
+      "Q021",
+      "Q078",
+      "Q049",
+      "Q050",
+      "Q084"
+    ],
+    "mocks": [
+      {
+        "subject": "L11",
+        "ids": [
+          "Q013",
+          "Q015",
+          "Q019",
+          "Q014",
+          "Q020",
+          "Q007",
+          "Q008",
+          "Q009",
+          "Q021"
+        ],
+        "wrongId": "Q007",
+        "correct": 8,
+        "wrong": 1,
+        "blank": 0,
+        "score": 89
+      },
+      {
+        "subject": "L12",
+        "ids": [
+          "Q033",
+          "Q032",
+          "Q031"
+        ],
+        "wrongId": "Q031",
+        "correct": 2,
+        "wrong": 1,
+        "blank": 0,
+        "score": 67
+      },
+      {
+        "subject": "L21",
+        "ids": [
+          "Q054",
+          "Q051",
+          "Q050",
+          "Q052",
+          "Q049",
+          "Q053"
+        ],
+        "wrongId": "Q049",
+        "correct": 5,
+        "wrong": 1,
+        "blank": 0,
+        "score": 83
+      },
+      {
+        "subject": "L22",
+        "ids": [
+          "Q084",
+          "Q076",
+          "Q082",
+          "Q077",
+          "Q078",
+          "Q083"
+        ],
+        "wrongId": "Q076",
+        "correct": 5,
+        "wrong": 1,
+        "blank": 0,
+        "score": 83
+      }
+    ],
+    "wrongRetry": "Q007 removed after correct retry",
+    "weakArea": "L11201 2/3 67%",
+    "nativeConfirmations": 4,
+    "tabs": [
+      "總覽",
+      "刷題練習",
+      "正式模擬",
+      "考古題",
+      "錯題本",
+      "弱點分析",
+      "官方範圍"
+    ],
+    "pageErrors": [],
+    "httpErrors": []
+  }
+]

@@ -1,4 +1,4 @@
-"""Read-only cue scan; optional Batch 1A baseline checks. Python standard library only."""
+"""Read-only cue scan; optional scoped baseline checks. Python standard library only."""
 import argparse
 import collections
 import csv
@@ -9,6 +9,48 @@ import subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BATCH = ['Q046', 'Q047', 'Q048', 'Q142', 'Q143', 'Q144', 'Q163', 'Q164', 'Q165', 'Q424']
+BATCHES = {'batch1a': BATCH,
+           'batch2a': [f'Q{n:03d}' for start in (85, 112, 127, 133, 139, 154, 169)
+                       for n in range(start, start + 3)],
+           'batch2b': [f'Q{n:03d}' for start in (334, 340, 346, 388)
+                       for n in range(start, start + 6)],
+           'batch2c': [f'Q{n:03d}' for start in (430, 466)
+                       for n in range(start, start + 6)],
+           'batch3a': [f'Q{n:03d}' for start in (1, 10, 16, 22, 34, 40, 43, 61)
+                       for n in range(start, start + 3)],
+           'batch3b': [f'Q{n:03d}' for start in (64, 67, 70, 73, 88, 91, 97, 103)
+                       for n in range(start, start + 3)],
+           'batch3c': [f'Q{n:03d}' for start, stop in ((106, 109), (145, 151), (178, 190))
+                       for n in range(start, stop)],
+           'batch3d': [f'Q{n:03d}' for start in (196, 202, 214, 226)
+                       for n in range(start, start + 6)],
+           'batch3e': [f'Q{n:03d}' for start in (232, 256, 262, 286)
+                       for n in range(start, start + 6)],
+           'batch3f': [f'Q{n:03d}' for n in range(298, 322)],
+           'batch3g': [f'Q{n:03d}' for start in (322, 358)
+                       for n in range(start, start + 12)],
+           'batch3h': [f'Q{n:03d}' for start in (370, 394)
+                       for n in range(start, start + 12)],
+           'batch3i': [f'Q{n:03d}' for start, stop in ((412, 424), (425, 430), (442, 448))
+                       for n in range(start, stop)],
+           'batch3j': [f'Q{n:03d}' for n in range(448, 460)],
+           'batch4a': [f'Q{n:03d}' for start in (4, 25, 28, 37, 55, 58, 79, 94)
+                       for n in range(start, start + 3)],
+           'batch4b': [f'Q{n:03d}' for start in (100, 109, 118, 121, 124, 130, 157, 166)
+                       for n in range(start, start + 3)],
+           'batch4c': [f'Q{n:03d}' for start in (172, 190, 208, 220)
+                       for n in range(start, start + 6)],
+           'batch4d': [f'Q{n:03d}' for start in (238, 244, 250, 268)
+                       for n in range(start, start + 6)],
+           'batch4e': [f'Q{n:03d}' for start in (274, 280, 292, 352)
+                       for n in range(start, start + 6)],
+           'batch4f': [f'Q{n:03d}' for start in (382, 406, 436, 460)
+                       for n in range(start, start + 6)],
+           'batch4g': [f'Q{n:03d}' for n in range(472, 484)],
+           'batch5a': [f'Q{n:03d}' for start in (7, 13, 19, 31, 49, 52, 76, 82)
+                       for n in range(start, start + 3)],
+           'batch5b': [f'Q{n:03d}' for start in (115, 136, 151, 160)
+                       for n in range(start, start + 3)]}
 
 
 def extract(text):
@@ -52,37 +94,39 @@ def scan(db):
     return summary, rows
 
 
-def validate(before, after, before_shell, after_shell, rows):
+def validate(before, after, before_shell, after_shell, rows, batch=BATCH):
     b = {q['id']: q for q in before['questions']}
     a = {q['id']: q for q in after['questions']}
     assert len(after['questions']) == len(a) == len(b) == 483, 'count/IDs'
     assert list(b) == list(a), 'ID order'
     changed = [qid for qid in a if a[qid] != b[qid]]
-    assert changed == BATCH, changed
+    assert changed == batch, changed
     for qid in a:
         q = a[qid]
         assert len(q['options']) == len(set(q['options'])) == 4, qid
         assert q['subject'] in after['subjects'] and q['topic'] in after['topics'], qid
         assert q['topic'].startswith(q['subject']), qid
         assert 0 <= q['answer'] < 4, qid
-        if qid in BATCH:
+        if qid in batch:
             for key in set(q) | set(b[qid]):
                 if key not in {'question', 'options', 'explanation'}:
                     assert q[key] == b[qid][key], (qid, key)
     assert {k: v for k, v in before.items() if k != 'questions'} == {
         k: v for k, v in after.items() if k != 'questions'}, 'DB metadata'
     assert before_shell == after_shell, 'HTML/CSS/JS outside DB changed'
-    assert all(r['ratio'] < 2 for r in rows if r['id'] in BATCH), 'batch length ratio'
-    assert all(',' not in r['repeat_ids'] for r in rows if r['id'] in BATCH), 'batch repeats'
+    assert all(r['ratio'] < 2 for r in rows if r['id'] in batch), 'batch length ratio'
+    assert all(',' not in r['repeat_ids'] for r in rows if r['id'] in batch), 'batch repeats'
     return changed
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--html', type=pathlib.Path, default=ROOT / 'index.html')
-    parser.add_argument('--baseline', help='Git ref containing the pre-Batch-1A index.html')
+    parser.add_argument('--baseline', help='Git ref containing the pre-batch index.html')
+    parser.add_argument('--batch', choices=BATCHES, default='batch1a')
     parser.add_argument('--csv', type=pathlib.Path, help='Write all 483 traceable rows, before/after if baseline supplied')
     args = parser.parse_args()
+    batch = BATCHES[args.batch]
     after, shell = extract(args.html.read_text(encoding='utf-8'))
     summary, rows = scan(after)
     result = {'after': summary}
@@ -92,8 +136,8 @@ def main():
         before, before_shell = extract(text)
         old_summary, old_rows = scan(before)
         result['before'] = old_summary
-        result['changed_ids'] = validate(before, after, before_shell, shell, rows)
-        result['batch_ratios'] = {r['id']: round(r['ratio'], 4) for r in rows if r['id'] in BATCH}
+        result['changed_ids'] = validate(before, after, before_shell, shell, rows, batch)
+        result['batch_ratios'] = {r['id']: round(r['ratio'], 4) for r in rows if r['id'] in batch}
         result['batch_validation'] = 'PASS'
         csv_rows = [dict(stage='before', **r) for r in old_rows] + csv_rows
     if args.csv:

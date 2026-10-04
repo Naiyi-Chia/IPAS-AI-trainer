@@ -1,0 +1,114 @@
+[
+  {
+    "width": 1280,
+    "height": 900,
+    "practice": [
+      "Q474",
+      "Q477",
+      "Q475",
+      "Q476",
+      "Q482",
+      "Q483",
+      "Q473",
+      "Q478",
+      "Q481",
+      "Q480",
+      "Q479",
+      "Q472"
+    ],
+    "mocks": [
+      {
+        "subject": "L23",
+        "ids": [
+          "Q482",
+          "Q479",
+          "Q472",
+          "Q477",
+          "Q478",
+          "Q483",
+          "Q476",
+          "Q473",
+          "Q474",
+          "Q481",
+          "Q475",
+          "Q480"
+        ],
+        "wrongId": "Q472",
+        "correct": 11,
+        "wrong": 1,
+        "blank": 0,
+        "score": 92
+      }
+    ],
+    "wrongRetry": "Q472 removed after correct retry",
+    "weakArea": "L23304 5/6 83%",
+    "nativeConfirmations": 1,
+    "tabs": [
+      "總覽",
+      "刷題練習",
+      "正式模擬",
+      "考古題",
+      "錯題本",
+      "弱點分析",
+      "官方範圍"
+    ],
+    "pageErrors": [],
+    "httpErrors": []
+  },
+  {
+    "width": 375,
+    "height": 900,
+    "practice": [
+      "Q477",
+      "Q475",
+      "Q481",
+      "Q482",
+      "Q483",
+      "Q478",
+      "Q474",
+      "Q476",
+      "Q479",
+      "Q480",
+      "Q472",
+      "Q473"
+    ],
+    "mocks": [
+      {
+        "subject": "L23",
+        "ids": [
+          "Q477",
+          "Q472",
+          "Q476",
+          "Q479",
+          "Q473",
+          "Q474",
+          "Q482",
+          "Q481",
+          "Q480",
+          "Q475",
+          "Q483",
+          "Q478"
+        ],
+        "wrongId": "Q472",
+        "correct": 11,
+        "wrong": 1,
+        "blank": 0,
+        "score": 92
+      }
+    ],
+    "wrongRetry": "Q472 removed after correct retry",
+    "weakArea": "L23304 5/6 83%",
+    "nativeConfirmations": 1,
+    "tabs": [
+      "總覽",
+      "刷題練習",
+      "正式模擬",
+      "考古題",
+      "錯題本",
+      "弱點分析",
+      "官方範圍"
+    ],
+    "pageErrors": [],
+    "httpErrors": []
+  }
+]

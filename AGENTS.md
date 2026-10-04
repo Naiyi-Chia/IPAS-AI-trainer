@@ -51,6 +51,14 @@ Context efficiency must not override correctness: if required evidence is missin
 - Do not add external dependencies unless the need is documented in the Issue.
 - Avoid unrelated refactors, formatting changes, or duplicate implementations.
 
+### Self-authored canonical question data
+
+- `data/practice-questions.json` is the single canonical Source of Truth for self-authored subjects, topics, and questions. Edit this JSON directly; there is no generated practice-bank copy or build step.
+- For self-authored question-content-only Issues, inspect only the relevant JSON records and metadata. Reading or editing `index.html` is unnecessary unless App behavior is explicitly in Scope.
+- Run `python scripts/validate_practice_questions.py` after every practice-bank change. Run `python scripts/audit_question_cues.py` when cue-bias evidence is relevant. `--baseline` uses a Git ref with canonical JSON; pre-migration batch evidence is reproduced from its historical checkout.
+- Preserve existing IDs, sourceType, metadata, answers, and explanations unless the Issue authorizes changing them. Content changes still require the dedicated review scope described below.
+- Local preview requires HTTP (for example `python -m http.server`), because the App loads canonical JSON before initializing its flows.
+
 ### Question-bank and official-content rules
 
 When the task touches question-bank or exam content:

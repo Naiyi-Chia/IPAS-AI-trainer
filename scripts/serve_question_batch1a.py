@@ -18,22 +18,26 @@ Open http://127.0.0.1:8766/batch2c for the 12 reviewed Batch 2C questions.
 import json
 import argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from audit_question_cues import ROOT, BATCHES, extract
+from audit_question_cues import ROOT, BATCHES
 
 
 class Handler(BaseHTTPRequestHandler):
     batch_name = 'batch1a'
 
     def do_GET(self):
+        if self.path == '/data/practice-questions.json':
+            db = json.loads((ROOT / 'data/practice-questions.json').read_text(encoding='utf-8'))
+            db['questions'] = [q for q in db['questions'] if q['id'] in BATCHES[self.batch_name]]
+            data = json.dumps(db, ensure_ascii=False).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(data)
+            return
         if self.path != '/' + self.batch_name:
             self.send_error(404)
             return
         source = (ROOT / 'index.html').read_text(encoding='utf-8')
-        db, _ = extract(source)
-        original = json.dumps(db, ensure_ascii=False, separators=(',', ':'))
-        db['questions'] = [q for q in db['questions'] if q['id'] in BATCHES[self.batch_name]]
-        assert source.count(original) == 1
-        source = source.replace(original, json.dumps(db, ensure_ascii=False, separators=(',', ':')), 1)
         setup = '''<script>
         const qaStorage = new Map();
         Object.defineProperty(window, 'localStorage', {value: {
@@ -44,7 +48,7 @@ class Handler(BaseHTTPRequestHandler):
         </script>'''
         source = source.replace('<script>', setup + '<script>', 1)
         # Keep external official sources outside this deterministic content fixture.
-        source = source.replace('setTimeout(()=>prewarmOfficialCache(),1200);', '')
+        source = source.replace('setTimeout(()=>prewarmOfficialBundle(),0);', '')
         data = source.encode('utf-8')
         self.send_response(200)
         self.send_header('Content-Type', 'text/html; charset=utf-8')

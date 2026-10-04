@@ -5,7 +5,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..'),out=process.argv[2];
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-const DB=JSON.parse(html.match(/^const DB = (.+);$/m)[1]);
+const DB=JSON.parse(fs.readFileSync(path.join(root,'data/practice-questions.json'),'utf8'));
 const bundle=JSON.parse(fs.readFileSync(path.join(root,'data/official-past-papers.json'),'utf8'));
 const topic='L12202',paper=bundle.papers.find(p=>p.subject==='L12');
 const official=paper.questions.filter(q=>q.competency_topic===topic).slice(0,3).map(q=>`PAST-${paper.paper_id}-${q.question_no}`);
@@ -30,6 +30,7 @@ async function run(){
    let release;const gate=new Promise(resolve=>release=resolve);
    await page.route('**/data/official-past-papers.json',async route=>{await gate;await route.continue()});
    await page.goto(url);
+   await page.waitForFunction(()=>DB!==null);
    await page.evaluate(()=>switchPanel('stats'));
    assert.match(await page.locator('#stats').innerText(),/正在載入/);
    assert.equal(await page.locator('.competencyRow').count(),0,'no partial diagnosis before trusted metadata');
@@ -117,7 +118,8 @@ async function run(){
   const ctx=await browser.newContext(),page=await ctx.newPage();let fail=true;
   await page.addInitScript(seed=>localStorage.setItem('ipasAIState',JSON.stringify(seed)),seed);
   await page.route('**/data/official-past-papers.json',route=>fail?route.fulfill({status:503,body:'unavailable'}):route.continue());
-  await page.goto(url);await page.evaluate(()=>switchPanel('stats'));
+  await page.goto(url);
+  await page.waitForFunction(()=>DB!==null);await page.evaluate(()=>switchPanel('stats'));
   await page.locator('#stats [role="alert"]').waitFor();assert.equal(await page.locator('.competencyRow').count(),0);
   await page.evaluate(()=>{switchPanel('practice');qs('#pmode').value='weak';return startPractice()});
   assert.match(await page.locator('#practiceArea').innerText(),/載入失敗/);assert.equal(await page.evaluate(()=>practiceSet.length),0);

@@ -20,7 +20,7 @@ function testResolver(){for(const [url,explicit,expected] of [
 ]){
  const location=new URL(url),ctx=vm.createContext({window:{location,__IPAS_DEV_RAW_BASE__:explicit},location});
  vm.runInContext(resolver,ctx);
- for(const file of ['data/official-past-papers.json',assets[0]])assert.equal(ctx.bundledAssetUrl('/'+file),expected+file,url);
+ for(const file of ['data/practice-questions.json','data/official-past-papers.json',assets[0]])assert.equal(ctx.bundledAssetUrl('/'+file),expected+file,url);
 }}
 async function run(){
  const browser=await chromium.launch({headless:true,channel:process.env.BROWSER_CHANNEL||'msedge'});
@@ -39,7 +39,7 @@ async function run(){
      const base=scenario.name==='production'?pages:scenario.name==='explicit-override'?override:raw;
      if(href.startsWith(base)){
       const relative=decodeURIComponent(href.slice(base.length));
-      if(relative==='data/official-past-papers.json'||assets.includes(relative))file=path.join(root,relative);
+      if(relative==='data/practice-questions.json'||relative==='data/official-past-papers.json'||assets.includes(relative))file=path.join(root,relative);
      }
     }
     if(text!==undefined)return route.fulfill({status:200,contentType:'text/html; charset=utf-8',body:text});
@@ -47,7 +47,7 @@ async function run(){
     return route.fulfill({status:404,body:'Not published at this URL'});
    });
    await page.goto(scenario.name==='production'?pages:pages+'dev/');
-   await page.waitForFunction(()=>typeof loadOfficialPastBundle==='function');
+   await page.waitForFunction(()=>DB!==null);
    await page.evaluate(()=>loadOfficialPastBundle());
    assert.equal(await page.evaluate(()=>window.__IPAS_DEV_RAW_BASE__||null),scenario.name==='explicit-override'?override:null);
    const result=await page.evaluate(async()=>{
@@ -71,6 +71,7 @@ async function run(){
    assert(result.shared>0&&result.question>0);assert.equal(result.overflow,false);
    assert.deepEqual(errors,[]);assert.deepEqual(failures,[]);
    const base=scenario.name==='production'?pages:scenario.name==='explicit-override'?override:raw;
+   assert(requests.includes(base+'data/practice-questions.json'));
    assert(requests.includes(base+'data/official-past-papers.json'));
    for(const asset of assets)assert(requests.includes(base+asset),'asset not requested: '+asset);
    assert(!requests.some(u=>u.startsWith(pages+'dev/data/')||u.startsWith(pages+'dev/assets/')));

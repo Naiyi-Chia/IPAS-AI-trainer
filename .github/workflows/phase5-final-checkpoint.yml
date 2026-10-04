@@ -1,0 +1,113 @@
+name: Phase 5 Final Checkpoint
+
+on:
+  push:
+    branches:
+      - question/issue-14-phase5-checkpoint-ci
+  workflow_dispatch:
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BROWSER_CHANNEL: chromium
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Phase 5 aggregate question-bank invariants
+        shell: python
+        run: |
+          import collections, json, pathlib, re, subprocess
+
+          root = pathlib.Path('.')
+          text = (root / 'index.html').read_text(encoding='utf-8')
+          baseline_ref = 'f1f108599afdf377dd179f5f392a1c69edf54428'
+          baseline_text = subprocess.check_output(['git', 'show', f'{baseline_ref}:index.html']).decode('utf-8')
+
+          def extract(src):
+              m = re.search(r'const DB\s*=\s*', src)
+              assert m, 'DB declaration missing'
+              db, end = json.JSONDecoder().raw_decode(src[m.end():])
+              return db, src[:m.end()] + '<DB>' + src[m.end() + end:]
+
+          before, before_shell = extract(baseline_text)
+          after, after_shell = extract(text)
+          qs = after['questions']
+          assert len(qs) == 483, len(qs)
+          ids = [q['id'] for q in qs]
+          assert len(set(ids)) == 483
+          assert ids == [f'Q{i:03d}' for i in range(1, 484)]
+          assert before_shell == after_shell, 'HTML/CSS/JS outside DB changed during Phase 5'
+          assert {k:v for k,v in before.items() if k != 'questions'} == {k:v for k,v in after.items() if k != 'questions'}, 'DB metadata changed'
+
+          b = {q['id']: q for q in before['questions']}
+          a = {q['id']: q for q in after['questions']}
+          expected = [f'Q{n:03d}' for start in (7,13,19,31,49,52,76,82) for n in range(start,start+3)]
+          expected += [f'Q{n:03d}' for start in (115,136,151,160) for n in range(start,start+3)]
+          changed = [qid for qid in ids if a[qid] != b[qid]]
+          assert changed == expected, (changed, expected)
+          for qid in expected:
+              for key in set(a[qid]) | set(b[qid]):
+                  if key not in {'question','options','explanation'}:
+                      assert a[qid][key] == b[qid][key], (qid, key)
+
+          groups = collections.defaultdict(list)
+          unique_longest = ratio_ge_2 = 0
+          answers = collections.Counter()
+          for q in qs:
+              assert len(q['options']) == len(set(q['options'])) == 4, q['id']
+              assert q['subject'] in after['subjects'] and q['topic'] in after['topics'], q['id']
+              assert q['topic'].startswith(q['subject']), q['id']
+              assert 0 <= q['answer'] < 4, q['id']
+              lengths = [len(re.sub(r'\s','',o)) for o in q['options']]
+              correct = lengths[q['answer']]
+              ratio = correct / ((sum(lengths)-correct)/3)
+              if ratio >= 2: ratio_ge_2 += 1
+              if correct > max(n for i,n in enumerate(lengths) if i != q['answer']): unique_longest += 1
+              key = tuple(sorted(re.sub(r'\s','',o) for o in q['options']))
+              groups[key].append(q['id'])
+              answers['ABCD'[q['answer']]] += 1
+          repeated = [v for v in groups.values() if len(v) > 1]
+          assert ratio_ge_2 == 0, ratio_ge_2
+          assert len(repeated) == 0, repeated
+          assert unique_longest == 52, unique_longest
+          assert dict(answers) == {'A':131,'B':109,'C':122,'D':121}, answers
+          print('PASS Phase 5 aggregate invariants: 483 unique IDs; exact 36 Phase 5 IDs changed; protected fields stable; ratio>=2=0; repeated groups=0; unique-longest=52; answer distribution stable')
+
+      - name: Inline JavaScript syntax
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          const html=fs.readFileSync('index.html','utf8');
+          const re=/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
+          let m,count=0;
+          while((m=re.exec(html))){ if(m[1].trim()){ new vm.Script(m[1]); count++; } }
+          if(!count) throw new Error('no inline scripts found');
+          console.log('PASS inline JavaScript syntax:',count,'script(s)');
+          NODE
+
+      - name: Repo-contained official bundle tests
+        run: python scripts/test_official_past_bundle.py
+
+      - name: Install Playwright runtime
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Dev asset resolution smoke
+        run: node scripts/test_dev_asset_resolution.cjs
+
+      - name: Source-aware weakness regression
+        run: node scripts/test_source_aware_weakness.cjs
+
+      - name: Batch 4A-5B browser regressions
+        run: |
+          set -euo pipefail
+          for batch in 4a 4b 4c 4d 4e 4f 4g 5a 5b; do
+            echo "=== Batch ${batch} ==="
+            node "scripts/test_question_batch${batch}.cjs"
+          done

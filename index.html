@@ -527,7 +527,7 @@ function renderPracticeQ(){
    ? `本輪：${current.ok?"✓ 正確":"✕ 錯誤"}`
    : past?`曾作答：${past.correct?"✓ 正確":"✕ 錯誤"}`:"尚未作答";
  a.innerHTML=`<div class="card questionCard ${q.id.startsWith('PAST-')?'officialQuestion':''}">
- <div class="qmeta"><span class="qmetaPrimary">${q.subject} · ${q.topic} ${esc(q.topicName)}</span><span class="qmetaSecondary">${q.level} · ${difficultyLabel(q.difficulty)}</span></div>
+ <div class="qmeta"><span id="practiceTopicLabel" class="qmetaPrimary">${current||past?`${q.subject} · ${q.topic} ${esc(q.topicName)}`:""}</span><span class="qmetaSecondary">${q.level} · ${difficultyLabel(q.difficulty)}</span></div>
  <div class="small">第 ${pIndex+1} / ${practiceSet.length} 題　｜　<span id="practiceAnsweredCount">已答 ${answered} / ${practiceSet.length}</span>　｜　<span id="practiceAttemptStatus" aria-live="polite">${attemptStatus}</span></div>
  <div class="progress" role="progressbar" aria-label="本輪作答進度" aria-valuemin="0" aria-valuemax="${practiceSet.length}" aria-valuenow="${answered}"><div id="practiceProgressFill" style="width:${practiceSet.length?answered/practiceSet.length*100:0}%"></div></div>
  ${renderPastSharedContext(q)}
@@ -543,6 +543,7 @@ function renderPracticeQ(){
  if(current)restorePracticeAnswer(current,q);
 }
 function restorePracticeAnswer(result,q){
+ const topic=qs("#practiceTopicLabel");if(topic)topic.textContent=`${q.subject} · ${q.topic} ${q.topicName}`;
  qsa("#opts .option").forEach((b,idx)=>{
    b.disabled=true;
    if(idx===q.answer)b.classList.add("correct");

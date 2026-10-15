@@ -284,6 +284,7 @@ const officialLearningResources = "https://ipd.nat.gov.tw/ipas/certification/AIA
 const OFFICIAL_PDF_BASE = "https://www.ipas.org.tw/api/proxy/uploads/certification_resource/bf93f438f7be48d295c1b40a34d79f3d/";
 const officialPdf = filename => OFFICIAL_PDF_BASE + encodeURIComponent(filename);
 const OFFICIAL_PAST_BUNDLE_PATH = "data/official-past-papers.json";
+const OFFICIAL_PAST_CONTENT_VERSION = 2;
 const PAST_MIGRATION_BACKUP_KEY = "ipasAIStateBackupBeforePastCanonicalV2";
 const PAST_CANONICAL_MIGRATION_VERSION = 2;
 let officialPastBundle=null, officialPastBundlePromise=null;
@@ -786,7 +787,7 @@ async function getBundledPastPaper(paper){
   const bp=data.papers.find(p=>p.paper_id===paper.id);
   if(!bp)throw new Error(`找不到內建考卷：${paper.id}`);
   const questions=bp.questions.map(q=>officialPastQuestionIndex.get(`PAST-${paper.id}-${q.question_no}`));
-  return {meta:{paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf,source:"canonical-bundle",sourceFile:bp.source_pdf_file,contentVersion:2},questions};
+  return {meta:{paperId:paper.id,title:`${paper.year} 年 ${paper.session} ${paper.subject} ${paper.name}`,pdf:paper.pdf,source:"canonical-bundle",sourceFile:bp.source_pdf_file,contentVersion:OFFICIAL_PAST_CONTENT_VERSION},questions};
 }
 
 function paperProgress(p){
@@ -1032,6 +1033,7 @@ function validPastAttempt(r,draft=false){
     if(!a||!Number.isSafeInteger(a.number)||a.number<1||a.questionId!==`PAST-${r.paper.id}-${a.number}`||
        ids.has(a.questionId)||numbers.has(a.number)||!Number.isInteger(a.optionCount)||a.optionCount<2||a.optionCount>26||
        !Number.isInteger(a.correctAnswer)||a.correctAnswer<0||a.correctAnswer>=a.optionCount||
+       !(a.contentSignature===undefined||typeof a.contentSignature==='string')||
        !(a.selectedAnswer===null||(Number.isInteger(a.selectedAnswer)&&a.selectedAnswer>=0&&a.selectedAnswer<a.optionCount)))return false;
     ids.add(a.questionId);numbers.add(a.number);
   }
@@ -1051,6 +1053,10 @@ function pastHistoryRecords(){
   const seen=new Set();
   return h.records.filter(r=>{if(!validPastAttempt(r)||seen.has(r.id))return false;seen.add(r.id);return true;}).map(freezePastAttempt);
 }
+function pastQuestionContentSignature(q){
+  // Exact serialized content identity, not a lossy hash; includes everything the review renderers show.
+  return JSON.stringify([q.question,q.options,q.answer,q.visualAssets||[],q.sharedContext||null]);
+}
 function beginPastAttempt(paper){
   pastAttemptSession=null;
   const h=pastHistoryStore();
@@ -1058,7 +1064,7 @@ function beginPastAttempt(paper){
   const startedAt=Date.now();
   pastAttemptSession={schemaVersion:1,id:`past-${crypto.randomUUID()}`,paper:{id:paper.id,title:pastPaperMeta.title,year:paper.year,session:paper.session,level:paper.level,subject:paper.subject,name:paper.name},
     contentVersion:pastPaperMeta.contentVersion,mode:'practice',startedAt,updatedAt:startedAt,submittedAt:null,elapsedMs:0,timeLimitMs:null,overtime:null,status:'in_progress',note:'',
-    answers:pastPaperSet.map(q=>({questionId:q.id,number:q.number,optionCount:q.options.length,selectedAnswer:null,correctAnswer:q.answer}))};
+    answers:pastPaperSet.map(q=>({questionId:q.id,number:q.number,optionCount:q.options.length,selectedAnswer:null,correctAnswer:q.answer,contentSignature:pastQuestionContentSignature(q)}))};
 }
 function recordPastSessionAnswer(choice){
   const s=pastAttemptSession;if(!s||s.status!=='in_progress')return;
@@ -1147,7 +1153,8 @@ function renderPastAttemptReview(index=pastHistoryReviewIndex){
   const a=r.answers[pastHistoryReviewIndex],q=officialPastQuestionIndex.get(a.questionId),choice=a.selectedAnswer;
   const label=n=>n===null?'未作答':String.fromCharCode(65+n);
   const outcome=choice===null?'未作答':choice===a.correctAnswer?'答對':'答錯';
-  const compatible=q&&q.answer===a.correctAnswer&&q.options.length===a.optionCount;
+  const compatible=q&&r.contentVersion===OFFICIAL_PAST_CONTENT_VERSION&&q.answer===a.correctAnswer&&q.options.length===a.optionCount&&
+    typeof a.contentSignature==='string'&&a.contentSignature===pastQuestionContentSignature(q);
   qs('#past').innerHTML=`<div class="card questionCard officialQuestion"><div class="examtop"><div><h3 id="pastAttemptReviewHeading" tabindex="-1" style="margin:0">本次作答回顧</h3><p class="small">${esc(r.paper.title)}<br>${esc(pastAttemptDate(r))} · ${pastAttemptMode(r)} · ${r.score} 分 · ${pastAttemptDuration(r.elapsedMs)}</p></div><button class="btn secondary" onclick="showPastHistory()">返回考試紀錄</button></div>
     ${r.note?`<div class="pastHistoryNote"><b>個人備註</b><br>${esc(r.note)}</div>`:''}
     <div><label for="pastReviewNumber">跳至題號</label> <select id="pastReviewNumber" onchange="renderPastAttemptReview(+this.value)">${r.answers.map((a,i)=>`<option value="${i}" ${i===pastHistoryReviewIndex?'selected':''}>第 ${a.number} 題 · ${a.selectedAnswer===null?'未作答':a.selectedAnswer===a.correctAnswer?'答對':'答錯'}</option>`).join('')}</select></div>

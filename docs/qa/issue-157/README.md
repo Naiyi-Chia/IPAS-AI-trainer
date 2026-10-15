@@ -4,6 +4,8 @@ Base: `dev@4c17d96`. Scoped branch: `codex/issue-157-past-attempt-history`.
 
 Scope: additive official-paper session history in `index.html`, contract in `docs/past-attempt-history.md`, reproducible browser QA in `scripts/test_past_attempt_history.cjs`. Existing isolated feedback/count test harnesses provide stubs for the new history hooks; their progress/scoring assertions remain intact. No official question data changed.
 
+Rework on 2026-10-15 addresses Technical Review FAIL on `8067cfa`: review now checks the saved/current content version and a new exact per-question content signature. No legacy signatures are inferred from today's content. Existing records without proof remain listed/manageable, with saved outcomes and the incompatible-content fallback in review.
+
 ## Checks
 
 - PASS installed Edge at 1280×900 and 375×900: repeated same-paper partial/full attempts have unique stable IDs, independent snapshots, selected answers and stored answer keys; latest-result answers never populate the new session snapshot. Repeated submission is idempotent.
@@ -14,6 +16,7 @@ Scope: additive official-paper session history in `index.html`, contract in `doc
 - PASS unsupported store versions and malformed records/drafts show a warning, preserve original raw data, and permit existing latest-result practice. New sessions do not overwrite unsupported history.
 - PASS schema negative controls: unsupported record version, inconsistent score/correct/time, invalid options, duplicate questions, unknown paper/mode/status, invalid IDs/overtime. Reserved timed-mode limit/overtime consistency validates; current UI does not enable timed exams or define official time limits.
 - PASS incompatible question content shows saved answer/outcome plus a warning, never replacement content. Transient official-bundle load failure shows retry; successful retry leaves persisted history unchanged.
+- PASS same answer index, option count **and content version**, but changed question wording, option text, visual paths or shared context: review omits current question/options/context/visuals, retains the saved selected/correct outcome and warns. Explicit saved/current `contentVersion` mismatch and missing legacy signature also fail closed. Matching content still renders; snapshots/latest results remain unchanged. New signature types are validated. These controls run at both viewport widths.
 - PASS desktop/mobile history and review: no document horizontal overflow or JavaScript errors; screenshots inspected.
 
 Screenshots: [history desktop](history-1280.png), [history mobile](history-375.png), [review desktop](review-1280.png), [review mobile](review-375.png).

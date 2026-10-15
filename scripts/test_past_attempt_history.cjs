@@ -40,10 +40,12 @@ async function run(){
    const first=await page.evaluate(()=>state.pastHistory.records[0]);
    assert.equal(first.answered,2);assert.equal(first.correct,1);assert.equal(first.score,2);assert.equal(first.resultStatus,'partial');
    assert.equal(first.answers[0].selectedAnswer,choice);assert.equal(first.answers[2].selectedAnswer,null);
+   assert.equal(first.contentVersion,await page.evaluate(()=>OFFICIAL_PAST_CONTENT_VERSION));
+   assert.equal(typeof first.answers[0].contentSignature,'string');
    assert.equal(first.mode,'practice');assert.equal(first.timeLimitMs,null);assert.equal(first.overtime,null);
    assert(first.submittedAt>=first.startedAt);assert.equal(first.elapsedMs,first.submittedAt-first.startedAt);
    const validation=await page.evaluate(record=>{
-    const negatives=[r=>r.schemaVersion=99,r=>r.score++,r=>r.correct++,r=>r.elapsedMs++,r=>r.answers[0].selectedAnswer=99,r=>r.answers[0].correctAnswer=-1,r=>r.answers.push(r.answers[0]),r=>r.paper.id='missing',r=>r.mode='unknown',r=>r.overtime=false,r=>r.status='edited',r=>r.id="bad');alert(1)"];
+    const negatives=[r=>r.schemaVersion=99,r=>r.score++,r=>r.correct++,r=>r.elapsedMs++,r=>r.answers[0].selectedAnswer=99,r=>r.answers[0].correctAnswer=-1,r=>r.answers[0].contentSignature=42,r=>r.answers.push(r.answers[0]),r=>r.paper.id='missing',r=>r.mode='unknown',r=>r.overtime=false,r=>r.status='edited',r=>r.id="bad');alert(1)"];
     const rejected=negatives.every(mutate=>{const r=structuredClone(record);mutate(r);return !validPastAttempt(r)});
     const timed=structuredClone(record);timed.mode='timed_exam';timed.timeLimitMs=Math.max(1,timed.elapsedMs-1);timed.overtime=timed.elapsedMs>timed.timeLimitMs;
     return {rejected,timed:validPastAttempt(timed),wrongOvertime:validPastAttempt({...timed,overtime:!timed.overtime})};
@@ -84,6 +86,36 @@ async function run(){
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'review no overflow');
    await page.evaluate(()=>{const q=officialPastQuestionIndex.get(findPastAttempt(pastHistoryReviewId).answers[0].questionId),answer=q.answer;q.answer=(answer+1)%4;renderPastAttemptReview(0);q.answer=answer;});
    assert.match(await page.locator('#past').innerText(),/無法對應這題的紀錄版本/);
+   // Same answer/index/count/version is insufficient when wording/options/context change.
+   const assertUnavailable=async()=>{
+    assert.match(await page.locator('#past').innerText(),/無法對應這題的紀錄版本/);
+    assert.equal(await page.locator('#past .qtext,#past .pastReviewOption,#past .pastSharedContext,#past .pastVisualGrid').count(),0,'unproven current content is not rendered');
+    assert.match(await page.locator('#past .pastQuizStatus').innerText(),new RegExp(`答錯.*當次答案 ${'ABCD'[choice]}`));
+   };
+   for(const field of ['question','options','visualAssets','sharedContext']){
+    const invariants=await page.evaluate(field=>{
+     const r=findPastAttempt(pastHistoryReviewId),a=r.answers[0],q=officialPastQuestionIndex.get(a.questionId);
+     const original=q[field];
+     if(field==='options')q.options=q.options.map((o,i)=>i===0?'CHANGED OPTION TEXT':o);
+     else if(field==='visualAssets')q.visualAssets=['changed-visual.png'];
+     else if(field==='sharedContext')q.sharedContext={text:'CHANGED SHARED CONTEXT',visual_assets:[]};
+     else q.question='CHANGED QUESTION WORDING';
+     const same={answer:q.answer===a.correctAnswer,count:q.options.length===a.optionCount,version:r.contentVersion===OFFICIAL_PAST_CONTENT_VERSION};
+     renderPastAttemptReview(0);q[field]=original;return same;
+    },field);
+    assert.deepEqual(invariants,{answer:true,count:true,version:true});await assertUnavailable();
+   }
+   // Explicit version mismatch and legacy records without a content proof fail closed.
+   for(const kind of ['version','legacy']){
+    assert(await page.evaluate(kind=>{
+     const h=pastHistoryStore(),index=h.records.findIndex(r=>r.id===pastHistoryReviewId),original=h.records[index],changed=structuredClone(original);
+     if(kind==='version')changed.contentVersion++;else changed.answers.forEach(a=>delete a.contentSignature);
+     h.records[index]=changed;const valid=validPastAttempt(changed);renderPastAttemptReview(0);h.records[index]=original;return valid;
+    },kind));
+    await assertUnavailable();
+   }
+   await page.evaluate(()=>renderPastAttemptReview(0));assert.equal(await page.locator('#past .qtext').count(),1,'matching version and exact signature render normally');
+   assert.deepEqual(await page.evaluate(id=>{const r=findPastAttempt(id);return {...r,note:''}},id),first,'compatibility checks never rewrite history');
    assert.equal(await page.evaluate(()=>JSON.stringify({attempts:state.attempts,wrong:state.wrong,bookmarks:state.bookmarks,examHistory:state.examHistory,evidence:competencyEvidence()})),unchanged);
    await page.getByRole('button',{name:'返回考試紀錄',exact:true}).click();
    page.once('dialog',d=>d.dismiss());await card.getByRole('button',{name:'刪除紀錄'}).click();assert.equal(await card.count(),1);
@@ -104,7 +136,7 @@ async function run(){
    assert.equal(await page.evaluate(()=>pastHistoryRecords().length),5);
    assert.deepEqual(await page.evaluate(()=>state.attempts.KEEP),seed.attempts.KEEP);
    assert(await page.evaluate(()=>state.wrong.KEEP&&state.bookmarks.KEEP));
-   assert.deepEqual(errors,[]);await ctx.close();console.log(`PASS ${width}px: independent partial/full attempts, immutable snapshot/review, notes/escaping, confirm cancel/delete, latest-result evidence unchanged, reload/draft recovery/exit/restart/tabs`);
+   assert.deepEqual(errors,[]);await ctx.close();console.log(`PASS ${width}px: independent attempts, immutable review, same-answer/count/version content changes rejected, version mismatch/legacy fail closed, notes/delete/isolation/reload/lifecycle`);
   }
   // Malformed and future versions must not break startup or be silently reset.
   for(const history of [{schemaVersion:99,records:[]},{schemaVersion:1,records:[{id:'bad'}],draft:{bad:true}}]){

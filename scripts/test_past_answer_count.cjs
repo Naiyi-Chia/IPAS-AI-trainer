@@ -22,8 +22,8 @@ for (const selected of [0, 1]) {
   const context = {
     pastPaperSet: Array.from({length: 50}, (_, i) => ({id: `TEST-${i}`, number: i + 1,
       question: 'Test', options: ['A', 'B', 'C', 'D'], answer: 0})),
-    pastPaperMeta: {title: 'Test paper', pdf: '#'}, pastIndex: 0, pastAnswered: false,
-    state: {attempts: {}, wrong: {}}, save() {}, esc: String,
+    pastPaperMeta: {title: 'Test paper', pdf: '#'}, pastIndex: 0, pastAnswered: false, pastAttemptSession: null,
+    state: {attempts: {}, wrong: {}}, save() {}, recordPastSessionAnswer() {}, esc: String,
     renderPastSharedContext: () => '', renderPastVisuals: () => '',
     qs: selector => selector === '#pastQuizArea' ? area : selector === '#pastOpts' ? {focus() {}} : nodes[selector],
     qsa: () => options, document: {createElement: () => ({})}

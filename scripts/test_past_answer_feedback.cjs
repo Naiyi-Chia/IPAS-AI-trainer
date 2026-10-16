@@ -27,7 +27,7 @@ for(let answer=0;answer<4;answer++){
     const context={pastAnswered:false,pastIndex:0,pastPaperSet:[question],
       pastPaperMeta:{title:'Official test paper',pdf:'https://example.test/official.pdf'},
       state:{attempts:{KEEP:{correct:true}},wrong:{'PAST-TEST-1':true},bookmarks:{KEEP:true},examHistory:[{score:80}]},
-      Date:{now:()=>123456789},save:()=>saves++,
+      Date:{now:()=>123456789},save:()=>saves++,recordPastSessionAnswer(){},
       qsa:selector=>{assert.equal(selector,'#pastOpts .option');return options},
       qs:selector=>{assert(selector in nodes,selector);return nodes[selector]},
       document:{createElement:tag=>{assert.equal(tag,'span');return {}}}};
@@ -65,8 +65,8 @@ for(let answer=0;answer<4;answer++){
 // Exercise the real render/navigation functions with existing saved attempts.
 const area=element();
 const focusCalls=[];
-const navigationCode=html.slice(html.indexOf('function pastNext('),html.indexOf('function getQuestionById('));
-const renderContext={pastIndex:0,pastAnswered:true,
+const navigationCode=html.slice(html.indexOf('function pastNext('),html.indexOf('// Separate, versioned session history;'));
+const renderContext={pastIndex:0,pastAnswered:true,pastAttemptSession:null,pastPapers:[],finishPastAttempt:()=>null,beginPastAttempt(){},
   pastPaperMeta:{title:'Official test paper',pdf:'https://example.test/official.pdf'},
   pastPaperSet:[1,2].map(number=>({id:`PAST-TEST-${number}`,number,question:'<Question>',options:['<A>','B & C'],answer:0})),
   state:{attempts:{'PAST-TEST-1':{correct:true}},wrong:{}},

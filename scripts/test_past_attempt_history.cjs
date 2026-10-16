@@ -23,12 +23,12 @@ async function run(){
    assert.deepEqual(await page.evaluate(()=>state),seed,'old state unmodified at upgrade');
    await page.getByRole('tab',{name:'考古題',exact:true}).click();
    await page.getByRole('button',{name:'考試紀錄',exact:true}).click();
-   assert.match(await page.locator('#past').innerText(),/尚無考試紀錄/);
+   assert.match(await page.locator('#history').innerText(),/尚無考試紀錄/);
    // Latest results are deliberately all correct; first new session must not inherit them.
    await page.evaluate(async paperId=>{
     await loadOfficialPastBundle();
     for(const q of officialPastQuestionIndex.values())if(q.paperId===paperId||q.id.startsWith(`PAST-${paperId}-`))state.attempts[q.id]={correct:true,last:10,subject:'PAST',topic:'legacy'};
-    save();await loadPastPaperById(paperId);
+    save();switchPanel('past');await loadPastPaperById(paperId);
    },paperId);
    const choice=await page.evaluate(()=>(pastPaperSet[pastIndex].answer+1)%4);
    await page.locator(`#pastOpts .option[data-i="${choice}"]`).click();
@@ -77,20 +77,20 @@ async function run(){
    const unchanged=await page.evaluate(()=>JSON.stringify({attempts:state.attempts,wrong:state.wrong,bookmarks:state.bookmarks,examHistory:state.examHistory,evidence:competencyEvidence()}));
    if(out){fs.mkdirSync(out,{recursive:true});await page.evaluate(()=>{document.documentElement.style.scrollBehavior='auto';window.scrollTo(0,0);});await page.screenshot({path:path.join(out,`history-${width}.png`),fullPage:true});}
    await card.getByRole('button',{name:'回顧本次作答'}).click();
-   assert.match(await page.locator('#past .pastQuizStatus').innerText(),new RegExp(`答錯.*當次答案 ${'ABCD'[choice]}`));
-   assert.equal(await page.locator('#past .option').count(),0,'review has no answer-edit controls');
+   assert.match(await page.locator('#history .pastQuizStatus').innerText(),new RegExp(`答錯.*當次答案 ${'ABCD'[choice]}`));
+   assert.equal(await page.locator('#history .option').count(),0,'review has no answer-edit controls');
    assert(await page.evaluate(id=>{const r=findPastAttempt(id);return Object.isFrozen(r)&&Object.isFrozen(r.answers[0])&&Object.isFrozen(r.paper)},id));
    if(out){await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(out,`review-${width}.png`),fullPage:true});}
-   await page.getByLabel('跳至題號').selectOption('2');assert.match(await page.locator('.pastQuizStatus').innerText(),/未作答/);
-   await page.getByLabel('跳至題號').selectOption('44');assert(await page.locator('.pastSharedContext').count(),'shared official context reused');
+   await page.getByLabel('跳至題號').selectOption('2');assert.match(await page.locator('#history .pastQuizStatus').innerText(),/未作答/);
+   await page.getByLabel('跳至題號').selectOption('44');assert(await page.locator('#history .pastSharedContext').count(),'shared official context reused');
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'review no overflow');
    await page.evaluate(()=>{const q=officialPastQuestionIndex.get(findPastAttempt(pastHistoryReviewId).answers[0].questionId),answer=q.answer;q.answer=(answer+1)%4;renderPastAttemptReview(0);q.answer=answer;});
-   assert.match(await page.locator('#past').innerText(),/無法對應這題的紀錄版本/);
+   assert.match(await page.locator('#history').innerText(),/無法對應這題的紀錄版本/);
    // Same answer/index/count/version is insufficient when wording/options/context change.
    const assertUnavailable=async()=>{
-    assert.match(await page.locator('#past').innerText(),/無法對應這題的紀錄版本/);
-    assert.equal(await page.locator('#past .qtext,#past .pastReviewOption,#past .pastSharedContext,#past .pastVisualGrid').count(),0,'unproven current content is not rendered');
-    assert.match(await page.locator('#past .pastQuizStatus').innerText(),new RegExp(`答錯.*當次答案 ${'ABCD'[choice]}`));
+    assert.match(await page.locator('#history').innerText(),/無法對應這題的紀錄版本/);
+    assert.equal(await page.locator('#history .qtext,#history .pastReviewOption,#history .pastSharedContext,#history .pastVisualGrid').count(),0,'unproven current content is not rendered');
+    assert.match(await page.locator('#history .pastQuizStatus').innerText(),new RegExp(`答錯.*當次答案 ${'ABCD'[choice]}`));
    };
    for(const field of ['question','options','visualAssets','sharedContext']){
     const invariants=await page.evaluate(field=>{
@@ -114,14 +114,14 @@ async function run(){
     },kind));
     await assertUnavailable();
    }
-   await page.evaluate(()=>renderPastAttemptReview(0));assert.equal(await page.locator('#past .qtext').count(),1,'matching version and exact signature render normally');
+   await page.evaluate(()=>renderPastAttemptReview(0));assert.equal(await page.locator('#history .qtext').count(),1,'matching version and exact signature render normally');
    assert.deepEqual(await page.evaluate(id=>{const r=findPastAttempt(id);return {...r,note:''}},id),first,'compatibility checks never rewrite history');
    assert.equal(await page.evaluate(()=>JSON.stringify({attempts:state.attempts,wrong:state.wrong,bookmarks:state.bookmarks,examHistory:state.examHistory,evidence:competencyEvidence()})),unchanged);
    await page.getByRole('button',{name:'返回考試紀錄',exact:true}).click();
    page.once('dialog',d=>d.dismiss());await card.getByRole('button',{name:'刪除紀錄'}).click();assert.equal(await card.count(),1);
    page.once('dialog',d=>d.accept());await card.getByRole('button',{name:'刪除紀錄'}).click();assert.equal(await card.count(),0);
    assert.equal(await page.evaluate(()=>JSON.stringify({attempts:state.attempts,wrong:state.wrong,bookmarks:state.bookmarks,examHistory:state.examHistory,evidence:competencyEvidence()})),unchanged);
-   await page.evaluate(id=>openPastAttemptReview(id),id);assert.match(await page.locator('#past').innerText(),/已不存在/);
+   await page.evaluate(id=>openPastAttemptReview(id),id);assert.match(await page.locator('#history').innerText(),/已不存在/);
    await page.reload();await page.waitForFunction(()=>DB!==null);
    assert.equal(await page.evaluate(()=>pastHistoryRecords().length),1,'remaining attempt survives reload');
    // Persisted active draft recovers only observed session time, not offline time.
@@ -144,9 +144,9 @@ async function run(){
    await page.addInitScript(data=>localStorage.setItem('ipasAIState',JSON.stringify(data)),{...seed,pastHistory:history});
    await page.goto(url);await page.waitForFunction(()=>DB!==null);
    await page.evaluate(()=>{switchPanel('past');showPastHistory();});
-   assert.match(await page.locator('#past').innerText(),/格式或版本無法讀取/);
+   assert.match(await page.locator('#history').innerText(),/格式或版本無法讀取/);
    assert.deepEqual(await page.evaluate(()=>state.pastHistory),history);assert.deepEqual(await page.evaluate(()=>state.attempts),seed.attempts);
-   await page.evaluate(async paperId=>{await loadPastPaperById(paperId);answerPast(pastPaperSet[pastIndex].answer);exitPastQuiz();},paperId);
+   await page.evaluate(async paperId=>{switchPanel('past');await loadPastPaperById(paperId);answerPast(pastPaperSet[pastIndex].answer);exitPastQuiz();},paperId);
    assert.deepEqual(await page.evaluate(()=>state.pastHistory),history,'unsupported history is never overwritten by a new session');
    await ctx.close();
   }
@@ -157,9 +157,9 @@ async function run(){
   await page.route('**/data/official-past-papers.json',route=>fail?route.fulfill({status:503,body:'unavailable'}):route.continue());
   await page.goto(url);await page.waitForFunction(()=>DB!==null);
   await page.evaluate(async id=>{switchPanel('past');showPastHistory();await openPastAttemptReview(id);},savedRecord.id);
-  assert.match(await page.locator('#past').innerText(),/官方題目載入失敗/);
+  assert.match(await page.locator('#history').innerText(),/官方題目載入失敗/);
   fail=false;await page.getByRole('button',{name:'重試',exact:true}).click();await page.locator('#pastAttemptReviewHeading').waitFor();
-  assert.deepEqual(await page.evaluate(()=>state),stored);await ctx.close();
+  const actual=await page.evaluate(()=>state);assert.deepEqual({...actual,examHistory:actual.examHistory.map(r=>r.kind==='legacy_summary'?r.legacy:r)},stored);await ctx.close();
   console.log('PASS incompatible question snapshot and transient review load failure/retry: saved history unchanged');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 }

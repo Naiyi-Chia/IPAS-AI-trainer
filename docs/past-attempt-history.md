@@ -2,6 +2,8 @@
 
 History is additive to the existing `ipasAIState` localStorage object. `attempts`, `wrong`, `bookmarks`, and `examHistory` keep their current meaning. In particular, `attempts` is still the latest result per stable question ID; history never feeds the weakness calculation.
 
+Issue #164 routes this unchanged official-history contract through the top-level **考試紀錄** tab. The Past Paper page retains a lightweight link; the single shared list and management UI are described in [Unified Exam History](exam-history.md). No second official-history data store is created.
+
 ## Version 1 contract
 
 `state.pastHistory = { schemaVersion: 1, records: [...], draft: null | Draft }`.

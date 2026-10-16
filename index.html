@@ -122,6 +122,9 @@ h3{font-size:18px;line-height:1.35}
 .pastHistoryNote{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px 12px;background:var(--bg);border-radius:8px;margin-top:12px}
 .pastHistoryActions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
 .pastHistoryActions .btn{min-height:44px}
+.historyFilters{margin:12px 0;gap:8px}
+.historyFilters .btn{min-height:44px}
+.statsActions{align-self:start}
 .pastNoteInput{display:block;width:100%;min-height:100px;margin:8px 0 12px;padding:12px;border:1px solid var(--line);border-radius:8px;resize:vertical;font-size:16px}
 .pastReviewJump{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
 .pastReviewJump .btn{min-width:44px;min-height:44px}
@@ -189,6 +192,7 @@ a{color:var(--brand)}
     <button class="tab active" id="tab-practice" role="tab" aria-selected="true" aria-controls="practice" data-panel="practice">刷題練習</button>
     <button class="tab" id="tab-exam" role="tab" aria-selected="false" aria-controls="exam" data-panel="exam">正式模擬</button>
     <button class="tab" id="tab-past" role="tab" aria-selected="false" aria-controls="past" data-panel="past">考古題</button>
+    <button class="tab" id="tab-history" role="tab" aria-selected="false" aria-controls="history" data-panel="history">考試紀錄</button>
     <button class="tab" id="tab-wrong" role="tab" aria-selected="false" aria-controls="wrong" data-panel="wrong">錯題本</button>
     <button class="tab" id="tab-stats" role="tab" aria-selected="false" aria-controls="stats" data-panel="stats">弱點分析</button>
     <button class="tab" id="tab-scope" role="tab" aria-selected="false" aria-controls="scope" data-panel="scope">官方範圍</button>
@@ -201,6 +205,7 @@ a{color:var(--brand)}
   <section id="practice" class="panel active" role="tabpanel" aria-labelledby="tab-practice"></section>
   <section id="exam" class="panel" role="tabpanel" aria-labelledby="tab-exam" hidden></section>
   <section id="past" class="panel" role="tabpanel" aria-labelledby="tab-past" hidden></section>
+  <section id="history" class="panel" role="tabpanel" aria-labelledby="tab-history" hidden></section>
   <section id="wrong" class="panel" role="tabpanel" aria-labelledby="tab-wrong" hidden></section>
   <section id="stats" class="panel" role="tabpanel" aria-labelledby="tab-stats" hidden></section>
   <section id="scope" class="panel" role="tabpanel" aria-labelledby="tab-scope" hidden></section>
@@ -374,6 +379,7 @@ const pastPapers = [
 const state = JSON.parse(localStorage.getItem("ipasAIState") || '{"attempts":{},"wrong":{},"bookmarks":{},"examHistory":[]}');
 let practiceSet=[], pIndex=0, practiceSessionResults={}, practiceStartedAt=0, practiceSessionSummaryText="";
 let examSet=[], eIndex=0, examAnswers={}, examTimer=null, examSeconds=0, examSubmitted=false, lastExamReview=null;
+let mockSession=null,historyFilter='all',mockReviewId=null;
 let pastPaperSet=[], pastIndex=0, pastAnswered=false, pastPaperMeta=null, pdfJsLoading=null;
 let pastAttemptSession=null, pastHistoryReviewId=null, pastHistoryReviewIndex=0, pastHistoryRequest=0;
 const PAST_HISTORY_SCHEMA_VERSION=1;
@@ -413,13 +419,15 @@ function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",
 function switchPanel(id){
  if(!DB||!qs(`#tab-${id}`))return;
  if(qs('#past')?.classList.contains('active')){finishPastAttempt('interrupted');pastAttemptSession=null;pastHistoryRequest++;}
+ if(qs('#history')?.classList.contains('active')&&id!=='history'){pastHistoryRequest++;pastHistoryReviewId=null;mockReviewId=null;}
  qsa(".panel").forEach(x=>{const active=x.id===id;x.classList.toggle("active",active);x.hidden=!active;});
  qsa(".tab").forEach(x=>{const active=x.dataset.panel===id;x.classList.toggle("active",active);x.setAttribute("aria-selected",String(active));});
  if(id==="past")renderPastPapers();if(id==="wrong")renderWrong();if(id==="stats")renderStats();if(id==="scope")renderScope();
+ if(id==="history")renderUnifiedHistory();
 }
 const appTabs=qsa(".tab");
 appTabs.forEach((b,index)=>{
- b.onclick=()=>switchPanel(b.dataset.panel);
+ b.onclick=()=>{if(b.dataset.panel==='history')historyFilter='all';switchPanel(b.dataset.panel);};
  b.onkeydown=e=>{
    let next=null;
    if(e.key==="ArrowRight")next=(index+1)%appTabs.length;
@@ -427,7 +435,7 @@ appTabs.forEach((b,index)=>{
    if(e.key==="Home")next=0;
    if(e.key==="End")next=appTabs.length-1;
    if(next===null)return;
-   e.preventDefault();appTabs[next].focus();switchPanel(appTabs[next].dataset.panel);
+   e.preventDefault();appTabs[next].focus();if(appTabs[next].dataset.panel==='history')historyFilter='all';switchPanel(appTabs[next].dataset.panel);
  };
 });
 function focusQuestion(areaSelector){setTimeout(()=>qs(areaSelector+" .qtext")?.focus(),0)}
@@ -670,6 +678,7 @@ function startExam(){
  let pool=DB.questions.filter(q=>q.subject===sub);
  examSet=buildStratifiedExam(pool,Math.min(n,pool.length));eIndex=0;examAnswers={};examSubmitted=false;lastExamReview=null;
  examSeconds=DB.subjects[sub].minutes*60;
+ mockSession={id:`mock-${crypto.randomUUID()}`,startedAt:Date.now(),configuration:{subject:sub,requestedCount:n,timeLimitSeconds:examSeconds},questions:JSON.parse(JSON.stringify(examSet))};
  qs("#examSessionSummary").textContent=subjectLabel(sub)+"｜"+examSet.length+" 題｜"+DB.subjects[sub].minutes+" 分鐘";
  qs("#examSettings").classList.add("hidden");
  qs("#examSessionBar").classList.remove("hidden");
@@ -705,14 +714,23 @@ function submitExam(auto){
    return {q,index:idx,selected,ok,unanswered};
  });
  let score=Math.round(correct/examSet.length*100),sub=examSet[0].subject,wrong=examSet.length-correct-blank;
- state.examHistory.unshift({date:Date.now(),subject:sub,score,count:examSet.length,correct,wrong,blank,mode:examSet.length===50?'full':'custom'});state.examHistory=state.examHistory.slice(0,30);save();
+ const attempt=createMockAttempt(auto);
+ const historySaved=attempt&&(state.examHistory===undefined||Array.isArray(state.examHistory));
+ if(historySaved){if(state.examHistory===undefined)state.examHistory=[];state.examHistory.unshift(attempt);}
+ let persistFailed=false;try{save();}catch(e){persistFailed=true;}
  renderExamResult(auto,score,correct,wrong,blank);
+ if(persistFailed)qs('#examArea').insertAdjacentHTML('afterbegin','<div class="notice" id="examHistorySaveStatus" role="alert"><p>本次結果尚未儲存到此裝置。結果仍保留在本頁，請確認瀏覽器儲存空間後重試，勿重新整理。</p><button class="btn secondary" onclick="retryExamHistorySave()">重試儲存結果</button></div>');
+ if(!historySaved)qs('#examArea').insertAdjacentHTML('afterbegin','<p class="notice" role="alert">模擬紀錄格式無法讀取，本次未新增考試紀錄；原始資料與作答進度仍保留。</p>');
+ if(qs('#history')?.classList.contains('active')&&qs('#historyList'))renderUnifiedHistory();
+}
+function retryExamHistorySave(){
+ try{save();qs('#examHistorySaveStatus').textContent='本次結果已儲存。';}catch(e){qs('#examHistorySaveStatus').setAttribute('role','alert');}
 }
 function renderExamResult(auto,score,correct,wrong,blank){
  qs("#examArea").innerHTML=`<div class="card questionCard"><h2>${auto?"時間到，已自動交卷":"模擬完成"}</h2>
  <div class="grid" style="margin-top:8px"><div class="card metricCard c4"><div class="label">分數</div><div class="kpi ${score>=70?"good":"bad"}">${score}</div></div><div class="card metricCard c4"><div class="label">答對</div><div class="kpi good">${correct}</div></div><div class="card metricCard c4"><div class="label">答錯／未答</div><div class="kpi bad">${wrong+blank}</div></div></div>
  <p>${examSet.length} 題中答對 ${correct} 題、答錯 ${wrong} 題、未作答 ${blank} 題。以單科 70 分作為練習參考：<b class="${score>=70?"good":"bad"}">${score>=70?"達標":"尚未達標"}</b>。</p>
- <div class="controls"><button class="btn primary" onclick="renderExamReview('all')">逐題檢討</button><button class="btn secondary" onclick="renderExamReview('wrong')">只看錯題</button><button class="btn secondary" onclick="startExam()">再考一次</button><button class="btn secondary" onclick="switchPanel('wrong')">錯題本</button></div></div>`;
+ <div class="controls"><button class="btn primary" onclick="renderExamReview('all')">逐題檢討</button><button class="btn secondary" onclick="renderExamReview('wrong')">只看錯題</button><button class="btn secondary" onclick="startExam()">再考一次</button><button class="btn secondary" onclick="openExamHistory('mock')">考試紀錄</button><button class="btn secondary" onclick="switchPanel('wrong')">錯題本</button></div></div>`;
 }
 function renderExamReview(filter='all'){
  if(!lastExamReview)return;
@@ -720,13 +738,72 @@ function renderExamReview(filter='all'){
  qs("#examArea").innerHTML=`<div class="card questionCard">
  <div class="examtop"><div><h3 style="margin:0">考後逐題檢討</h3><div class="small" style="margin-top:4px">${subjectLabel(examSet[0].subject)}｜${examSet.length} 題</div></div><button class="btn secondary" onclick="renderExam()">返回模擬設定</button></div>
  <div class="controls" style="margin:12px 0"><button class="btn ${filter==='all'?'primary':'secondary'}" onclick="renderExamReview('all')">全部</button><button class="btn ${filter==='wrong'?'primary':'secondary'}" onclick="renderExamReview('wrong')">只看錯題</button><button class="btn ${filter==='blank'?'primary':'secondary'}" onclick="renderExamReview('blank')">未作答</button></div>
- ${rows.length?rows.map(r=>{
-   const q=r.q; const chosen=r.selected===undefined?'未作答':`${String.fromCharCode(65+r.selected)}. ${esc(q.options[r.selected])}`; const correct=`${String.fromCharCode(65+q.answer)}. ${esc(q.options[q.answer])}`;
-   return `<details class="reviewItem" ${!r.ok?'open':''}><summary><span class="${r.ok?'good':'bad'}">${r.ok?'✓':'✕'}</span> 第 ${r.index+1} 題｜${esc(q.topicName)}</summary><div class="reviewBody"><div style="font-weight:700;margin-bottom:8px">${esc(q.question)}</div><div class="reviewChoice ${r.ok?'correct':'wrong'}"><b>你的答案：</b>${chosen}</div><div class="reviewChoice correct"><b>正確答案：</b>${correct}</div><div class="explain"><b>解析：</b>${esc(q.explanation)}<div class="small" style="margin-top:5px">${esc(q.sourceType)}</div></div></div></details>`;
- }).join(''):'<p>這個篩選條件下沒有題目。</p>'}
+ ${examReviewRowsMarkup(rows)}
  </div>`;
 }
+function examReviewRowsMarkup(rows){
+ return rows.length?rows.map(r=>{
+   const q=r.q; const chosen=r.selected===undefined?'未作答':`${String.fromCharCode(65+r.selected)}. ${esc(q.options[r.selected])}`; const correct=`${String.fromCharCode(65+q.answer)}. ${esc(q.options[q.answer])}`;
+   return `<details class="reviewItem" ${!r.ok?'open':''}><summary><span class="${r.ok?'good':'bad'}">${r.ok?'✓':'✕'}</span> 第 ${r.index+1} 題｜${esc(q.topicName)}</summary><div class="reviewBody"><div style="font-weight:700;margin-bottom:8px">${esc(q.question)}</div><div class="reviewChoice ${r.ok?'correct':'wrong'}"><b>你的答案：</b>${chosen}</div><div class="reviewChoice correct"><b>正確答案：</b>${correct}</div><div class="explain"><b>解析：</b>${esc(q.explanation)}<div class="small" style="margin-top:5px">${esc(q.sourceType)}</div></div></div></details>`;
+ }).join(''):'<p>這個篩選條件下沒有題目。</p>';
+}
 
+function freezeHistoryValue(value){
+ if(value&&typeof value==='object'&&!Object.isFrozen(value)){Object.values(value).forEach(freezeHistoryValue);Object.freeze(value);}return value;
+}
+function validLegacyMockSummary(r){
+ if(!r||typeof r!=='object'||Array.isArray(r)||'schemaVersion' in r||'answers' in r||'kind' in r||'id' in r||!Number.isFinite(r.score)||r.score<0||r.score>100)return false;
+ if(r.date!==undefined&&(!Number.isSafeInteger(r.date)||r.date<0||r.date>8640000000000000))return false;
+ if(r.subject!==undefined&&typeof r.subject!=='string'||r.mode!==undefined&&!['full','custom'].includes(r.mode))return false;
+ return ['count','correct','wrong','blank'].every(k=>r[k]===undefined||Number.isSafeInteger(r[k])&&r[k]>=0);
+}
+function validMockAttempt(r){
+ if(!r||r.schemaVersion!==1||typeof r.id!=='string'||!/^mock-[a-zA-Z0-9-]+$/.test(r.id)||typeof r.note!=='string')return false;
+ if(r.kind==='legacy_summary')return validLegacyMockSummary(r.legacy);
+ if(r.kind!=='mock_attempt'||!['full','custom'].includes(r.mode)||typeof r.subject!=='string'||
+    !Number.isSafeInteger(r.startedAt)||r.startedAt<0||!Number.isSafeInteger(r.submittedAt)||r.submittedAt<r.startedAt||r.submittedAt>8640000000000000||
+    r.date!==r.submittedAt||r.elapsedMs!==r.submittedAt-r.startedAt||!r.configuration||r.configuration.subject!==r.subject||
+    !Number.isSafeInteger(r.configuration.requestedCount)||r.configuration.requestedCount<1||
+    !Number.isSafeInteger(r.configuration.timeLimitSeconds)||r.configuration.timeLimitSeconds<1||
+    !Number.isInteger(r.remainingSeconds)||r.remainingSeconds<0||r.remainingSeconds>r.configuration.timeLimitSeconds||
+    typeof r.autoSubmitted!=='boolean'||r.timedOut!==(r.autoSubmitted&&r.remainingSeconds===0)||
+    !Array.isArray(r.answers)||!r.answers.length||r.configuration.requestedCount<r.answers.length)return false;
+ const ids=new Set();let correct=0,blank=0;
+ for(let i=0;i<r.answers.length;i++){
+  const a=r.answers[i],q=a?.question;
+  if(!q||a.number!==i+1||!['id','subject','topic','topicName','question','explanation','sourceType'].every(k=>typeof q[k]==='string')||q.subject!==r.subject||ids.has(q.id)||
+     !Array.isArray(q.options)||q.options.length<2||q.options.length>26||!q.options.every(o=>typeof o==='string')||
+     !Number.isInteger(a.correctAnswer)||a.correctAnswer<0||a.correctAnswer>=q.options.length||q.answer!==a.correctAnswer||
+     !(a.selectedAnswer===null||Number.isInteger(a.selectedAnswer)&&a.selectedAnswer>=0&&a.selectedAnswer<q.options.length)||
+     a.correct!==(a.selectedAnswer===a.correctAnswer)||a.unanswered!==(a.selectedAnswer===null))return false;
+  ids.add(q.id);if(a.correct)correct++;if(a.unanswered)blank++;
+ }
+ return r.count===r.answers.length&&r.correct===correct&&r.blank===blank&&r.wrong===r.count-correct-blank&&r.score===Math.round(correct/r.count*100)&&r.mode===(r.count===50?'full':'custom');
+}
+function createMockAttempt(auto){
+ if(!mockSession)return null;
+ const submittedAt=Math.max(mockSession.startedAt,Date.now()),answers=mockSession.questions.map((q,i)=>{
+  const selectedAnswer=examAnswers[q.id]===undefined?null:examAnswers[q.id];
+  return {number:i+1,question:q,selectedAnswer,correctAnswer:q.answer,correct:selectedAnswer===q.answer,unanswered:selectedAnswer===null};
+ });
+ const correct=answers.filter(a=>a.correct).length,blank=answers.filter(a=>a.unanswered).length,count=answers.length;
+ const r={schemaVersion:1,kind:'mock_attempt',id:mockSession.id,mode:count===50?'full':'custom',subject:mockSession.configuration.subject,configuration:mockSession.configuration,
+  startedAt:mockSession.startedAt,submittedAt,date:submittedAt,elapsedMs:submittedAt-mockSession.startedAt,remainingSeconds:Math.max(0,examSeconds),autoSubmitted:!!auto,timedOut:!!auto&&examSeconds<=0,
+  answers,count,correct,wrong:count-correct-blank,blank,score:Math.round(correct/count*100),note:''};
+ return validMockAttempt(r)?freezeHistoryValue(r):null;
+}
+function migrateLegacyMockHistory(){
+ if(!Array.isArray(state.examHistory))return '';
+ const original=state.examHistory,next=original.map(r=>validLegacyMockSummary(r)?{schemaVersion:1,kind:'legacy_summary',id:`mock-${crypto.randomUUID()}`,note:typeof r.note==='string'?r.note:'',legacy:JSON.parse(JSON.stringify(r))}:r);
+ if(next.every((r,i)=>r===original[i]))return '';
+ state.examHistory=next;
+ try{save();return '';}catch(e){state.examHistory=original;return '舊模擬紀錄無法儲存升級，原始資料仍保留。請確認瀏覽器儲存空間後重試。';}
+}
+function mockHistoryRecords(){
+ if(!Array.isArray(state.examHistory))return [];
+ const seen=new Set();return state.examHistory.filter(r=>{if(!validMockAttempt(r)||seen.has(r.id))return false;seen.add(r.id);return true;}).map(freezeHistoryValue);
+}
+function findMockAttempt(id){return mockHistoryRecords().find(r=>r.id===id);}
 function cleanBundledOption(value,letter){
   const raw=String(value||"").trim();
   for(const prefix of [`(${letter})`,`（${letter}）`,`${letter}.`,`${letter}、`]){
@@ -1103,48 +1180,87 @@ function pastAttemptDuration(ms){const sec=Math.floor(ms/1000);return `${Math.fl
 function pastAttemptMode(r){return r.mode==='practice'?'刷題練習':'計時考試';}
 function pastAttemptTiming(r){return r.timeLimitMs===null?'未計時（無時間限制）':`限制 ${pastAttemptDuration(r.timeLimitMs)} · ${r.overtime?'已超時':'未超時'}`;}
 function showPastHistory(){
-  finishPastAttempt('interrupted');pastAttemptSession=null;pastHistoryReviewId=null;pastHistoryRequest++;
-  renderPastHistory();setTimeout(()=>qs('#pastHistoryHeading')?.focus(),0);
+  openExamHistory('past');
 }
-function renderPastHistory(message=''){
-  const records=pastHistoryRecords().sort((a,b)=>b.startedAt-a.startedAt),h=pastHistoryStore();
-  const invalid=state.pastHistory!==undefined&&(!h||h.records.length!==records.length||h.draft&&!validPastAttempt(h.draft,true));
-  qs('#past').innerHTML=`<div class="card"><div class="examtop"><div><h3 id="pastHistoryHeading" tabindex="-1" style="margin:0">考試紀錄</h3><p class="small">每次作答獨立保存。分數依本次答案計算，未作答題目不計分。</p></div><button class="btn secondary" onclick="exitPastQuiz()">返回考卷列表</button></div>
-    <div role="status" id="pastHistoryStatus">${esc(message)}</div>${invalid?'<p role="alert" class="bad">部分紀錄格式或版本無法讀取，原始資料仍保留。本版不會覆寫不支援的資料。</p>':''}</div>
-    <div class="pastHistoryList">${records.length?records.map(r=>`<article class="card pastHistoryCard" data-attempt-id="${esc(r.id)}">
-      <div><div class="small">${esc(r.paper.year)} 年 ${esc(r.paper.session)} · ${esc(r.paper.level)} · ${esc(r.paper.subject)}</div><h3 style="margin:6px 0">${esc(r.paper.name)}</h3><div class="small">${esc(pastAttemptDate(r))} · ${pastAttemptMode(r)} · ${r.status==='interrupted'?'中途結束':'已交卷'}${r.resultStatus==='partial'?'（含未作答）':''}</div></div>
-      <div class="pastHistoryScore"><div class="kpi">${r.score}<span class="small"> 分</span></div><div>${r.correct} / ${r.total} 題正確</div></div>
-      <div style="grid-column:1/-1"><div class="pastHistoryFacts"><span>本次作答 ${r.answered} / ${r.total} 題</span><span>實際時間 ${pastAttemptDuration(r.elapsedMs)}</span><span>${pastAttemptTiming(r)}</span></div>${r.note?`<div class="pastHistoryNote"><b>個人備註</b><br>${esc(r.note.length>120?r.note.slice(0,120)+'…':r.note)}</div>`:''}</div>
-      <div class="pastHistoryActions"><button class="btn primary" onclick="openPastAttemptReview('${r.id}')">回顧本次作答</button><button class="btn secondary" onclick="editPastAttemptNote('${r.id}')">${r.note?'修改':'新增'}備註</button><button class="btn danger" onclick="deletePastAttempt('${r.id}')">刪除紀錄</button></div></article>`).join(''):'<div class="card"><h3>尚無考試紀錄</h3><p>開啟官方考卷並作答，完成或離開時會保存本次紀錄。既有進度仍保留；舊進度沒有所選答案，無法還原成單次紀錄。</p></div>'}</div>`;
+function openExamHistory(filter='all'){
+  historyFilter=['all','past','mock'].includes(filter)?filter:'all';pastHistoryReviewId=null;mockReviewId=null;pastHistoryRequest++;
+  switchPanel('history');qs('#pastHistoryHeading')?.focus();
+}
+function renderPastHistory(message=''){renderUnifiedHistory(message);}
+function historyEntry(source,r){
+  if(source==='past')return {source,r,id:r.id,date:r.startedAt,title:r.paper.name,identity:`${r.paper.year} 年 ${r.paper.session} · ${r.paper.level} · ${r.paper.subject}`,score:r.score,correct:r.correct,total:r.total,elapsed:r.elapsedMs,mode:pastAttemptMode(r),detail:`${r.status==='interrupted'?'中途結束':'已交卷'} · 本次作答 ${r.answered}/${r.total} 題 · ${pastAttemptTiming(r)}`};
+  const legacy=r.kind==='legacy_summary',data=legacy?r.legacy:r,subject=data.subject;
+  const mode=legacy?(data.mode==='full'?'完整模擬':data.mode==='custom'?'加強／快速模擬':'模式未記錄'):`${r.configuration.requestedCount===50?'完整':r.configuration.requestedCount===40?'加強':'快速'}模擬 · ${r.count} 題`;
+  return {source,r,id:r.id,date:data.date??null,title:DB.subjects[subject]?subjectLabel(subject):subject||'科目未記錄',identity:legacy?'舊模擬成績摘要':'自編題模擬考',score:data.score,correct:data.correct??null,total:data.count??null,elapsed:legacy?null:r.elapsedMs,mode,detail:legacy?'此舊紀錄僅有成績摘要，無法回顧逐題答案':`${r.timedOut?'時間到自動交卷':r.autoSubmitted?'自動交卷':'已交卷'} · 答錯 ${r.wrong} 題 · 未答 ${r.blank} 題`,legacy};
+}
+function renderUnifiedHistory(message=''){
+  pastHistoryRequest++;pastHistoryReviewId=null;mockReviewId=null;
+  const migrationMessage=migrateLegacyMockHistory(),past=pastHistoryRecords(),mock=mockHistoryRecords(),h=pastHistoryStore();
+  const invalidPast=state.pastHistory!==undefined&&(!h||h.records.length!==past.length||h.draft&&!validPastAttempt(h.draft,true));
+  const invalidMock=state.examHistory!==undefined&&(!Array.isArray(state.examHistory)||state.examHistory.length!==mock.length);
+  const records=[...past.map(r=>historyEntry('past',r)),...mock.map(r=>historyEntry('mock',r))].filter(e=>historyFilter==='all'||historyFilter===e.source).sort((a,b)=>(b.date??-1)-(a.date??-1));
+  qs('#history').innerHTML=`<div class="card"><h3 id="pastHistoryHeading" tabindex="-1" style="margin-top:0">考試紀錄</h3><p class="small">回看每次考古題與模擬考的作答。備註與單筆刪除只管理紀錄，作答進度與弱點分析依據仍保留。</p>
+    <div class="controls historyFilters" role="group" aria-label="紀錄類型">${[['all','全部'],['past','考古題'],['mock','模擬考']].map(([key,label])=>`<button class="btn ${historyFilter===key?'primary':'secondary'}" aria-pressed="${historyFilter===key}" onclick="openExamHistory('${key}')">${label}</button>`).join('')}</div>
+    <p id="historyStatus" role="status">${esc(message||migrationMessage)}${message||migrationMessage?' ':''}共 ${records.length} 筆紀錄</p>${invalidPast||invalidMock?'<p role="alert" class="bad">部分紀錄格式或版本無法讀取，原始資料仍保留。本版不會覆寫不支援的資料。</p>':''}</div>
+    <div class="pastHistoryList" id="historyList">${records.length?records.map(e=>`<article class="card pastHistoryCard" data-attempt-id="${e.id}" data-source="${e.source}">
+      <div><div class="small"><b>${e.source==='past'?'官方考古題':'模擬考'}</b> · ${esc(e.identity)}</div><h3 style="margin:6px 0">${esc(e.title)}</h3><div class="small">${e.date===null?'日期未記錄':esc(new Date(e.date).toLocaleString('zh-TW',{hour12:false}))} · ${e.mode}</div></div>
+      <div class="pastHistoryScore"><div class="kpi">${e.score}<span class="small"> 分</span></div><div>${e.correct===null||e.total===null?'答對題數未記錄':`${e.correct} / ${e.total} 題正確`}</div></div>
+      <div style="grid-column:1/-1"><div class="pastHistoryFacts"><span>${e.elapsed===null?'作答時間未記錄':`實際時間 ${pastAttemptDuration(e.elapsed)}`}</span><span>${esc(e.detail)}</span></div>${e.r.note?`<div class="pastHistoryNote"><b>個人備註</b><br>${esc(e.r.note.length>120?e.r.note.slice(0,120)+'…':e.r.note)}</div>`:''}</div>
+      <div class="pastHistoryActions">${e.legacy?'':`<button class="btn primary" onclick="${e.source==='past'?'openPastAttemptReview':'openMockAttemptReview'}('${e.id}')">回顧本次作答</button>`}<button class="btn secondary" onclick="${e.source==='past'?'editPastAttemptNote':'editMockAttemptNote'}('${e.id}')">${e.r.note?'修改':'新增'}備註</button><button class="btn danger" onclick="${e.source==='past'?'deletePastAttempt':'deleteMockAttempt'}('${e.id}')">刪除紀錄</button></div></article>`).join(''):'<div class="card"><h3>尚無考試紀錄</h3><p>完成模擬考，或在官方考卷作答後完成／離開，就能在這裡回顧本次紀錄。既有考古題進度仍留在考卷列表。</p></div>'}</div>`;
 }
 function findPastAttempt(id){return pastHistoryRecords().find(r=>r.id===id);}
-function editPastAttemptNote(id){
-  const r=findPastAttempt(id);if(!r){renderPastHistory('這筆紀錄已不存在。');return;}
-  qs('#past').innerHTML=`<div class="card questionCard"><h3>個人備註</h3><p>${esc(r.paper.title)}<br><span class="small">${esc(pastAttemptDate(r))} · ${r.score} 分</span></p><label for="pastAttemptNote">這次作答的複習重點</label><textarea id="pastAttemptNote" class="pastNoteInput" maxlength="2000">${esc(r.note)}</textarea><p class="small">最多 2,000 字。備註不會變更答案、分數或作答時間。</p><div class="controls"><button class="btn primary" onclick="savePastAttemptNote('${r.id}')">儲存備註</button><button class="btn secondary" onclick="showPastHistory()">取消</button></div></div>`;
+function findHistoryAttempt(source,id){return source==='past'?findPastAttempt(id):findMockAttempt(id);}
+function editPastAttemptNote(id){editHistoryNote('past',id);}
+function editMockAttemptNote(id){editHistoryNote('mock',id);}
+function editHistoryNote(source,id){
+  const r=findHistoryAttempt(source,id);if(!r){renderUnifiedHistory('這筆紀錄已不存在。');return;}
+  const e=historyEntry(source,r);
+  qs('#history').innerHTML=`<div class="card questionCard"><h3>個人備註</h3><p>${esc(e.title)}<br><span class="small">${e.source==='past'?'官方考古題':'模擬考'} · ${e.date===null?'日期未記錄':esc(new Date(e.date).toLocaleString('zh-TW'))} · ${e.score} 分</span></p><label for="pastAttemptNote">這次作答的複習重點</label><textarea id="pastAttemptNote" class="pastNoteInput" maxlength="2000">${esc(r.note)}</textarea><p class="small">最多 2,000 字。備註不會變更答案、分數或作答時間。</p><p id="historyNoteStatus" role="alert"></p><div class="controls"><button class="btn primary" onclick="saveHistoryNote('${source}','${r.id}')">儲存備註</button><button class="btn secondary" onclick="openExamHistory(historyFilter)">取消</button></div></div>`;
   qs('#pastAttemptNote').focus();
 }
-function savePastAttemptNote(id){
-  const h=pastHistoryStore(),r=findPastAttempt(id);if(!h||!r){renderPastHistory('這筆紀錄已不存在。');return;}
+function saveHistoryNote(source,id){
+  const r=findHistoryAttempt(source,id);if(!r){renderUnifiedHistory('這筆紀錄已不存在。');return;}
   const note=qs('#pastAttemptNote')?.value;if(typeof note!=='string'||note.length>2000)return;
-  h.records=h.records.map(a=>a===r?freezePastAttempt({...r,note}):a);save();renderPastHistory('備註已儲存。');qs('#pastHistoryHeading')?.focus();
+  const original=source==='past'?pastHistoryStore().records:state.examHistory;
+  const next=original.map(a=>a===r?freezeHistoryValue({...r,note}):a);
+  const assign=value=>{if(source==='past')pastHistoryStore().records=value;else state.examHistory=value;};
+  assign(next);
+  try{save();}catch(e){assign(original);qs('#historyNoteStatus').textContent='備註未能儲存，請確認瀏覽器儲存空間後重試。';return;}
+  renderUnifiedHistory('備註已儲存。');qs('#pastHistoryHeading')?.focus();
 }
-function deletePastAttempt(id){
-  const r=findPastAttempt(id);if(!r){renderPastHistory('這筆紀錄已不存在。');return;}
-  if(!confirm(`刪除 ${r.paper.title}\n${pastAttemptDate(r)} 的這筆考試紀錄？\n備註與本次作答快照將永久刪除。既有刷題進度、錯題本及弱點分析不會變更。`))return;
-  const h=pastHistoryStore();h.records=h.records.filter(a=>a.id!==id);save();pastHistoryReviewId=null;pastHistoryRequest++;
-  renderPastHistory('考試紀錄已刪除。');qs('#pastHistoryHeading')?.focus();
+function deletePastAttempt(id){deleteHistoryAttempt('past',id);}
+function deleteMockAttempt(id){deleteHistoryAttempt('mock',id);}
+function deleteHistoryAttempt(source,id){
+  const r=findHistoryAttempt(source,id);if(!r){renderUnifiedHistory('這筆紀錄已不存在。');return;}
+  const e=historyEntry(source,r);
+  if(!confirm(`刪除 ${e.title}\n${e.date===null?'日期未記錄':new Date(e.date).toLocaleString('zh-TW')} 的這筆考試紀錄？\n備註與本次作答快照將永久刪除。既有刷題進度、錯題本、書籤及弱點分析不會變更。`))return;
+  const original=source==='past'?pastHistoryStore().records:state.examHistory,next=original.filter(a=>a!==r);
+  const assign=value=>{if(source==='past')pastHistoryStore().records=value;else state.examHistory=value;};
+  assign(next);
+  try{save();}catch(e){assign(original);renderUnifiedHistory('刪除未能儲存，原紀錄仍保留。');return;}
+  renderUnifiedHistory('考試紀錄已刪除。');qs('#pastHistoryHeading')?.focus();
+}
+function openMockAttemptReview(id,filter='all'){
+  const r=findMockAttempt(id);if(!r){renderUnifiedHistory('這筆紀錄已不存在。');return;}
+  if(r.kind==='legacy_summary'){renderUnifiedHistory('此舊紀錄僅有成績摘要，無法回顧逐題答案。');return;}
+  mockReviewId=id;
+  const rows=r.answers.map(a=>({q:a.question,index:a.number-1,selected:a.selectedAnswer===null?undefined:a.selectedAnswer,ok:a.correct,unanswered:a.unanswered})).filter(a=>filter==='all'||filter==='wrong'&&!a.ok||filter==='blank'&&a.unanswered);
+  qs('#history').innerHTML=`<div class="card questionCard"><div class="examtop"><div><h3 id="mockHistoryReviewHeading" tabindex="-1" style="margin:0">模擬考本次作答回顧</h3><p class="small">${esc(historyEntry('mock',r).title)} · ${r.score} 分 · ${r.correct}/${r.count} 題正確<br>${esc(new Date(r.submittedAt).toLocaleString('zh-TW'))} · ${pastAttemptDuration(r.elapsedMs)}</p></div><button class="btn secondary" onclick="openExamHistory(historyFilter)">返回考試紀錄</button></div>
+    ${r.note?`<div class="pastHistoryNote"><b>個人備註</b><br>${esc(r.note)}</div>`:''}
+    <div class="controls historyFilters" role="group" aria-label="回顧篩選">${[['all','全部'],['wrong','錯題與未答'],['blank','未作答']].map(([key,label])=>`<button class="btn ${filter===key?'primary':'secondary'}" aria-pressed="${filter===key}" onclick="openMockAttemptReview('${id}','${key}')">${label}</button>`).join('')}</div>${examReviewRowsMarkup(rows)}</div>`;
+  qs('#mockHistoryReviewHeading')?.focus();
 }
 async function openPastAttemptReview(id){
   if(!findPastAttempt(id)){renderPastHistory('這筆紀錄已不存在。');return;}
   const request=++pastHistoryRequest;
-  qs('#past').innerHTML='<div class="card" role="status">正在載入本次作答的官方題目…</div>';
+  qs('#history').innerHTML='<div class="card" role="status">正在載入本次作答的官方題目…</div>';
   try{
     await loadOfficialPastBundle();if(request!==pastHistoryRequest)return;
     if(!findPastAttempt(id)){renderPastHistory('這筆紀錄已不存在。');return;}
     pastHistoryReviewId=id;pastHistoryReviewIndex=0;renderPastAttemptReview();
   }catch(e){
     if(request!==pastHistoryRequest)return;
-    qs('#past').innerHTML=`<div class="card" role="alert"><p>官方題目載入失敗，考試紀錄仍保留。</p><div class="controls"><button class="btn primary" onclick="openPastAttemptReview('${id}')">重試</button><button class="btn secondary" onclick="showPastHistory()">返回考試紀錄</button></div></div>`;
+    qs('#history').innerHTML=`<div class="card" role="alert"><p>官方題目載入失敗，考試紀錄仍保留。</p><div class="controls"><button class="btn primary" onclick="openPastAttemptReview('${id}')">重試</button><button class="btn secondary" onclick="openExamHistory(historyFilter)">返回考試紀錄</button></div></div>`;
   }
 }
 function renderPastAttemptReview(index=pastHistoryReviewIndex){
@@ -1155,7 +1271,7 @@ function renderPastAttemptReview(index=pastHistoryReviewIndex){
   const outcome=choice===null?'未作答':choice===a.correctAnswer?'答對':'答錯';
   const compatible=q&&r.contentVersion===OFFICIAL_PAST_CONTENT_VERSION&&q.answer===a.correctAnswer&&q.options.length===a.optionCount&&
     typeof a.contentSignature==='string'&&a.contentSignature===pastQuestionContentSignature(q);
-  qs('#past').innerHTML=`<div class="card questionCard officialQuestion"><div class="examtop"><div><h3 id="pastAttemptReviewHeading" tabindex="-1" style="margin:0">本次作答回顧</h3><p class="small">${esc(r.paper.title)}<br>${esc(pastAttemptDate(r))} · ${pastAttemptMode(r)} · ${r.score} 分 · ${pastAttemptDuration(r.elapsedMs)}</p></div><button class="btn secondary" onclick="showPastHistory()">返回考試紀錄</button></div>
+  qs('#history').innerHTML=`<div class="card questionCard officialQuestion"><div class="examtop"><div><h3 id="pastAttemptReviewHeading" tabindex="-1" style="margin:0">本次作答回顧</h3><p class="small">${esc(r.paper.title)}<br>${esc(pastAttemptDate(r))} · ${pastAttemptMode(r)} · ${r.score} 分 · ${pastAttemptDuration(r.elapsedMs)}</p></div><button class="btn secondary" onclick="openExamHistory(historyFilter)">返回考試紀錄</button></div>
     ${r.note?`<div class="pastHistoryNote"><b>個人備註</b><br>${esc(r.note)}</div>`:''}
     <div><label for="pastReviewNumber">跳至題號</label> <select id="pastReviewNumber" onchange="renderPastAttemptReview(+this.value)">${r.answers.map((a,i)=>`<option value="${i}" ${i===pastHistoryReviewIndex?'selected':''}>第 ${a.number} 題 · ${a.selectedAnswer===null?'未作答':a.selectedAnswer===a.correctAnswer?'答對':'答錯'}</option>`).join('')}</select></div>
     <div class="pastReviewJump"><button class="btn secondary" onclick="renderPastAttemptReview(${pastHistoryReviewIndex-1})" ${pastHistoryReviewIndex===0?'disabled':''}>上一題</button><button class="btn secondary" onclick="renderPastAttemptReview(${pastHistoryReviewIndex+1})" ${pastHistoryReviewIndex===r.total-1?'disabled':''}>下一題</button></div>
@@ -1201,8 +1317,6 @@ function renderStats(){
     });
   }
   const {rows}=competencyEvidence();
-  let hist=state.examHistory||[];
-  const pastRows=pastPapers.map(p=>{const pr=paperProgress(p);return {...p,...pr,score:pr.answered?Math.round(pr.correct/pr.answered*100):null}}).filter(p=>p.answered);
   qs("#stats").innerHTML=`<div class="grid"><div class="card c8"><h3 style="margin-top:0">能力小章節弱點分析</h3>
   <p class="small">官方考古題與自編題逐題等權合併，每題採最近一次結果，做題順序不限。至少 3 題且正確率低於 70% 為弱項；1–2 題僅供初步參考。沒有正式弱項時，最多選 4 個相對較弱章節作為備援練習。</p>
   ${rows.length?rows.map(v=>{
@@ -1217,8 +1331,8 @@ function renderStats(){
       <a class="competencyReview" href="${esc(m.url)}" target="_blank" rel="noopener" aria-label="${esc(`複習 ${v.topic} ${v.name}｜${m.section}`)}">複習此章節 ↗</a>
     </div>`;
   }).join(""):"尚無能力章節作答資料。官方考古題或自編題的作答都可建立弱點分析。"}</div>
-  <div class="card c4"><h3 style="margin-top:0">官方考古題進度</h3><p class="small">依考卷顯示的來源進度；章節診斷請看「能力小章節弱點分析」。</p>${pastRows.length?pastRows.slice(0,10).map(h=>`<div class="topicbar"><div><b>${h.year} ${h.session} ${h.subject}</b><div class="small">${h.answered} 題已作答</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}%</b></div>`).join(""):"尚無考古題作答紀錄"}
-  <h3>最近模擬</h3>${hist.length?hist.slice(0,6).map(h=>`<div class="topicbar"><div><b>${h.subject}</b><div class="small">${new Date(h.date).toLocaleDateString()}</div></div><b class="${h.score>=70?'good':'bad'}">${h.score}</b></div>`).join(""):"尚無模擬紀錄"}
+  <div class="card c4 statsActions"><h3 style="margin-top:0">下一步複習</h3><p class="small">依能力章節的最新作答結果安排複習。考卷目前進度可到考古題查看，單次作答回顧集中在考試紀錄。</p>
+  <div class="controls"><button class="btn primary" onclick="switchPanel('practice');qs('#pmode').value='weak';startPractice()">練習弱項</button><button class="btn secondary" onclick="switchPanel('wrong')">查看錯題</button><button class="btn secondary" onclick="openExamHistory()">考試紀錄</button></div>
   <button class="btn danger" style="margin-top:12px" onclick="resetAll()">清除全部進度</button></div></div>`;
 }
 function resetAll(){

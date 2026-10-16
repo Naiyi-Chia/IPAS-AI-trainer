@@ -26,7 +26,7 @@ async function run(){
    await page.route('**/data/practice-questions.json',async route=>{await gate;await route.continue();});
    await page.goto(url);
    assert.match(await page.locator('#practice').innerText(),/正在載入/);
-   assert.equal(await page.locator('.tab:disabled').count(),6);
+   assert.equal(await page.locator('.tab:disabled').count(),7);
    assert.equal(await page.locator('#practiceStart').count(),0);
    assert.deepEqual(await page.evaluate(()=>state),seed);
    await page.evaluate(()=>switchPanel('stats'));
@@ -63,7 +63,8 @@ async function run(){
     assert.equal(await page.evaluate(()=>examSeconds),bank.subjects[subject].minutes*60);
     await page.waitForFunction(seconds=>examSeconds<seconds,bank.subjects[subject].minutes*60);
     await page.evaluate(()=>{for(let i=0;i<examSet.length;i++){eIndex=i;examPick(examSet[i].answer);}submitExam(true);renderExamReview();});
-    assert.equal(await page.evaluate(()=>state.examHistory.at(-1).score),100);
+    assert.equal(await page.evaluate(()=>state.examHistory[0].score),100);
+    assert(await page.evaluate(subject=>state.examHistory[0].subject===subject&&validMockAttempt(state.examHistory[0]),subject));
     assert.match(await page.locator('#examArea').innerText(),new RegExp(bank.questions.find(q=>q.subject===subject).subjectName));
     assert(await page.evaluate(()=>examSubmitted));
     const stopped=await page.evaluate(()=>examSeconds);await page.waitForTimeout(1100);
@@ -71,7 +72,7 @@ async function run(){
    }
    await page.evaluate(()=>switchPanel('past'));await page.evaluate(()=>loadPastPaperById('115-2-L11'));
    assert.equal(await page.evaluate(()=>pastPaperSet.length),50);
-   for(const panel of ['practice','exam','past','wrong','stats','scope']){
+   for(const panel of ['practice','exam','past','history','wrong','stats','scope']){
     await page.evaluate(p=>switchPanel(p),panel);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),panel+' horizontal overflow');
    }
@@ -90,7 +91,7 @@ async function run(){
    await page.addInitScript(seed=>localStorage.setItem('ipasAIState',JSON.stringify(seed)),seed);
    await page.route('**/data/practice-questions.json',route=>failure==='network'?route.abort():route.fulfill({status:failure==='http'?503:200,contentType:'application/json',body:failure==='json'?'{':failure==='shape'?'{}':'unavailable'}));
    await page.goto(url);await page.locator('#practice [role="alert"]').waitFor();
-   assert.equal(await page.locator('.tab:disabled').count(),6);
+   assert.equal(await page.locator('.tab:disabled').count(),7);
    assert.deepEqual(await page.evaluate(()=>state),seed);
    assert.equal(await page.evaluate(()=>DB),null);
    await page.unroute('**/data/practice-questions.json');await page.getByRole('button',{name:'重新載入',exact:true}).click();

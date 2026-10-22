@@ -7,7 +7,7 @@ Issue #164 routes this unchanged official-history contract through the top-level
 ## Version 1 contract
 
 `state.pastHistory = { schemaVersion: 1, records: [...], draft: null | Draft }`.
-The field is created on the first new official-paper answer. Reading an old state does not synthesize history, clear progress, or rewrite stored question IDs. Unsupported versions and malformed records remain in storage; the history UI warns and only displays supported valid records. Invalid drafts / unsupported stores block new history capture while latest-result practice remains available.
+The field is created on the first new practice answer, or before a timed exam starts. Reading an old state does not synthesize history, clear progress, or rewrite stored question IDs. Unsupported versions and malformed records remain in storage; the history UI warns and only displays supported valid records. Invalid drafts / unsupported stores block new history capture while latest-result practice remains available.
 
 Each finalized record has:
 
@@ -17,19 +17,20 @@ Each finalized record has:
 | `id` | `past-` + UUID; generated once at session start |
 | `paper` | Snapshot of `id`, `title`, `year`, `session`, `level`, `subject`, `name`; stable paper reference |
 | `contentVersion` | Content generation used for the session; supplied by `OFFICIAL_PAST_CONTENT_VERSION` (currently `2`) and checked during review. Increment for canonical content revisions; this is separate from bundle `schema_version` |
-| `mode` | `practice` or reserved `timed_exam`; current UI only creates `practice` |
+| `mode` | `practice` or `timed_exam`; timed producer/resume behavior is defined in [Issue #158](past-timed-exam.md) |
 | `startedAt`, `updatedAt`, `submittedAt` | Epoch milliseconds; finalized `updatedAt` equals `submittedAt` |
 | `elapsedMs` | Nonnegative wall time from opening/restarting the paper to finalization |
-| `timeLimitMs`, `overtime` | Both `null` for practice. For future timed mode: positive limit, boolean `elapsedMs > timeLimitMs`. No official duration is defined by this Issue |
+| `timeLimitMs`, `overtime` | Both `null` for practice. Timed mode: positive saved official limit, boolean `elapsedMs > timeLimitMs`; per-year/level/subject rules live in the timed-mode contract |
+| `position`, `timingRule` | Additive timed metadata: zero-based position and `{year, version, source}`. Optional for older records; typed/validated if present |
 | `answers` | Ordered snapshot of `{questionId, number, optionCount, selectedAnswer, correctAnswer, contentSignature}` for every question in the paper |
 | `answered`, `correct`, `total`, `score` | Selected count, correct count, paper length, rounded `100 * correct / total`; unanswered contributes zero |
-| `status` | `submitted` (finish button) or `interrupted` (leave/restart/reload) |
+| `status` | Finalized records: `submitted` or practice `interrupted`. Timed leave/reload retains an `in_progress` draft until explicit submission |
 | `resultStatus` | `complete` if all questions have a selection, otherwise `partial`; no pass/fail threshold |
 | `note` | User text, editable through Notes UI, max 2,000 characters |
 
 Answers are zero-based option indices. `selectedAnswer: null` means unanswered **in this session**, even when older progress exists. A repeated selection in the same session replaces only that session's choice; a finalized record is never rescored or edited. System fields and nested snapshots are frozen in memory. Note updates replace only `note`; deletion removes only the matching history record after native confirmation.
 
-`validPastAttempt()` validates IDs, supported versions/modes/statuses, unique question numbers/IDs, option bounds, timing consistency, summary consistency, and overtime semantics. The record and store both carry versions so later migrations can be explicit. Adding a timed-mode producer or other enum requires a dedicated Issue and contract alignment.
+`validPastAttempt()` validates IDs, supported versions/modes/statuses, unique question numbers/IDs, option bounds, timing consistency, summary consistency, optional position/rule metadata, and overtime semantics. The record and store both carry versions so later migrations can be explicit. The timed producer added by #158 reuses this version 1 contract; it also validates resumable drafts against the complete canonical paper and saved timing rule.
 
 `contentSignature` is an exact serialized identity (`JSON.stringify`) of runtime question text, ordered options, correct-answer index, visual asset paths and the complete shared context (including its visual paths). It is stored at session creation and compared at review time. It is not a lossy hash. This prevents changed wording/options/context from being rendered as historical content even if a content revision accidentally retains the same version, option count and answer index. Asset bytes are referenced by their existing paths; replacing bytes at the same path requires a content-version increment.
 
@@ -37,10 +38,10 @@ The signature field is additive within record version 1: if present it must be a
 
 ## Session lifecycle
 
-- Loading or restarting a paper starts an independent in-memory session. Existing "continue" navigation can start at the first question without a latest result; earlier questions are still unanswered in this new snapshot.
-- Each answer saves the current draft alongside the usual latest-result update, using the existing `save()` pattern.
-- Finish saves a submitted snapshot, including any unanswered questions. Return to papers, tab switch, or restart saves an interrupted snapshot if at least one answer exists. Empty sessions create no history. Repeated finish events cannot duplicate a record.
-- Reload recovers a valid stored draft as interrupted once, at its **last persisted answer time**. Offline time is not added. This preserves selections without claiming elapsed time after the last observed event. Recovery clears the draft but preserves latest-result progress.
+- Practice: loading/restarting starts an independent in-memory session. Existing "continue" navigation can start at the first question without a latest result; earlier questions are still unanswered in this new snapshot. Each practice answer saves the draft alongside the usual latest-result update.
+- Practice finish saves a submitted snapshot. Return to papers, tab switch, or restart saves an interrupted snapshot if at least one answer exists. Empty practice sessions create no history. Reload recovers a valid practice draft once as interrupted at its **last persisted answer time**, without adding offline time.
+- Timed: a full unanswered draft is saved at start, including its timestamp and official limit. Answer/position updates change only the draft. Leaving/reloading does not finalize it; explicit resume keeps its ID, start and selections, and recomputes elapsed/overtime from current time. No pause/reset is provided. The existing single draft slot is protected against starting a different paper/mode until submission.
+- Timed explicit submission saves a finalized snapshot (including empty/partial attempts), clears the draft, and updates latest results/wrong book only for selected questions. Unanswered questions contribute zero to the session score without overwriting an older latest result. Failed submission rolls back stores and leaves the exam active. Repeated submission cannot duplicate a record.
 - History review loads existing canonical questions by stable ID and uses only saved selections / answer keys for outcomes. Current content is rendered only when the saved content version matches `OFFICIAL_PAST_CONTENT_VERSION`, a saved exact signature matches the current runtime content, and answer index/option count agree. Missing, unknown or incompatible content shows the snapshot answers plus an explicit unavailable-content message. Shared context and official visuals reuse existing renderers only after these checks. No new AI explanation is generated.
 - Delete cancels the current review reference and pending review loads. Reopening a deleted ID safely returns to history.
 

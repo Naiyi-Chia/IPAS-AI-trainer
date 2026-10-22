@@ -125,6 +125,11 @@ h3{font-size:18px;line-height:1.35}
 .historyFilters{margin:12px 0;gap:8px}
 .historyFilters .btn{min-height:44px}
 .statsActions{align-self:start}
+.pastTimedClock{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.pastTimedClock.overtime{border-color:var(--warn);background:#fffaeb}
+.pastTimedClock strong{font-variant-numeric:tabular-nums;font-size:22px}
+.pastTimedPalette{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.pastTimedPalette button{min-width:44px;min-height:44px}
 .pastNoteInput{display:block;width:100%;min-height:100px;margin:8px 0 12px;padding:12px;border:1px solid var(--line);border-radius:8px;resize:vertical;font-size:16px}
 .pastReviewJump{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
 .pastReviewJump .btn{min-width:44px;min-height:44px}
@@ -382,7 +387,12 @@ let examSet=[], eIndex=0, examAnswers={}, examTimer=null, examSeconds=0, examSub
 let mockSession=null,historyFilter='all',mockReviewId=null;
 let pastPaperSet=[], pastIndex=0, pastAnswered=false, pastPaperMeta=null, pdfJsLoading=null;
 let pastAttemptSession=null, pastHistoryReviewId=null, pastHistoryReviewIndex=0, pastHistoryRequest=0;
+let pastTimedTimer=null,pastTimedError='';
 const PAST_HISTORY_SCHEMA_VERSION=1;
+const PAST_TIMING_RULES={
+ 114:{version:1,source:'https://www.ipas.org.tw/DownloadFile.ashx?filename='+encodeURIComponent('5070f383-019a-46ab-acf2-f3807a027966_114年度AI應用規劃師能力鑑定簡章(初、中級)_公告版v3.1.pdf')+'&type=10',levels:{初級:{subjects:['L11','L12'],minutes:75},中級:{subjects:['L21','L22','L23'],minutes:90}}},
+ 115:{version:1,source:officialBrochure,levels:{初級:{subjects:['L11','L12'],minutes:75},中級:{subjects:['L21','L22','L23'],minutes:90}}}
+};
 
 function save(){ localStorage.setItem("ipasAIState",JSON.stringify(state)); }
 const PAST_PROGRESS_MIGRATIONS={
@@ -418,7 +428,7 @@ function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function switchPanel(id){
  if(!DB||!qs(`#tab-${id}`))return;
- if(qs('#past')?.classList.contains('active')){finishPastAttempt('interrupted');pastAttemptSession=null;pastHistoryRequest++;}
+ if(qs('#past')?.classList.contains('active')){if(!suspendPastTimedAttempt())return;finishPastAttempt('interrupted');pastAttemptSession=null;pastHistoryRequest++;}
  if(qs('#history')?.classList.contains('active')&&id!=='history'){pastHistoryRequest++;pastHistoryReviewId=null;mockReviewId=null;}
  qsa(".panel").forEach(x=>{const active=x.id===id;x.classList.toggle("active",active);x.hidden=!active;});
  qsa(".tab").forEach(x=>{const active=x.dataset.panel===id;x.classList.toggle("active",active);x.setAttribute("aria-selected",String(active));});
@@ -924,12 +934,14 @@ function showPastQuizView(){
   renderPastQuiz();
 }
 function exitPastQuiz(){
+  if(!suspendPastTimedAttempt())return;
   finishPastAttempt('interrupted');pastAttemptSession=null;pastHistoryRequest++;
   pastPaperSet=[];pastIndex=0;pastAnswered=false;pastPaperMeta=null;
   renderPastPapers();
   setTimeout(()=>qs('#pastPapersHeading')?.focus(),0);
 }
 function renderPastPapers(){
+  const draft=pastHistoryStore()?.draft,locked=draft?.mode==='timed_exam';
   const group=(level)=>pastPapers.filter(p=>p.level===level);
   const paperCard=(p,i)=>{
     const prog=paperProgress(p), score=prog.answered?Math.round(prog.correct/prog.answered*100):null;
@@ -939,9 +951,11 @@ function renderPastPapers(){
       <div class="small">考試日期：${p.date}　｜　官方 PDF：約 ${p.size}</div>
       <div class="small" style="margin-top:7px">${prog.answered?`已作答 ${prog.answered} 題 · 答對 ${prog.correct} 題${score!==null?` · 目前正確率 ${score}%`:''}`:'尚未作答 · 作答後會自動記錄進度'}</div>
       <div class="controls" style="margin-top:12px">
-        <button class="btn primary" onclick="loadPastPaperById('${p.id}')">${prog.answered?'繼續刷題':'開始刷題'}</button>
+        <button class="btn primary" onclick="loadPastPaperById('${p.id}')" ${locked?'disabled':''}>${prog.answered?'繼續刷題':'開始刷題'}</button>
+        <button class="btn secondary" onclick="loadPastPaperById('${p.id}','timed_exam')" ${locked||!pastPaperTiming(p)?'disabled':''}>計時考試${pastPaperTiming(p)?` · ${pastPaperTiming(p).minutes} 分鐘`:'（無時間規則）'}</button>
         <a class="btn secondary" style="display:inline-block;text-decoration:none" href="${p.pdf}" target="_blank" rel="noopener">查看官方 PDF</a>
       </div>
+      <p class="small" style="margin-bottom:0">刷題為練習模式：不計時、即時回饋。計時考試交卷後才顯示對錯。</p>
     </div>`;
   };
   qs("#past").innerHTML=`
@@ -949,6 +963,7 @@ function renderPastPapers(){
       <div class="examtop"><div><h3 id="pastPapersHeading" tabindex="-1" style="margin:0">官方考古題</h3><div class="small" style="margin-top:5px">${pastPapers.length} 份官方公告試題，直接點「開始刷題」即可</div></div>
       <div class="controls"><button class="btn secondary" onclick="showPastHistory()">考試紀錄</button><a class="btn secondary" style="text-decoration:none" href="${officialLearningResources}" target="_blank" rel="noopener">官方歷屆考題頁</a></div></div>
       <div id="pastLoadStatus" class="small" role="status" aria-live="polite" style="margin-top:8px"></div>
+      ${locked?`<div class="notice"><b>有進行中的計時考試</b><p>${esc(draft.paper?.title||'考卷資料待確認')}。離開或重載仍繼續計時；請先恢復並交卷，再開始其他考卷或模式。</p><button class="btn primary" onclick="resumePastTimedAttempt()">恢復計時考試</button></div>`:''}
     </div>
     <h3>初級 Lv1</h3><div class="grid">${group("初級").map(p=>paperCard(p,pastPapers.indexOf(p))).join("")}</div>
     <h3 style="margin-top:22px">中級 Lv2</h3><div class="grid">${group("中級").map(p=>paperCard(p,pastPapers.indexOf(p))).join("")}</div>`;
@@ -960,20 +975,31 @@ async function prewarmOfficialBundle(){
     await loadOfficialPastBundle();
   }catch(e){console.warn("內建官方考古題預載失敗",e)}
 }
-async function loadPastPaperById(id){
+async function loadPastPaperById(id,mode='practice'){
   const paper=pastPapers.find(p=>p.id===id);
   if(!paper)return;
   const request=++pastHistoryRequest;
   const status=qs("#pastLoadStatus");
   try{
+    const draft=pastHistoryStore()?.draft;
+    if(draft?.mode==='timed_exam'&&mode!=='resume')throw new Error('請先恢復並交卷現有計時考試，計時不會暫停。');
+    if(!['practice','timed_exam','resume'].includes(mode))throw new Error('作答模式無效');
     if(status)status.textContent=`正在開啟 ${paper.year} 年 ${paper.session} ${paper.subject}…`;
     const parsed=await getBundledPastPaper(paper);
     if(request!==pastHistoryRequest)return;
     finishPastAttempt('interrupted');
     pastPaperSet=parsed.questions;pastPaperMeta=parsed.meta;pastAnswered=false;
-    beginPastAttempt(paper);
+    if(mode==='resume'){
+      if(!validPastTimedDraft(draft,parsed.questions,paper))throw new Error('計時紀錄不完整、內容版本不符或系統時間異常；原資料仍保留，無法安全恢復。');
+      const resumed=JSON.parse(JSON.stringify(draft));if(!touchPastTimedClock(resumed))throw new Error(pastTimedError);
+      if(!persistPastTimedDraft(resumed))throw new Error(pastTimedError);
+      pastAttemptSession=resumed;
+    }else{
+      beginPastAttempt(paper,mode);
+      if(mode==='timed_exam'&&!pastAttemptSession)throw new Error(pastTimedError||'無法安全建立計時考試，請檢查紀錄與時間規則。');
+    }
     const firstUnanswered=pastPaperSet.findIndex(q=>!state.attempts[q.id]);
-    pastIndex=firstUnanswered>=0?firstUnanswered:0;
+    pastIndex=mode==='resume'?pastAttemptSession.position:mode==='timed_exam'?0:firstUnanswered>=0?firstUnanswered:0;
     showPastQuizView();
     focusPastQuestionStart();
   }catch(err){
@@ -1010,6 +1036,7 @@ function renderPastQuiz(){
     area.innerHTML='';
     return;
   }
+  if(pastAttemptSession?.mode==='timed_exam'&&pastAttemptSession.status==='in_progress'){renderPastTimedQuiz();return;}
   const q=pastPaperSet[pastIndex];
   const prog=currentPastProgress();
   area.innerHTML=`<div class="card questionCard officialQuestion" style="margin-bottom:12px">
@@ -1044,6 +1071,7 @@ function renderPastQuiz(){
 }
 
 function answerPast(i){
+  if(pastAttemptSession?.mode==='timed_exam'){answerPastTimed(i);return;}
   if(pastAnswered||!Number.isInteger(i)||i<0||i>=pastPaperSet[pastIndex]?.options.length) return;
   pastAnswered=true;
   const q=pastPaperSet[pastIndex], ok=i===q.answer;
@@ -1068,6 +1096,7 @@ function answerPast(i){
 }
 
 function pastNext(){
+  if(pastAttemptSession?.mode==='timed_exam'){navigatePastTimed(pastIndex+1);return;}
   if(!pastPaperSet.length)return;
   if(pastIndex<pastPaperSet.length-1){
     pastIndex++;pastAnswered=false;renderPastQuiz();focusPastQuestionStart();
@@ -1081,14 +1110,107 @@ function pastNext(){
   }
 }
 function pastPrev(){
+  if(pastAttemptSession?.mode==='timed_exam'){navigatePastTimed(pastIndex-1);return;}
   if(pastIndex>0){pastIndex--;pastAnswered=false;renderPastQuiz();focusPastQuestionStart();}
 }
 function restartPastQuiz(){
+  if(pastAttemptSession?.mode==='timed_exam'){if(pastAttemptSession.status==='in_progress'){pastTimedError='請先交卷，再開始新一輪作答。';renderPastTimedQuiz();}else exitPastQuiz();return;}
   finishPastAttempt('interrupted');
   beginPastAttempt(pastPapers.find(p=>p.id===pastPaperMeta?.paperId));
   pastIndex=0;pastAnswered=false;
   if(!qs('#pastQuizArea'))qs('#past').innerHTML='<div id="pastQuizArea"></div>';
   renderPastQuiz();focusPastQuestionStart();
+}
+
+function pastPaperTiming(paper){
+  const rule=PAST_TIMING_RULES[paper?.year],level=rule?.levels[paper?.level];
+  return level?.subjects.includes(paper.subject)?{...level,version:rule.version,source:rule.source}:null;
+}
+function stopPastTimedTimer(){if(pastTimedTimer!==null)clearInterval(pastTimedTimer);pastTimedTimer=null;}
+function touchPastTimedClock(s){
+  const now=Date.now();
+  if(!Number.isSafeInteger(now)||now<s.updatedAt){pastTimedError='系統時間早於已保存的時間，請校正系統時間後重試；紀錄不會被重設。';return false;}
+  s.updatedAt=now;s.elapsedMs=now-s.startedAt;s.overtime=s.elapsedMs>s.timeLimitMs;return true;
+}
+function validPastTimedDraft(s,questions,paper){
+  const timing=pastPaperTiming(paper);
+  return validPastAttempt(s,true)&&s.mode==='timed_exam'&&s.paper.id===paper.id&&s.paper.year===paper.year&&s.paper.level===paper.level&&s.paper.subject===paper.subject&&
+    timing&&s.timeLimitMs===timing.minutes*60000&&s.timingRule?.year===paper.year&&s.timingRule.version===timing.version&&s.timingRule.source===timing.source&&
+    s.contentVersion===OFFICIAL_PAST_CONTENT_VERSION&&Number.isInteger(s.position)&&s.position>=0&&s.position<questions.length&&
+    s.updatedAt<=Date.now()&&s.answers.length===questions.length&&!pastHistoryStore()?.records.some(r=>r?.id===s.id)&&
+    s.answers.every((a,i)=>a.questionId===questions[i].id&&a.number===questions[i].number&&a.correctAnswer===questions[i].answer&&a.optionCount===questions[i].options.length&&a.contentSignature===pastQuestionContentSignature(questions[i]));
+}
+function persistPastTimedDraft(s){
+  if(!validPastAttempt(s,true)){pastTimedError='計時紀錄不完整，無法安全儲存。';return false;}
+  const original=state.pastHistory,h=pastHistoryStore(true);
+  if(!h||h.draft&&h.draft.id!==s.id){pastTimedError='現有紀錄無法讀取或另有未完成作答，原資料仍保留。';return false;}
+  const draft=h.draft;h.draft=JSON.parse(JSON.stringify(s));
+  try{save();pastTimedError='';return true;}catch(e){if(original===undefined)delete state.pastHistory;else h.draft=draft;pastTimedError='計時作答尚未儲存，請確認瀏覽器儲存空間後重試；勿重新整理。';return false;}
+}
+function suspendPastTimedAttempt(){
+  const s=pastAttemptSession;
+  if(s?.mode==='timed_exam'&&s.status==='in_progress'){
+    const next=JSON.parse(JSON.stringify(s));next.position=pastIndex;
+    if(!touchPastTimedClock(next)||!persistPastTimedDraft(next)){renderPastTimedQuiz();return false;}
+    pastAttemptSession=next;
+  }
+  stopPastTimedTimer();return true;
+}
+function resumePastTimedAttempt(){
+  const draft=pastHistoryStore()?.draft;
+  if(!draft?.paper?.id||!pastPapers.some(p=>p.id===draft.paper.id)){const el=qs('#pastLoadStatus');if(el)el.textContent='計時紀錄缺少有效考卷資料，原資料仍保留。';return;}
+  return loadPastPaperById(draft.paper.id,'resume');
+}
+function pastTimedClockText(ms){const sec=Math.max(0,Math.floor(ms/1000));return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;}
+function updatePastTimedClock(){
+  const s=pastAttemptSession,el=qs('#pastTimedClock');if(s?.mode!=='timed_exam'||s.status!=='in_progress'||!el)return;
+  const elapsed=Date.now()-s.startedAt;
+  if(Date.now()<s.updatedAt){qs('#pastTimedError').textContent='系統時間異常，請校正系統時間；計時與紀錄不會重設。';return;}
+  const overtime=elapsed>s.timeLimitMs,state=overtime?'overtime':elapsed===s.timeLimitMs?'expired':'running';
+  qs('#pastTimedDisplay').textContent=overtime?`超時 ${pastTimedClockText(elapsed-s.timeLimitMs)}`:`剩餘 ${pastTimedClockText(Math.ceil((s.timeLimitMs-elapsed)/1000)*1000)}`;
+  qs('#pastTimedElapsed').textContent=`實際作答 ${pastTimedClockText(elapsed)} · 官方時間 ${s.timeLimitMs/60000} 分鐘`;
+  el.classList.toggle('overtime',overtime);
+  if(el.dataset.state!==state){el.dataset.state=state;qs('#pastTimedStatus').textContent=state==='running'?'計時中，交卷後才顯示正解。':state==='expired'?'官方時間已到，不會自動交卷。':'已超時，仍可作答；請主動交卷。';}
+}
+function renderPastTimedQuiz(){
+  const s=pastAttemptSession,area=qs('#pastQuizArea');if(!s||s.mode!=='timed_exam'||s.status!=='in_progress'||!area)return;
+  stopPastTimedTimer();const q=pastPaperSet[pastIndex],choice=s.answers[pastIndex].selectedAnswer,answered=s.answers.filter(a=>a.selectedAnswer!==null).length;
+  area.innerHTML=`<div class="card questionCard officialQuestion"><div class="pastQuizTop pastQuestionStart" id="pastQuestionStart" tabindex="-1"><div><span class="pill">計時考試模式</span><h3>${esc(s.paper.title)}</h3></div><button class="btn secondary pastExitBtn" onclick="exitPastQuiz()">暫時離開（繼續計時）</button></div>
+    <div class="pastTimedClock" id="pastTimedClock"><strong id="pastTimedDisplay" role="timer" aria-label="考試剩餘或超時時間" aria-live="off"></strong><span id="pastTimedElapsed"></span><span id="pastTimedStatus" role="status"></span></div>
+    <p id="pastTimedError" class="bad" role="alert">${esc(pastTimedError)}</p><p class="small">第 ${pastIndex+1}/${s.answers.length} 題 · 已選 ${answered} 題 · ${choice===null?'本題未作答':`本題已選 ${String.fromCharCode(65+choice)}`}。時間到不自動交卷；離開與重載不會暫停。</p>
+    ${renderPastSharedContext(q)}<div class="qtext">${esc(q.question)}</div>${renderPastVisuals(q)}
+    <div id="pastOpts" role="group" aria-label="作答選項">${q.options.map((o,i)=>`<button class="option ${choice===i?'selected':''}" aria-pressed="${choice===i}" data-i="${i}" onclick="answerPastTimed(${i})"><b>${String.fromCharCode(65+i)}.</b> ${esc(o)}</button>`).join('')}</div>
+    <div class="navrow"><button class="btn secondary" onclick="navigatePastTimed(${pastIndex-1})" ${pastIndex===0?'disabled':''}>上一題</button><button class="btn secondary" onclick="navigatePastTimed(${pastIndex+1})" ${pastIndex===s.answers.length-1?'disabled':''}>下一題</button><button class="btn primary" onclick="submitPastTimed()">交卷</button></div>
+    <div class="pastTimedPalette" aria-label="考古題題號">${s.answers.map((a,i)=>`<button class="btn ${i===pastIndex?'primary':'secondary'}" aria-label="第 ${i+1} 題${a.selectedAnswer!==null?'，已選答案':''}" ${i===pastIndex?'aria-current="step"':''} onclick="navigatePastTimed(${i})">${i+1}${a.selectedAnswer!==null?' · 已選':''}</button>`).join('')}</div></div>`;
+  updatePastTimedClock();pastTimedTimer=setInterval(updatePastTimedClock,1000);
+}
+function answerPastTimed(choice){
+  const s=pastAttemptSession;if(s?.mode!=='timed_exam'||s.status!=='in_progress'||!Number.isInteger(choice)||choice<0||choice>=pastPaperSet[pastIndex].options.length)return;
+  const next=JSON.parse(JSON.stringify(s));next.answers[pastIndex].selectedAnswer=choice;next.position=pastIndex;
+  if(touchPastTimedClock(next)&&persistPastTimedDraft(next))pastAttemptSession=next;
+  renderPastTimedQuiz();qs(`#pastOpts [data-i="${choice}"]`)?.focus({preventScroll:true});
+}
+function navigatePastTimed(index){
+  const s=pastAttemptSession;if(s?.mode!=='timed_exam'||s.status!=='in_progress'||!Number.isInteger(index)||index<0||index>=s.answers.length)return;
+  const next=JSON.parse(JSON.stringify(s));next.position=index;
+  if(touchPastTimedClock(next)&&persistPastTimedDraft(next)){pastAttemptSession=next;pastIndex=index;}
+  renderPastTimedQuiz();focusPastQuestionStart();
+}
+function submitPastTimed(){
+  const s=pastAttemptSession,paper=pastPapers.find(p=>p.id===s?.paper.id);
+  if(s?.mode!=='timed_exam'||s.status!=='in_progress')return;
+  if(!validPastTimedDraft(s,pastPaperSet,paper)){pastTimedError='紀錄內容或時間無法驗證，原紀錄仍保留，無法安全交卷。';renderPastTimedQuiz();return;}
+  const blank=s.answers.filter(a=>a.selectedAnswer===null).length;
+  if(!confirm(`確定交卷？尚有 ${blank} 題未作答。交卷後才顯示正解，並保存本次分數與實際作答時間。`))return;
+  const next=JSON.parse(JSON.stringify(s));if(!touchPastTimedClock(next)){renderPastTimedQuiz();return;}
+  const record=finalizePastAttempt(next,'submitted',next.updatedAt),h=pastHistoryStore();if(!record||!h)return;
+  const original={records:h.records,draft:h.draft,attempts:state.attempts,wrong:state.wrong};
+  h.records=[...h.records,record];h.draft=null;state.attempts={...state.attempts};state.wrong={...state.wrong};
+  record.answers.filter(a=>a.selectedAnswer!==null).forEach(a=>{const correct=a.selectedAnswer===a.correctAnswer;state.attempts[a.questionId]={correct,last:record.submittedAt,subject:'PAST',topic:record.paper.title};if(correct)delete state.wrong[a.questionId];else state.wrong[a.questionId]=true;});
+  try{save();}catch(e){h.records=original.records;h.draft=original.draft;state.attempts=original.attempts;state.wrong=original.wrong;pastTimedError='交卷未能儲存，紀錄與計時仍保留；請確認儲存空間後再交卷。';renderPastTimedQuiz();return;}
+  pastAttemptSession=record;stopPastTimedTimer();
+  qs('#pastQuizArea').innerHTML=`<div class="card questionCard" id="pastCompletion" tabindex="-1"><h3>計時考試已交卷</h3><div class="kpi">${record.score} 分</div><p>${record.correct}/${record.total} 題正確 · ${record.total-record.answered} 題未作答</p><p>實際作答 ${pastAttemptDuration(record.elapsedMs)} · 官方時間 ${record.timeLimitMs/60000} 分鐘 · ${record.overtime?'已超時':'未超時'}</p><div class="controls"><button class="btn primary" onclick="openExamHistory('past');openPastAttemptReview('${record.id}')">回顧本次作答</button><button class="btn secondary" onclick="exitPastQuiz()">返回考卷列表</button></div></div>`;
+  focusPastCompletion();
 }
 
 // Separate, versioned session history; never reconstruct selected answers from latest-result progress.
@@ -1105,6 +1227,8 @@ function validPastAttempt(r,draft=false){
      !Number.isSafeInteger(r.elapsedMs)||r.elapsedMs<0||!Number.isSafeInteger(r.updatedAt)||r.updatedAt<r.startedAt||
      r.elapsedMs!==r.updatedAt-r.startedAt||!Number.isSafeInteger(r.contentVersion)||r.contentVersion<1||
      !Array.isArray(r.answers)||!r.answers.length||typeof r.note!=='string')return false;
+  if(r.position!==undefined&&(!Number.isInteger(r.position)||r.position<0||r.position>=r.answers.length))return false;
+  if(r.timingRule!==undefined&&(!r.timingRule||typeof r.timingRule.year!=='string'||!Number.isSafeInteger(r.timingRule.version)||r.timingRule.version<1||typeof r.timingRule.source!=='string'))return false;
   const ids=new Set(),numbers=new Set();
   for(const a of r.answers){
     if(!a||!Number.isSafeInteger(a.number)||a.number<1||a.questionId!==`PAST-${r.paper.id}-${a.number}`||
@@ -1123,7 +1247,7 @@ function validPastAttempt(r,draft=false){
     r.answered===answered&&r.correct===correct&&r.score===Math.round(correct/r.total*100)&&r.resultStatus===(answered===r.total?'complete':'partial');
 }
 function freezePastAttempt(r){
-  r.answers.forEach(Object.freeze);Object.freeze(r.answers);Object.freeze(r.paper);return Object.freeze(r);
+  return freezeHistoryValue(r);
 }
 function pastHistoryRecords(){
   const h=pastHistoryStore();if(!h)return [];
@@ -1134,14 +1258,20 @@ function pastQuestionContentSignature(q){
   // Exact serialized content identity, not a lossy hash; includes everything the review renderers show.
   return JSON.stringify([q.question,q.options,q.answer,q.visualAssets||[],q.sharedContext||null]);
 }
-function beginPastAttempt(paper){
+function beginPastAttempt(paper,mode='practice'){
   pastAttemptSession=null;
   const h=pastHistoryStore();
   if(!paper||!pastPaperSet.length||state.pastHistory!==undefined&&!h||h?.draft&&!validPastAttempt(h.draft,true))return;
   const startedAt=Date.now();
   pastAttemptSession={schemaVersion:1,id:`past-${crypto.randomUUID()}`,paper:{id:paper.id,title:pastPaperMeta.title,year:paper.year,session:paper.session,level:paper.level,subject:paper.subject,name:paper.name},
-    contentVersion:pastPaperMeta.contentVersion,mode:'practice',startedAt,updatedAt:startedAt,submittedAt:null,elapsedMs:0,timeLimitMs:null,overtime:null,status:'in_progress',note:'',
+    contentVersion:pastPaperMeta.contentVersion,mode,startedAt,updatedAt:startedAt,submittedAt:null,elapsedMs:0,timeLimitMs:null,overtime:null,status:'in_progress',note:'',
     answers:pastPaperSet.map(q=>({questionId:q.id,number:q.number,optionCount:q.options.length,selectedAnswer:null,correctAnswer:q.answer,contentSignature:pastQuestionContentSignature(q)}))};
+  if(mode==='timed_exam'){
+    const timing=pastPaperTiming(paper);
+    if(!timing||h?.draft){pastAttemptSession=null;pastTimedError='尚有未完成或無法讀取的紀錄，或本考卷缺少官方時間規則。';return;}
+    Object.assign(pastAttemptSession,{timeLimitMs:timing.minutes*60000,overtime:false,position:0,timingRule:{year:paper.year,version:timing.version,source:timing.source}});
+    if(!persistPastTimedDraft(pastAttemptSession))pastAttemptSession=null;
+  }
 }
 function recordPastSessionAnswer(choice){
   const s=pastAttemptSession;if(!s||s.status!=='in_progress')return;
@@ -1160,6 +1290,7 @@ function finalizePastAttempt(s,status,at){
 }
 function finishPastAttempt(status){
   const s=pastAttemptSession;if(!s)return null;
+  if(s.mode==='timed_exam'&&s.status==='in_progress')return null;
   const h=pastHistoryStore();
   if(s.status!=='in_progress')return h?.records.find(r=>r.id===s.id)||null;
   if(!s.answers.some(a=>a.selectedAnswer!==null))return null;
@@ -1170,6 +1301,7 @@ function finishPastAttempt(status){
 }
 function recoverPastAttemptDraft(){
   const h=pastHistoryStore();if(!h||!validPastAttempt(h.draft,true))return;
+  if(h.draft.mode==='timed_exam')return;
   const r=finalizePastAttempt(h.draft,'interrupted',h.draft.updatedAt);
   if(r&&r.answered&&!h.records.some(a=>a.id===r.id))h.records.push(r);
   h.draft=null;save();

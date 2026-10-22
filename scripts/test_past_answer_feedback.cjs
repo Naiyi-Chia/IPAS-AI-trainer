@@ -24,7 +24,7 @@ for(let answer=0;answer<4;answer++){
       explanation:'UNVERIFIED EXPLANATION MUST NOT BE PRESENTED AS OFFICIAL',sourceType:'iPAS 官方公告試題 PDF'};
     const original=JSON.stringify(question);
     let saves=0;
-    const context={pastAnswered:false,pastIndex:0,pastPaperSet:[question],
+    const context={pastAnswered:false,pastIndex:0,pastAttemptSession:null,pastPaperSet:[question],
       pastPaperMeta:{title:'Official test paper',pdf:'https://example.test/official.pdf'},
       state:{attempts:{KEEP:{correct:true}},wrong:{'PAST-TEST-1':true},bookmarks:{KEEP:true},examHistory:[{score:80}]},
       Date:{now:()=>123456789},save:()=>saves++,recordPastSessionAnswer(){},
